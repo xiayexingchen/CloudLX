@@ -1,0 +1,165 @@
+{
+  "pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "uni-app"
+      }
+    },
+    {
+      "path": "pages/home/home",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/orders/orders",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/messages/messages",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/mine/mine",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/smsLogin/smsLogin",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/userInfoInit/userInfoInit",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/package/packageAdd/packageAdd",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/idCard/idCard",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    /*    {
+          "path": "pages/address/address",
+          "style": {
+            "navigationBarTitleText": ""
+          }
+        }, */
+
+    {
+      "path": "pages/package/timeoutPackage/timeoutPackage",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/package/pendingPackage/pendingPackage",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/package/completedPackage/completedPackage",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+
+    {
+      "path": "pages/package/deliveringPackage/deliveringPackage",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path" : "pages/address/address",
+      "style" : 
+      {
+        "navigationBarTitleText" : ""
+      }
+    },
+    {
+      "path" : "pages/wallet/wallet",
+      "style" : 
+      {
+        "navigationBarTitleText" : ""
+      }
+    },
+    {
+      "path" : "pages/discount/discount",
+      "style" : 
+      {
+        "navigationBarTitleText" : ""
+      }
+    },
+    {
+      "path" : "pages/feedback/feedback",
+      "style" : 
+      {
+        "navigationBarTitleText" : ""
+      }
+    },
+    {
+      "path" : "pages/disclaimer/disclaimer",
+      "style" : 
+      {
+        "navigationBarTitleText" : ""
+      }
+    }
+  ],
+
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "校园跑腿",
+    "navigationBarBackgroundColor": "#0069FF",
+    "backgroundColor": "#f3f4f6"
+  },
+
+  "tabBar": {
+    "color": "#000000",
+    "selectedColor": "#0069FF",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [{
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "static/icons/home.png",
+        "selectedIconPath": "static/icons/homefill.png"
+      },
+      {
+        "pagePath": "pages/orders/orders",
+        "text": "订单",
+        "iconPath": "static/icons/order.png",
+        "selectedIconPath": "static/icons/orderfill.png"
+      },
+      {
+        "pagePath": "pages/messages/messages",
+        "text": "信息",
+        "iconPath": "static/icons/message.png",
+        "selectedIconPath": "static/icons/messagefill.png"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        "iconPath": "static/icons/user.png",
+        "selectedIconPath": "static/icons/userfill.png"
+      }
+    ]
+  }
+}
