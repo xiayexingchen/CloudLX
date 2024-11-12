@@ -1,12 +1,12 @@
 {
   "pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
 
-    {
-      "path": "pages/index/index",
-      "style": {
-        "navigationBarTitleText": "uni-app"
-      }
-    },
+    // {
+    //   "path": "pages/index/index",
+    //   "style": {
+    //     "navigationBarTitleText": "uni-app"
+    //   }
+    // },
     {
       "path": "pages/home/home",
       "style": {
@@ -32,19 +32,13 @@
       }
     },
     {
-      "path": "pages/smsLogin/smsLogin",
-      "style": {
-        "navigationBarTitleText": ""
-      }
-    },
-    {
       "path": "pages/userInfoInit/userInfoInit",
       "style": {
         "navigationBarTitleText": ""
       }
     },
     {
-      "path": "pages/package/packageAdd/packageAdd",
+      "path": "pages/package/packageAdd",
       "style": {
         "navigationBarTitleText": ""
       }
@@ -55,68 +49,70 @@
         "navigationBarTitleText": ""
       }
     },
-    /*    {
-          "path": "pages/address/address",
-          "style": {
-            "navigationBarTitleText": ""
-          }
-        }, */
 
     {
-      "path": "pages/package/timeoutPackage/timeoutPackage",
+      "path": "pages/package/timeoutPackage",
       "style": {
         "navigationBarTitleText": ""
       }
     },
     {
-      "path": "pages/package/pendingPackage/pendingPackage",
+      "path": "pages/package/pendingPackage",
       "style": {
         "navigationBarTitleText": ""
       }
     },
     {
-      "path": "pages/package/completedPackage/completedPackage",
+      "path": "pages/package/completedPackage",
       "style": {
         "navigationBarTitleText": ""
       }
     },
 
     {
-      "path": "pages/package/deliveringPackage/deliveringPackage",
+      "path": "pages/package/deliveringPackage",
       "style": {
         "navigationBarTitleText": ""
       }
     },
     {
-      "path" : "pages/address/address",
-      "style" : 
-      {
-        "navigationBarTitleText" : ""
+      "path": "pages/address/address",
+      "style": {
+        "navigationBarTitleText": ""
       }
     },
     {
-      "path" : "pages/wallet/wallet",
-      "style" : 
-      {
-        "navigationBarTitleText" : ""
+      "path": "pages/wallet/wallet",
+      "style": {
+        "navigationBarTitleText": ""
       }
     },
     {
-      "path" : "pages/discount/discount",
-      "style" : 
-      {
-        "navigationBarTitleText" : ""
+      "path": "pages/discount/discount",
+      "style": {
+        "navigationBarTitleText": ""
       }
     },
     {
-      "path" : "pages/feedback/feedback",
-      "style" : 
-      {
-        "navigationBarTitleText" : ""
+      "path": "pages/feedback/feedback",
+      "style": {
+        "navigationBarTitleText": ""
       }
     },
     {
-      "path" : "pages/disclaimer/disclaimer",
+      "path": "pages/disclaimer/disclaimer",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/map/map",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path" : "pages/robotView/robotView",
       "style" : 
       {
         "navigationBarTitleText" : ""

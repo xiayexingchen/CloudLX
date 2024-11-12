@@ -22,25 +22,34 @@
   <view>
     <!-- Tab 切换栏 -->
     <u-tabs :list="tabList" :current="currentTab" @change="changeTab"></u-tabs>
-    <!-- 当前 Tab 下的包裹卡片列表 -->
+    <!-- 卡片部分 -->
     <scroll-view scroll-y style="height: 800px; width:100%;" @scrolltolower="loadMoreData">
-      <u-card v-for="(item, index) in packageList" :key="item.id" :title="item.title">
-
+      <view class="package-card" v-for="(item, index) in currentPackageList" :key="item.packageId"
+        @click="handlePackageClick(item)">
         <view class="package-info">
-          <image :src="item.image" mode="aspectFit"></image> <!-- 包裹类型的图片 -->
+          <image class="package-image" :src="getPackageTypeImage(item.type)" mode="aspectFit"></image>
           <view class="package-details">
-            <text>{{ item.deliveryStatus }}</text> <!-- 包裹状态 -->
-            <text>{{ item.attributes }}</text> <!-- 包裹属性 -->
-
+            <text class="status">{{ item.packageSiteName }}</text>
+            <text class="location">{{ item.packageType }}</text>
+            <text class="time">{{ item.packageInTime }}</text>
           </view>
-
         </view>
         <view class="package-buttons">
-          <u-button size="small" type="default" @click="hidePackage(index)">隐藏</u-button>
-          <u-button size="small" type="primary" @click="reviewPackage(index)">评价</u-button>
-          <!-- 根据是否有评价按钮 -->
+          <!-- 按钮部分保持不变 -->
+          <template v-if="currentTab === 0">
+            <u-button size="small" type="primary" @click.stop="pickupPackage(item)">配送</u-button>
+            <!--            <u-button size="small" type="default" @click.stop="hidePackage(index)">隐藏</u-button> -->
+          </template>
+          <template v-else-if="currentTab === 2">
+            <u-button size="small" type="default" @click.stop="hidePackage(index)">隐藏</u-button>
+            <u-button size="small" type="primary" @click.stop="reviewPackage(item)">评价</u-button>
+          </template>
+          <template v-else-if="currentTab === 3">
+            <u-button size="small" type="primary" @click.stop="reviewPackage(item)">联系管理员</u-button>
+            <!--            <u-button size="small" type="default" @click.stop="hidePackage(index)">隐藏</u-button> -->
+          </template>
         </view>
-      </u-card>
+      </view>
     </scroll-view>
   </view>
 </template>
@@ -48,9 +57,12 @@
 <script setup>
   import {
     ref,
-    onMounted
+    onMounted,
+    computed
   } from 'vue';
-
+  import {
+    fetchPackageDataAPI
+  } from '../../api/api';
   const indicatorDots = ref(true);
   const indicatorColor = ref("#FFF");
   const autoplay = ref(true);
@@ -79,7 +91,7 @@
       id: 1
     },
     {
-      name: '已签收',
+      name: '近日签收',
       id: 2
     },
     {
@@ -88,45 +100,105 @@
     }
   ]);
   const currentTab = ref(0); // 当前选中的 tab id
-  const packageList = ref([]); // 当前 tab 下的包裹数据
-
-  const fetchPackageData = (tabId) => {
-    // 这里可以用真实的接口替代
-    if (tabId === 0) {
-      packageList.value = [{
-        deliveryStatus: "已送至 天马一区一栋",
-        attributes: "快递",
-        image: "/static/parcel.png",
-        hasReview: true,
-        id: 1,
-        title: "包裹1"
-      }];
-    } else if (tabId === 1) {
-      packageList.value = [{
-        deliveryStatus: "外卖至望儿菜鸟驿站B5柜",
-        attributes: "外卖",
-        image: "/static/food.png",
-        hasReview: false,
-        id: 2,
-        title: "包裹2"
-      }];
+  // 包裹数据存储
+  const allPackages = ref({
+    pendingPackageList: [],
+    deliveringPackageList: [],
+    completedPackageList: [],
+    timeoutPackageList: []
+  });
+  // 计算当前显示的包裹列表
+  const currentPackageList = computed(() => {
+    switch (currentTab.value) {
+      case 0:
+        return allPackages.value.pendingPackageList;
+      case 1:
+        return allPackages.value.deliveringPackageList;
+      case 2:
+        return allPackages.value.completedPackageList;
+      case 3:
+        return allPackages.value.timeoutPackageList;
+      default:
+        return [];
     }
-    // 其他类型的包裹数据加载逻辑
+  });
+  // 获取包裹类型对应的图片
+  const getPackageTypeImage = (type) => {
+    const imageMap = {
+      'flower': '/static/flower.png',
+      'food': '/static/food.png',
+      'parcel': '/static/parcel.png',
+      'fragile': '/static/fragile.png',
+      'other': '/static/other.png'
+    };
+    return imageMap[type] || imageMap.other;
   };
 
-  function changeTab(index) {
-    currentTab.value = index;
-    fetchPackageData(index);
+  // 获取包裹信息
+  const fetchPackageData = async () => {
+    try {
+      const response = await fetchPackageDataAPI();
+      console.log(response);
+      allPackages.value = response.data;
+      //test
+      console.log(allPackages.value.pendingPackageList);
+      console.log(currentPackageList.value);
+      console.log(currentPackageList.value[0])
+    } catch (error) {
+      console.error('获取包裹信息失败:', error);
+      uni.showToast({
+        title: '获取数据失败',
+        icon: 'none'
+      });
+    }
   }
 
-  // 页面加载时获取默认 tab 数据
+
+
+  // 处理包裹点击
+  const handlePackageClick = (parcel) => {
+    console.log("点击")
+    const routes = {
+      0: '/pages/package/pendingPackage',
+      1: '/pages/package/deliveringPackage',
+      2: '/pages/package/completedPackage',
+      3: '/pages/package/timeoutPackage'
+    };
+    console.log(`${routes[currentTab.value]}?id=${parcel.packageId}`);
+    uni.navigateTo({
+      url: `${routes[currentTab.value]}?id=${parcel.packageId}`
+    });
+  };
+  // 包裹操作函数
+  const pickupPackage = (parcel) => {
+    // 实现取件逻辑
+  };
+
+  const trackPackage = (parcel) => {
+    // 实现追踪逻辑
+  };
+
+  const reviewPackage = (parcel) => {
+    // 实现评价逻辑
+  };
+
+  const hidePackage = (index) => {
+    currentPackageList.value.splice(index, 1);
+  };
+
+  // 页面加载时获取数据
   onMounted(() => {
-    fetchPackageData(currentTab.value);
+    fetchPackageData();
   });
+
+  // Tab切换处理
+  function changeTab(index) {
+    currentTab.value = index;
+  }
 
   function toPackageAdd() {
     uni.navigateTo({
-      url: "/pages/packageAdd/packageAdd"
+      url: "/pages/package/packageAdd"
     });
   }
 
@@ -141,16 +213,6 @@
   // 滚动到底部加载更多
   const loadMoreData = () => {
     console.log("加载更多数据");
-  };
-
-  // 隐藏包裹
-  const hidePackage = (index) => {
-    packageList.value.splice(index, 1);
-  };
-
-  // 评价包裹
-  const reviewPackage = (index) => {
-    console.log("评价包裹", packageList.value[index]);
   };
 </script>
 
@@ -204,21 +266,54 @@
     margin-top: 10px;
   }
 
+
+  .package-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    margin: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
   .package-info {
-    font-size: 14px;
-    color: #333;
-    margin-bottom: 10px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    margin-bottom: 15px;
+  }
+
+  .package-image {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    margin-right: 5px;
   }
 
   .package-details {
-    margin-left: 10px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .status {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .location,
+    .time {
+      font-size: 14px;
+      color: #666;
+    }
   }
 
   .package-buttons {
     display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
+    justify-content: flex-end;
+    gap: 10px;
+
+    :deep(.u-button) {
+      margin-left: 10px;
+    }
   }
 </style>

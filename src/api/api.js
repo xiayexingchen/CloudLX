@@ -1,6 +1,16 @@
 // 引入 request 文件
 import request from './request.js'
+// 获取包裹数据
+// 获取包裹数据
+export const fetchPackageDataAPI = () => {
+  return request({
+    url: '/user/packages/getPackagesList',
+    method: 'get',
 
+  })
+}
+
+//发短信验证码
 export const sendMessageAPI = (phoneNumber) => {
   return request({
     url: '/user/sendMessage',

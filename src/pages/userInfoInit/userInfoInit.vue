@@ -66,7 +66,10 @@
         // 提交用户信息
         submitUserInfoAfterFirstLogin(this.userInfo).then(response => {
           if (response.code === 21041) {
-            this.toHome();
+            //this.toHome();
+            uni.switchTab({
+              url: "/pages/home/home"
+            });
           } else {
             uni.showToast({
               title: '验证码已过期或不存在',

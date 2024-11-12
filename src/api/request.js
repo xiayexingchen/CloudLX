@@ -1,4 +1,4 @@
-import apiConfig from '@/self-config.js'; // 引入配置文件
+import apiConfig from './self-config.js'; // 引入配置文件
 
 const timeout = 5000;
 

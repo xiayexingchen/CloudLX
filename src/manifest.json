@@ -55,7 +55,12 @@
     "setting": {
       "urlCheck": false
     },
-    "usingComponents": true
+    "usingComponents": true,
+    "permission": {
+      "scope.userLocation": {
+        "desc": "涉及到快递包裹存放位置，机器人配送位置等信息，需要获取位置。"
+      }
+    }
   },
   "mp-alipay": {
     "usingComponents": true

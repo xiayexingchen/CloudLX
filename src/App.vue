@@ -14,4 +14,6 @@
 
   <style lang="scss">
     @import "./uni_modules/vk-uview-ui/index.scss";
+    @import "colorui/main.css";
+    @import "colorui/icon.css";
   </style>

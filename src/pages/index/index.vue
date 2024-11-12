@@ -1,19 +1,36 @@
 <template>
-  <view class="container">
-    <!-- 标题和Logo -->
-    <view class="header">
-      <image src="/static/logo.png" class="logo" />
-      <text class="welcome-text">欢迎使用 云行包裹</text>
+  <view class="page-container">
+    <!-- 背景图片部分 -->
+    <view class="background-section">
+      <image src="/static/logo.png" mode="aspectFill" class="bg-image" />
     </view>
 
-    <!-- 微信快捷登录按钮 -->
-    <u-button type="primary" class="login-button" @click="openAuthPopup">
-      微信快捷登录
-    </u-button>
-    <!-- 手机验证码登录按钮 -->
-    <u-button type="primary" class="login-button" @click="toSmsLogin">
-      手机验证码登录
-    </u-button>
+    <!-- 可拖动的圆角矩形部分 -->
+    <view class="movable-section">
+      <!-- Logo圆形 -->
+      <view class="logo-circle">
+        <image src="/static/logo.png" mode="aspectFit" class="logo-image" />
+      </view>
+
+      <!-- 内容区域 -->
+      <view class="content">
+        <view class="welcome-text">欢迎使用 云行包裹</view>
+
+        <button class="btn-wechat" @click="openAuthPopup">
+          <text>微信一键登录</text>
+        </button>
+
+        <button class="btn-phone" @click="toSmsLogin">
+          <text>手机号快速登录</text>
+        </button>
+
+        <view class="privacy-text">
+          <checkbox style="transform: scale(0.7)" :checked="isChecked" :value="isChecked" class="more">
+          </checkbox>
+          我已阅读并同意《隐私协议》
+        </view>
+      </view>
+    </view>
 
     <!-- 底部弹窗（是否授权一键登录） -->
     <u-popup mode="bottom" v-model="showAuthPopup" :overlay="true" overlay-style="background-color: rgba(0, 0, 0, 0.5);"
@@ -27,7 +44,6 @@
     </u-popup>
   </view>
 </template>
-
 <script setup>
   import {
     ref
@@ -37,16 +53,21 @@
   } from '../../api/api';
 
   const showAuthPopup = ref(false);
-
+  const isChecked = ref(false); // 使用ref创建响应式数据
   // 打开授权弹窗
   function openAuthPopup() {
-    showAuthPopup.value = true;
+    if (isChecked === false) {
+      console.log("请选择协议")
+    } else {
+      showAuthPopup.value = true;
+    }
+
   }
 
 
   function toSmsLogin() {
     uni.navigateTo({
-      url: '/pages/smsLogin/smsLogin'
+      // url: '/pages/smsLogin/smsLogin'
     });
   }
 
@@ -110,53 +131,91 @@
       });
     });
   }
-
-
-
-  // 模拟微信登录函数（wxlogin）
-  // 实际上，这里你应该替换成实际的登录逻辑
-  // async function wxlogin() {
-  //   // 模拟获取 token 和 isNewUser 状态
-  //   return new Promise((resolve) => {
-  //     setTimeout(() => {
-  //       resolve({
-  //         token: "sample_token",
-  //         isNewUser: Math.random() > 0.5
-  //       });
-  //     }, 1000);
-  //   });
-  // }
 </script>
 
 <style scoped>
-  .container {
+  .page-container {
+    height: 100vh;
+    position: relative;
+  }
+
+  .background-section {
+    height: 50vh;
+    position: fixed;
+    width: 100%;
+    top: 0;
+  }
+
+  .bg-image {
+    width: 100%;
+    height: 100%;
+  }
+
+
+  .movable-section {
+    position: absolute;
+    top: 30vh;
+    width: 100%;
+    min-height: 60vh;
+    background-color: #fff;
+    border-radius: 20px 20px 0 0;
+    padding: 5rpx, 5rpx, 5rpx, 5rpx;
+    /* 这样才能滑动，什么原理padding: 60rpx 40rpx; */
+  }
+
+  .logo-circle {
+    position: absolute;
+    top: -100rpx;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200rpx;
+    height: 200rpx;
+    background: #fff;
+    border-radius: 50%;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
-    background-color: #f7f8fa;
   }
 
-  .header {
-    text-align: center;
-    margin-bottom: 40px;
-  }
-
-  .logo {
-    width: 100px;
-    height: 100px;
+  .logo-image {
+    width: 150rpx;
+    height: 150rpx;
   }
 
   .welcome-text {
-    font-size: 18px;
-    color: #333;
-    margin-top: 10px;
+    text-align: center;
+    font-size: 36rpx;
+    font-weight: bold;
+    margin: 140rpx 0 60rpx;
   }
 
-  .login-button {
-    width: 80%;
-    margin-top: 20px;
+  .btn-wechat {
+    background: #0069FF;
+    color: #fff;
+    height: 90rpx;
+    line-height: 90rpx;
+    border-radius: 45rpx;
+    margin-bottom: 30rpx;
+    margin-left: 20rpx;
+    margin-right: 20rpx;
+  }
+
+  .btn-phone {
+    background: #fff;
+    color: #333;
+    height: 90rpx;
+    line-height: 90rpx;
+    border-radius: 45rpx;
+    margin-left: 20rpx;
+    margin-right: 20rpx;
+    border: 2px solid #e9e9e9;
+  }
+
+  .privacy-text {
+    text-align: center;
+    font-size: 24rpx;
+    color: #999;
+    margin-top: 40rpx;
   }
 
   .auth-popup {
