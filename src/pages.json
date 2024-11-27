@@ -1,78 +1,90 @@
 {
-  "pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
 
+
+  "pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
     // {
-    //   "path": "pages/index/index",
+    //   "path": "pages/test/test",
     //   "style": {
-    //     "navigationBarTitleText": "uni-app"
+    //     "navigationBarTitleText": ""
     //   }
     // },
     {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "",
+        "navigationStyle": "custom",
+        "app-plus": {
+          "titleNView": false,
+          "animationType": "slide-in-bottom"
+        }
+      }
+    },
+    {
       "path": "pages/home/home",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "首页"
       }
     },
     {
       "path": "pages/orders/orders",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "订单页"
       }
     },
     {
       "path": "pages/messages/messages",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "消息"
       }
     },
     {
       "path": "pages/mine/mine",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "我的"
       }
     },
     {
       "path": "pages/userInfoInit/userInfoInit",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "个人信息"
       }
     },
     {
       "path": "pages/package/packageAdd",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "添加包裹"
       }
     },
     {
       "path": "pages/idCard/idCard",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "身份码"
       }
     },
 
     {
       "path": "pages/package/timeoutPackage",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "超时包裹"
       }
     },
     {
       "path": "pages/package/pendingPackage",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "待取包裹"
       }
     },
     {
       "path": "pages/package/completedPackage",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "近日签收"
       }
     },
 
     {
       "path": "pages/package/deliveringPackage",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "配送包裹"
       }
     },
     {
@@ -112,24 +124,42 @@
       }
     },
     {
-      "path" : "pages/robotView/robotView",
-      "style" : 
-      {
-        "navigationBarTitleText" : ""
+      "path": "pages/robotView/robotView",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+
+    {
+      "path": "pages/message-detail/message-detail",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/delivery-detail/delivery-detail",
+      "style": {
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/review/review",
+      "style": {
+        "navigationBarTitleText": ""
       }
     }
   ],
 
   "globalStyle": {
     "navigationBarTextStyle": "white",
-    "navigationBarTitleText": "校园跑腿",
-    "navigationBarBackgroundColor": "#0069FF",
+    "navigationBarTitleText": "",
+    "navigationBarBackgroundColor": "#3B82F6",
     "backgroundColor": "#f3f4f6"
   },
 
   "tabBar": {
     "color": "#000000",
-    "selectedColor": "#0069FF",
+    "selectedColor": "#3B82F6",
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
     "list": [{
