@@ -1,87 +1,130 @@
 <script setup>
   import {
     ref,
-    computed
+    computed,
+    onMounted
   } from 'vue';
   import dayjs from 'dayjs';
-
+  import {
+    onLoad
+  } from '@dcloudio/uni-app';
+  import {
+    fetchOrderDataAPI
+  } from '@/api/api-order';
   // 状态变量
-  const search = ref('');
-  const showDatePicker = ref(false);
+
+  const showCalendar = ref(false);
   const startDate = ref(dayjs().subtract(7, 'day').format('YYYY-MM-DD'));
   const endDate = ref(dayjs().format('YYYY-MM-DD'));
-
-  // 模拟订单数据
-  const orders = ref([{
-      id: 'ORDER2024031501',
-      status: '已送达',
-      location: '菜鸟驿站-幸福小区店',
-      time: '2024-11-19 14:30:00',
-      image: '/static/package1.png',
-      trackingNumber: 'YT5647891234',
-      price: '99.00',
-      items: [{
-        name: '休闲运动鞋',
-        quantity: 1,
-        spec: '黑色 42码'
-      }],
-      canEvaluate: true
-    },
-    {
-      id: 'ORDER2024031502',
-      status: '运输中',
-      location: '【广州转运中心】已发出，下一站【深圳转运中心】',
-      time: '2024-11-23 10:20:00',
-      image: '/static/package2.png',
-      trackingNumber: 'SF7891234560',
-      price: '199.00',
-      items: [{
-        name: '商务双肩包',
-        quantity: 1,
-        spec: '深灰色'
-      }],
-      canEvaluate: false
-    },
-    {
-      id: 'ORDER2024031401',
-      status: '待取件',
-      location: '快递柜-幸福小区A区1号柜',
-      time: '2024-11-24 18:45:00',
-      image: '/static/package3.png',
-      trackingNumber: 'JD4567891230',
-      price: '299.00',
-      items: [{
-        name: '智能手表',
-        quantity: 1,
-        spec: '星空黑'
-      }],
-      canEvaluate: false,
-      pickupCode: '8888'
+  const orders = ref([]);
+  const loading = ref(false);
+  const dateInfo = ref({
+    startTime: '',
+    endTime: ''
+  })
+  // 搜索功能
+  const search = ref('');
+  const onSearch = () => {
+    // 这里可以选择是否重新请求数据
+    // 如果数据量不大，可以直接用本地筛选（已在 groupedOrders 中实现）
+    // 如果数据量大，建议发起新的请求
+    if (search.value.length >= 10) {
+      fetchOrderData();
     }
-  ]);
+  };
+  // 获取订单数据
+  const fetchOrderData = async () => {
+    try {
+      loading.value = true;
 
+      const dateInfo = {
+        startTime: dayjs(startDate.value).startOf('day').format('YYYY-MM-DD'),
+        endTime: dayjs(endDate.value).endOf('day').format('YYYY-MM-DD')
+      };
+      console.log(dateInfo);
+      const res = await fetchOrderDataAPI(dateInfo);
+
+      if (res.code === 30011) { // 假设30011是成功状态码
+        console.log(res.data);
+        orders.value = res.data;
+
+      } else {
+        uni.showToast({
+          title: '获取订单失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      console.error('获取订单列表失败:', error);
+      uni.showToast({
+        title: '系统错误',
+        icon: 'none'
+      });
+    } finally {
+      loading.value = false;
+      // 如果是下拉刷新，需要结束刷新状态
+      //uni.stopPullDownRefresh();
+    }
+  };
+
+
+  // 日期选择处理TODO
+  // const handleDateChange = (e) => {
+  //   startDate.value = e[0];
+  //   endDate.value = e[1];
+  //   fetchOrderData();
+  // };
+  const handleDateChange = (e) => {
+    console.log('日期选择:', e);
+    startDate.value = e.startDate;
+    endDate.value = e.endDate;
+    showCalendar.value = false;
+    fetchOrderData(); // 选择日期后重新获取数据
+  };
+  // 状态样式映射
+  const getStatusClass = (status) => {
+    const map = {
+      '待发货': 'status-pending',
+      '正在运输': 'status-shipping',
+      '已完成': 'status-completed'
+    };
+    return map[status] || '';
+  };
+
+  // 格式化手机号
+  // const formatPhone = (phone) => {
+  //   return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+  // };
+
+  //格式化日期
+  const formatDate = (date) => {
+    return dayjs(date).format('YYYY-MM-DD');
+  };
   // 按日期分组的订单
   const groupedOrders = computed(() => {
     const groups = {};
     const filteredOrders = orders.value.filter(order => {
-      const orderDate = dayjs(order.time);
+      console.log("orders:" + order.created_at);
+      const orderDate = dayjs(order.created_at);
       const start = dayjs(startDate.value);
       const end = dayjs(endDate.value);
       const matchSearch = search.value ?
-        (order.trackingNumber.includes(search.value) ||
-          order.items.some(item => item.name.includes(search.value))) :
+        (order.order_id.includes(search.value) ||
+          order.username.includes(search.value)) :
         true;
-      return orderDate.isAfter(start) && orderDate.isBefore(end) && matchSearch;
-    }).sort((a, b) => dayjs(b.time).valueOf() - dayjs(a.time).valueOf()); // 按时间降序;
+      return orderDate.isAfter(start) &&
+        orderDate.isBefore(end) &&
+        matchSearch;
+    }).sort((a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf());
 
     filteredOrders.forEach(order => {
-      const date = dayjs(order.time).format('YYYY-MM-DD');
+      const date = dayjs(order.created_at).format('YYYY-MM-DD');
       if (!groups[date]) groups[date] = [];
       groups[date].push(order);
     });
+    console.log("groups:" + groups.value);
     return groups;
   });
-
   // 日期范围文本显示
   const getDateRangeText = () => {
     return `${startDate.value} 至 ${endDate.value}`;
@@ -93,6 +136,7 @@
       url: `/pages/evaluate/evaluate?id=${order.id}`
     });
   };
+  // 日期选择处理
 
   const onHide = (order) => {
     uni.showModal({
@@ -110,10 +154,7 @@
     });
   };
 
-  const onSearch = () => {
-    // 实际项目中这里会调用后端API
-    console.log('搜索关键词:', search.value);
-  };
+
 
   // 复制单号
   const copyTrackingNumber = (number) => {
@@ -145,91 +186,119 @@
       });
     }, 1000);
   };
+  // 页面加载时获取数据
+  onMounted(() => {
+    fetchOrderData();
+  });
 </script>
 
 <template>
   <view class="container">
     <!-- 搜索栏 -->
-    <view class="search-section">
-      <u-search v-model="search" placeholder="输入运单号或商品名称搜索" :show-action="false" @search="onSearch"></u-search>
-    </view>
-
-    <!-- 日期选择器 -->
-    <view class="date-picker-trigger" @click="showDatePicker = true">
-      <view class="date-text">
-        <u-icon name="calendar" size="20" color="#666"></u-icon>
-        <text>{{ getDateRangeText() }}</text>
+    <view class="fixed-header">
+      <view class="search-section">
+        <u-search v-model="search" placeholder="输入运单号或商品名称搜索" :show-action="false" @search="onSearch"></u-search>
       </view>
-      <u-icon name="arrow-right" size="20" color="#666"></u-icon>
+
+      <!-- 日期选择器 -->
+      <view class="date-picker-trigger" @click="showCalendar = true">
+        <view class="date-text">
+          <u-icon name="calendar" size="20" color="#666"></u-icon>
+          <text>{{ getDateRangeText() }}</text>
+        </view>
+        <u-icon name="arrow-right" size="20" color="#666"></u-icon>
+      </view>
     </view>
 
     <!-- 订单列表 -->
-    <scroll-view scroll-y class="orders-list" @refresherrefresh="onRefresh" refresher-enabled
-      :refresher-triggered="false">
+    <view class="orders-list">
       <block v-for="(group, date) in groupedOrders" :key="date">
         <view class="date-divider">{{ date }}</view>
-
-        <view class="order-card" v-for="order in group" :key="order.id">
+        <view class="order-card" v-for="order in group" :key="order.order_id">
           <!-- 订单头部 -->
           <view class="order-header">
-            <view class="order-status">{{ order.status }}</view>
-            <view class="tracking-number" @click="copyTrackingNumber(order.trackingNumber)">
-              运单号：{{ order.trackingNumber }}
-              <u-icon name="copy" size="14" color="#666"></u-icon>
+            <view class="left">
+              <text class="site-name">{{ order.site_name }}</text>
+              <text class="status" :class="getStatusClass(order.status)">{{ order.status }}</text>
             </view>
+            <text class="order-id">订单号：{{ order.order_id }}</text>
           </view>
 
           <!-- 订单内容 -->
           <view class="order-content">
-            <image :src="order.image" mode="aspectFill" class="order-image"></image>
-            <view class="order-details">
-              <view class="order-items">
-                <text v-for="(item, index) in order.items" :key="index">
-                  {{ item.name }} x{{ item.quantity }}
-                </text>
-              </view>
-              <view class="order-location">
-                <u-icon name="map" size="14" color="#666"></u-icon>
-                <text>{{ order.location }}</text>
-              </view>
-              <view class="order-time">
-                <u-icon name="clock" size="14" color="#666"></u-icon>
-                <text>{{ order.time }}</text>
-              </view>
+            <view class="info-row">
+              <u-icon name="map" size="16" color="#666"></u-icon>
+              <text class="address">{{ order.delivery_address }}</text>
+            </view>
+
+            <view class="info-row">
+              <u-icon name="account" size="16" color="#666"></u-icon>
+              <text>{{ order.username }}</text>
+              <text class="phone">{{order.phone_number }}</text>
+            </view>
+
+            <view class="info-row">
+              <u-icon name="clock" size="16" color="#666"></u-icon>
+              <text>预计完成：{{ order.estimated_completion_time }}</text>
             </view>
           </view>
 
           <!-- 订单底部 -->
           <view class="order-footer">
-            <view class="price">¥{{ order.price }}</view>
-            <view class="buttons">
-              <u-button v-if="order.canEvaluate" type="primary" size="mini" @click="onEvaluate(order)">评价</u-button>
-              <u-button size="mini" @click="onHide(order)">隐藏</u-button>
+            <view class="left">
+              <text class="type">{{ order.type }}</text>
+              <text class="amount">¥{{ order.total_amount}}</text><!-- order.total_amount.toFixed(2)||0 -->
+            </view>
+            <view class="actions">
+              <u-button v-if="order.status === '待发货'" type="primary" size="mini">退单</u-button>
+              <u-button size="mini" plain>删除</u-button>
             </view>
           </view>
         </view>
       </block>
+    </view>
 
-      <!-- 空状态 -->
-      <view v-if="Object.keys(groupedOrders).length === 0" class="empty-state">
-        <u-icon name="order" size="64" color="#999"></u-icon>
-        <text>暂无相关订单</text>
+    <!-- 空状态 -->
+    <view v-if="Object.keys(groupedOrders).length === 0" class="empty-state">
+      <u-icon name="order" size="64" color="#999"></u-icon>
+      <text>暂无相关订单</text>
+    </view>
+
+    <!-- 日期选择弹窗
+    <u-popup v-model="showDatePicker" mode="bottom">
+      <view class="calendar-popup">
+        <view class="calendar-header">
+          <text>选择日期范围</text>
+          <u-icon name="close" @click="showDatePicker = false"></u-icon>
+        </view>
+        <u-calendar :show="showDatePicker" mode="range" :defaultDate="[startDate, endDate]" @change="handleDateChange"
+          color="#3498db"></u-calendar>
       </view>
-    </scroll-view>
-
-    <!-- 日期选择弹窗 -->
-    <u-popup v-model="showDatePicker" mode="center">
-      <!-- ... 原有的日期选择器内容 ... -->
-    </u-popup>
+    </u-popup> -->
+    <!-- 日历选择器 -->
+    <u-calendar v-model="showCalendar" mode="range" @change="handleDateChange"></u-calendar>
+    <!-- @close="showCalendar = false"
+  :insert="false"
+  :clearDate="false"
+  :startDate="startDate"
+  :endDate="endDate" -->
   </view>
 </template>
 
 <style lang="scss" scoped>
   .container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
     background-color: #f5f5f5;
+    padding-top: 110px; // 固定头部的高度
+  }
+
+  .fixed-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background-color: #fff;
   }
 
   .search-section {
@@ -248,14 +317,17 @@
     .date-text {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 8px;
       color: #333;
+
+      text {
+        font-size: 14px;
+      }
     }
   }
 
   .orders-list {
-    flex: 1;
-    padding: 0 15px;
+    padding: 15px;
   }
 
   .date-divider {
@@ -265,11 +337,11 @@
   }
 
   .order-card {
-    background-color: #fff;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
     .order-header {
       display: flex;
@@ -277,48 +349,69 @@
       align-items: center;
       margin-bottom: 12px;
 
-      .order-status {
+      .left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .site-name {
+        font-size: 16px;
         font-weight: 500;
         color: #333;
       }
 
-      .tracking-number {
+      .status {
+        padding: 2px 8px;
+        border-radius: 4px;
         font-size: 12px;
-        color: #666;
-        display: flex;
-        align-items: center;
-        gap: 4px;
+
+        &.status-pending {
+          background: #fff7e6;
+          color: #fa8c16;
+        }
+
+        &.status-shipping {
+          background: #e6f7ff;
+          color: #1890ff;
+        }
+
+        &.status-completed {
+          background: #f6ffed;
+          color: #52c41a;
+        }
+      }
+
+      .order-id {
+        font-size: 13px;
+        color: #999;
       }
     }
 
     .order-content {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 12px;
+      padding: 12px 0;
+      border-top: 1px solid #f5f5f5;
+      border-bottom: 1px solid #f5f5f5;
 
-      .order-image {
-        width: 80px;
-        height: 80px;
-        border-radius: 4px;
-      }
+      .info-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        color: #666;
+        font-size: 14px;
 
-      .order-details {
-        flex: 1;
-
-        .order-items {
-          margin-bottom: 8px;
-          font-size: 14px;
-          color: #333;
+        &:last-child {
+          margin-bottom: 0;
         }
 
-        .order-location,
-        .order-time {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          font-size: 12px;
-          color: #666;
-          margin-top: 4px;
+        .address {
+          flex: 1;
+        }
+
+        .phone {
+          color: #999;
+          margin-left: 12px;
         }
       }
     }
@@ -327,18 +420,50 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 12px;
-      border-top: 1px solid #eee;
+      margin-top: 12px;
 
-      .price {
+      .left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .type {
+        padding: 2px 8px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #666;
+      }
+
+      .amount {
         font-size: 16px;
         font-weight: 500;
         color: #ff4d4f;
       }
 
-      .buttons {
+      .actions {
         display: flex;
         gap: 8px;
+      }
+    }
+  }
+
+  .calendar-popup {
+    background-color: #fff;
+    border-radius: 16px 16px 0 0;
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid #eee;
+
+      text {
+        font-size: 16px;
+        font-weight: 500;
+        color: #333;
       }
     }
   }
