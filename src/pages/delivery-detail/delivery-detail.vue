@@ -1,24 +1,28 @@
 <template>
   <view class="delivery-detail">
     <!-- 收货地址部分 -->
-    <view class="address-section" @click="chooseAddress">
-      <template v-if="address.name!==''">
-        <view class="address-info">
-          <view class="user-info">
-            <text class="name">{{address.name}}</text>
-          </view>
-          <view class="address">{{address.fullAddress}}</view>
+    <view class="address-section">
+      <view class="section-title">配送地址</view>
+      <view class="selector-info" @click="chooseAddress">
+        <view class="left">
+          <u-icon name="map" size="16" color="#666"></u-icon>
+          <template v-if="address.name!==''">
+            <view class="address-info">
+              <view class="user-info">
+                <text class="name">{{address.name}}</text>
+              </view>
+              <view class="address">{{address.fullAddress}}</view>
+            </view>
+          </template>
+          <template v-else>
+            <text class="placeholder">请选择收货地址</text>
+          </template>
         </view>
-      </template>
-      <template v-else>
-        <view class="no-address">
-          <u-icon name="map" size="24" color="#409EFF"></u-icon>
-          <text class="placeholder">请选择收货地址</text>
+        <view class="right">
+          <u-icon name="arrow-right" size="16" color="#999"></u-icon>
         </view>
-      </template>
-      <u-icon name="arrow-right" size="20" color="#999"></u-icon>
+      </view>
     </view>
-
     <!-- 包裹信息部分 -->
     <view class="package-info">
       <view class="section-title">包裹信息</view>
@@ -57,9 +61,9 @@
     </view>
 
     <!-- 优惠券 -->
-    <view class="coupon-section" @click="openCouponPopup">
+    <view class="coupon-section">
       <view class="section-title">优惠券</view>
-      <view class="coupon-info selector-info">
+      <view class="coupon-info selector-info" @click="openCouponPopup">
         <view class="left">
           <u-icon name="coupon" size="16" color="#666"></u-icon>
           <text v-if="selectedCoupon">
@@ -68,7 +72,7 @@
           <text v-else>请选择优惠券</text>
         </view>
         <view class="right">
-          <u-icon v-if="selectedCoupon" name="close" size="16" color="#999" @click.stop="removeSelectedCoupon"></u-icon>
+          <!-- <u-icon v-if="selectedCoupon" name="close" size="16" color="#999" @click.stop="removeSelectedCoupon"></u-icon> -->
           <u-icon name="arrow-right" size="16" color="#999"></u-icon>
         </view>
       </view>
@@ -375,46 +379,31 @@
 
     // 地址部分样式优化
     .address-section {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 32rpx;
-      background: #fff;
+      .selector-info {
+        .left {
+          .address-info {
+            margin-left: 12rpx;
 
-      .address-info {
-        flex: 1;
-        margin-right: 20rpx;
+            .user-info {
+              margin-bottom: 8rpx;
 
-        .user-info {
-          margin-bottom: 12rpx;
-          display: flex;
-          align-items: center;
+              .name {
+                font-size: 28rpx;
+                color: #2c3e50;
+              }
+            }
 
-          .name {
-            font-size: 32rpx;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-right: 24rpx;
+            .address {
+              font-size: 26rpx;
+              color: #606266;
+            }
           }
 
-        }
-
-        .address {
-          font-size: 28rpx;
-          color: #606266;
-          line-height: 1.4;
-        }
-      }
-
-      .no-address {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        gap: 12rpx;
-
-        .placeholder {
-          font-size: 30rpx;
-          color: #909399;
+          .placeholder {
+            font-size: 28rpx;
+            color: #909399;
+            margin-left: 12rpx;
+          }
         }
       }
     }
