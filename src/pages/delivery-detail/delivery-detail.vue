@@ -1,46 +1,57 @@
 <template>
   <view class="delivery-detail">
-    <!-- 收货地址 -->
+    <!-- 收货地址部分 -->
     <view class="address-section" @click="chooseAddress">
-      <view v-show="address" class="address-info">
-        <view class="user-info">
-          <text class="name">{{address.name}}</text>
-          <text class="phone">{{address.name !=='' ? '':'请选择收货地址'}}</text>
+      <template v-if="address.name!==''">
+        <view class="address-info">
+          <view class="user-info">
+            <text class="name">{{address.name}}</text>
+          </view>
+          <view class="address">{{address.fullAddress}}</view>
         </view>
-        <view class="address">{{address.fullAddress}}</view>
-      </view>
-      <view v-show="!address.name.value" class="no-address">
-        <text>></text>
-      </view>
-      <uni-icons type="right" size="20" color="#999"></uni-icons>
+      </template>
+      <template v-else>
+        <view class="no-address">
+          <u-icon name="map" size="24" color="#409EFF"></u-icon>
+          <text class="placeholder">请选择收货地址</text>
+        </view>
+      </template>
+      <u-icon name="arrow-right" size="20" color="#999"></u-icon>
     </view>
 
-    <!-- 包裹信息 -->
+    <!-- 包裹信息部分 -->
     <view class="package-info">
       <view class="section-title">包裹信息</view>
       <view class="package-item">
-        <image :src="packageInfo.image" mode="aspectFill" class="package-image" width="150rpx" height="150rpx">
-        </image>
+        <view class="package-type">
+          <image :src="getPackageTypeImage(packageInfo.itemType)" mode="aspectFit" class="type-icon" />
+        </view>
         <view class="package-detail">
-          <view class="package-name">{{packageInfo.trackingNumber}}</view>
-          <view class="package-code">
-            <uni-icons type="package" size="20" color="#666"></uni-icons>
-            快递类型：{{packageInfo.itemType}}
+          <view class="tracking-info">
+            <text class="label">运单号：</text>
+            <text class="value">{{packageInfo.trackingNumber}}</text>
+          </view>
+          <view class="type-info">
+            <text class="label">包裹类型：</text>
+            <text class="value">{{packageInfo.itemType}}</text>
           </view>
         </view>
       </view>
     </view>
+
 
     <!-- 配送时间 -->
     <view class="delivery-time">
       <view class="section-title">配送时间</view>
       <picker mode="multiSelector" :range="timeRange" @change="onTimeChange">
         <view class="time-picker selector-info">
-          <text>{{selectedTime || '请选择配送时间'}}</text>
-          <text>
-            <uni-icons type="right" size="20" color="#999"></uni-icons>
-            <uni-icons v-if="selectedTime" type="edit" size="20" color="#999" @click="openTimeSelector"></uni-icons>
-          </text>
+          <view class="left">
+            <u-icon name="clock" size="16" color="#666"></u-icon>
+            <text>{{selectedTime || '请选择配送时间'}}</text>
+          </view>
+          <view class="right">
+            <u-icon name="arrow-right" size="16" color="#999"></u-icon>
+          </view>
         </view>
       </picker>
     </view>
@@ -49,13 +60,17 @@
     <view class="coupon-section" @click="openCouponPopup">
       <view class="section-title">优惠券</view>
       <view class="coupon-info selector-info">
-        <text v-if="selectedCoupon">
-          <u-icon name="coupon" size="20" color="#666"></u-icon>
-          已选择：{{formatDiscountValue(selectedCoupon) + selectedCoupon.couponType}}
-          <u-icon name="close" size="20" @click="removeSelectedCoupon"></u-icon>
-        </text>
-        <text v-else>请选择优惠券</text>
-        <u-icon name="right" size="20" color="#999"></u-icon>
+        <view class="left">
+          <u-icon name="coupon" size="16" color="#666"></u-icon>
+          <text v-if="selectedCoupon">
+            已选择：{{formatDiscountValue(selectedCoupon) + selectedCoupon.couponType}}
+          </text>
+          <text v-else>请选择优惠券</text>
+        </view>
+        <view class="right">
+          <u-icon v-if="selectedCoupon" name="close" size="16" color="#999" @click.stop="removeSelectedCoupon"></u-icon>
+          <u-icon name="arrow-right" size="16" color="#999"></u-icon>
+        </view>
       </view>
     </view>
 
@@ -66,9 +81,9 @@
           <text>配送费</text>
           <text>¥{{deliveryFee}}</text>
         </view>
-        <view class="fee-row" v-if="associatedCoupon">
+        <view class="fee-row" v-if="selectedCoupon">
           <text>优惠金额</text>
-          <text class="discount">-¥{{selectedCoupon.amount}}</text>
+          <text class="discount">-¥{{(deliveryFee-totalAmount).toFixed(2)}}</text>
         </view>
         <view class="fee-row total">
           <text>总计</text>
@@ -78,47 +93,47 @@
     </view>
 
     <!-- 提交订单按钮 -->
-    <view class="submit-btn" @click="submitOrder">
-      提交订单
-    </view>
+    <view class="submit-btn" @click="submitOrder">提交订单</view>
+
+    <!-- 优惠券弹窗 -->
+    <!-- 优惠券弹窗 -->
+    <u-popup v-model="showPopup" mode="bottom" :mask-close-able="true" :safe-area-inset-bottom="true"
+      border-radius="16">
+      <view class="coupon-popup">
+        <view class="popup-header">
+          <text class="title">选择优惠券</text>
+          <u-icon name="close" size="20" @click="closeCouponPopup"></u-icon>
+        </view>
+
+        <scroll-view scroll-y class="coupon-list">
+          <!-- 不使用优惠券选项 -->
+          <view class="coupon-item no-coupon" :class="{ active: !selectedCoupon }" @click="selectCoupon(null)">
+            不使用优惠券
+          </view>
+
+          <!-- 优惠券列表 -->
+          <view v-for="coupon in coupons" :key="coupon.couponId" class="coupon-item"
+            :class="{ active: selectedCoupon?.couponId === coupon.couponId }" @click="selectCoupon(coupon)">
+            <view class="coupon-left">
+              <text class="discount-value">
+                {{ formatDiscountValue(coupon) }}
+              </text>
+              <text class="coupon-type">{{ coupon.couponType }}</text>
+            </view>
+            <view class="coupon-right">
+              <text class="valid-date">
+                {{ formatDate(coupon.startDate) }} - {{ formatDate(coupon.endDate) }}
+              </text>
+            </view>
+          </view>
+        </scroll-view>
+
+        <view class="popup-footer">
+          <button class="confirm-btn" @click="confirmCoupon">确定</button>
+        </view>
+      </view>
+    </u-popup>
   </view>
-  <!-- 优惠券弹窗 -->
-  <!-- 优惠券弹窗 -->
-  <u-popup v-model="showPopup" mode="bottom" :mask-close-able="true" :safe-area-inset-bottom="true" border-radius="16">
-    <view class="coupon-popup">
-      <view class="popup-header">
-        <text class="title">选择优惠券</text>
-        <u-icon name="close" size="20" @click="closeCouponPopup"></u-icon>
-      </view>
-
-      <scroll-view scroll-y class="coupon-list">
-        <!-- 不使用优惠券选项 -->
-        <view class="coupon-item no-coupon" :class="{ active: !selectedCoupon }" @click="selectCoupon(null)">
-          不使用优惠券
-        </view>
-
-        <!-- 优惠券列表 -->
-        <view v-for="coupon in coupons" :key="coupon.couponId" class="coupon-item"
-          :class="{ active: selectedCoupon?.couponId === coupon.couponId }" @click="selectCoupon(coupon)">
-          <view class="coupon-left">
-            <text class="discount-value">
-              {{ formatDiscountValue(coupon) }}
-            </text>
-            <text class="coupon-type">{{ coupon.couponType }}</text>
-          </view>
-          <view class="coupon-right">
-            <text class="valid-date">
-              {{ formatDate(coupon.startDate) }} - {{ formatDate(coupon.endDate) }}
-            </text>
-          </view>
-        </view>
-      </scroll-view>
-
-      <view class="popup-footer">
-        <button class="confirm-btn" @click="confirmCoupon">确定</button>
-      </view>
-    </view>
-  </u-popup>
 </template>
 
 <script setup>
@@ -139,11 +154,22 @@
   // 地址信息
   const address = ref({
     name: '',
-    phone: '',
     fullAddress: ''
   });
   // 包裹信息（从上一页面获取）
   const packageInfo = ref({})
+  // 获取包裹类型对应的图片
+  const getPackageTypeImage = (type) => {
+    const imageMap = {
+      '外卖': '/static/food.png',
+      '快递': '/static/parcel.png',
+      '鲜花': '/static/flower.png',
+      '蛋糕': '/static/cake.png',
+      'other': '/static/other.png'
+    };
+    return imageMap[type] || imageMap.other;
+  };
+
   // 配送时间选择
   const timeRange = ref([
     ['今天', '明天', '后天'],
@@ -309,247 +335,306 @@
 <style lang="scss">
   .delivery-detail {
     min-height: 100vh;
-    background-color: #f9f9f9;
+    background-color: #f5f7fa; // 更改背景色为更柔和的色调
     padding-bottom: 120rpx;
 
-    .section-title {
-      font-size: 32rpx;
-      color: #333;
-      font-weight: bold;
-      margin-bottom: 20rpx;
+    // 统一的卡片样式
+    .address-section,
+    .package-info,
+    .delivery-time,
+    .coupon-section,
+    .fee-section {
+      background-color: #fff;
+      padding: 32rpx;
+      margin: 20rpx;
+      border-radius: 16rpx;
+      box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
     }
 
+    // 统一的标题样式
+    .section-title {
+      font-size: 30rpx;
+      color: #2c3e50;
+      font-weight: 600;
+      margin-bottom: 24rpx;
+      position: relative;
+      padding-left: 24rpx;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 6rpx;
+        height: 24rpx;
+        background-color: #409EFF;
+        border-radius: 3rpx;
+      }
+    }
+
+    // 地址部分样式优化
     .address-section {
-      background-color: #fff;
-      padding: 30rpx;
-      margin-bottom: 20rpx;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 32rpx;
+      background: #fff;
 
       .address-info {
         flex: 1;
+        margin-right: 20rpx;
 
         .user-info {
-          margin-bottom: 10rpx;
+          margin-bottom: 12rpx;
+          display: flex;
+          align-items: center;
 
           .name {
-            margin-right: 20rpx;
+            font-size: 32rpx;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-right: 24rpx;
           }
 
-          .phone {
-            color: #666;
-          }
         }
 
         .address {
-          color: #333;
-          font-size: 30rpx;
+          font-size: 28rpx;
+          color: #606266;
+          line-height: 1.4;
         }
       }
 
       .no-address {
-        color: #999;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12rpx;
+
+        .placeholder {
+          font-size: 30rpx;
+          color: #909399;
+        }
       }
     }
 
+    // 包裹信息样式优化
     .package-info {
-      background-color: #fff;
-      padding: 30rpx;
-      margin-bottom: 20rpx;
-
       .package-item {
         display: flex;
         align-items: center;
+        gap: 24rpx;
+        padding: 20rpx;
+        background: #f8f9fc;
+        border-radius: 12rpx;
 
-        .package-image {
-          width: 150rpx;
-          height: 150rpx;
-          margin-right: 20rpx;
+        .package-type {
+          width: 80rpx;
+          height: 80rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #fff;
+          border-radius: 12rpx;
+          box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+
+          .type-icon {
+            width: 48rpx;
+            height: 48rpx;
+          }
         }
 
         .package-detail {
           flex: 1;
 
-          .package-name {
-            font-size: 30rpx;
-            margin-bottom: 10rpx;
-          }
+          .tracking-info,
+          .type-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8rpx;
 
-          .package-code {
-            color: #666;
-            font-size: 26rpx;
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            .label {
+              font-size: 26rpx;
+              color: #909399;
+              margin-right: 8rpx;
+            }
+
+            .value {
+              font-size: 28rpx;
+              color: #2c3e50;
+              font-weight: 500;
+            }
           }
         }
       }
     }
 
-    .delivery-time {
-      background-color: #fff;
-      padding: 30rpx;
-      margin-bottom: 20rpx;
 
-      .selector-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: #666;
-      }
-    }
-
-    .coupon-section {
+    // 选择器通用样式
+    .selector-info {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 15px;
-      background: #fff;
-      margin-bottom: 10px;
+      background-color: #f5f7fa;
+      padding: 24rpx;
+      border-radius: 12rpx;
+      font-size: 28rpx;
+      color: #606266;
 
-      text {
-        &:first-child {
-          color: #333;
-          font-size: 14px;
-        }
+      .left {
+        display: flex;
+        align-items: center;
+        gap: 12rpx;
+      }
 
-        &:last-child {
-          color: #666;
-          font-size: 14px;
-        }
+      .right {
+        display: flex;
+        align-items: center;
+        gap: 8rpx;
       }
     }
 
-    .fee-section {
-      background-color: #fff;
-      padding: 30rpx;
-      margin-bottom: 20rpx;
-
-      .fee-table {
-        display: table;
-        width: 100%;
-
-        .fee-row {
-          display: table-row;
-
-          text {
-            display: table-cell;
-            padding: 10rpx;
-          }
-        }
-
-        .total {
-          border-top: 1rpx solid #eee;
-          padding-top: 20rpx;
-          font-weight: bold;
-
-          .total-amount {
-            color: #007BFF;
-            font-size: 32rpx;
-          }
-        }
-      }
-    }
-
+    // 优惠券弹窗样式优化
     .coupon-popup {
-      background-color: #fff;
-      border-radius: 16px 16px 0 0;
-      max-height: 70vh;
-      display: flex;
-      flex-direction: column;
+      padding: 32rpx;
+      border-radius: 24rpx 24rpx 0 0;
 
       .popup-header {
-        padding: 16px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #eee;
+        margin-bottom: 32rpx;
 
         .title {
-          font-size: 16px;
-          font-weight: 500;
-          color: #333;
+          font-size: 32rpx;
+          font-weight: 600;
+          color: #2c3e50;
         }
       }
 
       .coupon-list {
-        flex: 1;
-        padding: 16px;
-        max-height: calc(70vh - 120px);
+        max-height: 60vh;
+        padding: 0 0 32rpx;
       }
 
       .coupon-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 16px;
-        margin-bottom: 12px;
-        background: #f8f8f8;
-        border-radius: 8px;
-        border: 1px solid #eee;
+        padding: 24rpx;
+        margin-bottom: 16rpx;
+        background: #fff;
+        border: 2rpx solid #edf2f7;
+        border-radius: 12rpx;
+        transition: all 0.3s ease;
 
         &.active {
-          background: #e6f7ff;
-          border-color: #1890ff;
-        }
-
-        &.no-coupon {
-          justify-content: center;
-          color: #666;
+          background: #ecf5ff;
+          border-color: #409EFF;
         }
 
         .coupon-left {
           .discount-value {
-            font-size: 20px;
-            font-weight: bold;
-            color: #ff4d4f;
-            margin-right: 8px;
+            color: #409EFF;
+            font-size: 36rpx;
+            font-weight: 600;
+            margin-right: 8rpx;
           }
 
           .coupon-type {
-            font-size: 12px;
-            color: #666;
+            font-size: 24rpx;
+            color: #909399;
           }
         }
 
         .coupon-right {
           .valid-date {
-            font-size: 12px;
-            color: #999;
+            font-size: 24rpx;
+            color: #909399;
           }
         }
       }
 
       .popup-footer {
-        padding: 16px;
-        border-top: 1px solid #eee;
+        padding-top: 24rpx;
 
         .confirm-btn {
           width: 100%;
-          height: 44px;
-          background: #1890ff;
+          height: 88rpx;
+          line-height: 88rpx;
+          text-align: center;
           color: #fff;
-          border-radius: 22px;
-          border: none;
-          font-size: 16px;
+          background: linear-gradient(135deg, #409EFF 0%, #3481e3 100%);
+          border-radius: 44rpx;
+          font-size: 32rpx;
+          font-weight: 600;
+          box-shadow: 0 4rpx 12rpx rgba(64, 158, 255, 0.3);
+          transition: all 0.3s ease;
 
           &:active {
-            opacity: 0.9;
+            transform: scale(0.98);
           }
         }
       }
     }
 
+    // 费用部分样式优化
+    .fee-section {
+      .fee-table {
+        .fee-row {
+          padding: 16rpx 0;
+
+          text {
+            color: #606266;
+            font-size: 28rpx;
+
+            &.discount {
+              color: #ff6b6b;
+            }
+          }
+        }
+
+        .total {
+          border-top: 2rpx solid #edf2f7;
+          margin-top: 16rpx;
+          padding-top: 24rpx;
+
+          .total-amount {
+            color: #409EFF;
+            font-size: 36rpx;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+
+
+    // 提交按钮样式优化
     .submit-btn {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 100rpx;
-      background-color: #007BFF;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      left: 20rpx;
+      right: 20rpx;
+      bottom: 20rpx;
+      height: 96rpx;
+      line-height: 96rpx; // 添加行高使文字垂直居中
+      background: linear-gradient(135deg, #409EFF 0%, #3481e3 100%);
+      color: #fff; // 添加文字颜色
       font-size: 32rpx;
+      font-weight: 600;
+      text-align: center; // 添加文字水平居中
+      box-shadow: 0 4rpx 12rpx rgba(64, 158, 255, 0.3);
+      border-radius: 48rpx;
+      z-index: 100; // 确保按钮在最上层
+
+      // 添加点击效果
+      &:active {
+        transform: scale(0.98);
+      }
     }
   }
 </style>
