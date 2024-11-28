@@ -147,6 +147,12 @@
       "style": {
         "navigationBarTitleText": ""
       }
+    },
+    {
+      "path": "pages/delivery-detail/delivery-address",
+      "style": {
+        "navigationBarTitleText": ""
+      }
     }
   ],
 

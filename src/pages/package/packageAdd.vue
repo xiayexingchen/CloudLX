@@ -46,12 +46,16 @@
 
         <view class="info-content">
           <view class="info-item">
+            <text class="label">包裹编号：</text>
+            <text class="value">{{ packageInfo.packageId }}</text>
+          </view>
+          <view class="info-item">
             <text class="label">包裹类型：</text>
             <text class="value">{{ packageInfo.packageType }}</text>
           </view>
           <view class="info-item">
-            <text class="label">位置：</text>
-            <text class="value">{{ packageInfo.packageSiteName }}</text>
+            <text class="label">入库时间：</text>
+            <text class="value">{{ formattedPackageInTime }}</text>
           </view>
           <!-- 可以根据需要添加更多信息 -->
         </view>
@@ -82,6 +86,21 @@
   const ownerPhone = ref('');
   const packageInfo = ref(null);
 
+  // 假设 packageInTime 是一个 ISO 格式的时间字符串，或者是一个时间戳
+  const packageInTime = ref('');
+
+  // 格式化时间为 年月日 时分秒 格式
+  const formattedPackageInTime = computed(() => {
+    const date = new Date(packageInTime.value);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    return `${year}/${month}/${day}  ${hours}:${minutes}:${seconds}`;
+  });
   // // 包裹类型文字映射
   //// const packageTypeText = {
   //   express: '快递包裹',
@@ -110,6 +129,7 @@
 
         if (result.code === 22021) {
           packageInfo.value = result.data;
+          packageInTime.value = packageInfo.value.packageInTime;
           uni.showToast({
             title: '已找到包裹',
             icon: 'success'
@@ -135,7 +155,7 @@
       ownerPhone.value.length === 11;
   });
 
-  // 扫码功能
+  // 扫码功能TODO
   const scanCode = () => {
     uni.scanCode({
       success: (res) => {
@@ -144,7 +164,7 @@
     });
   };
 
-  // 选择联系人
+  // 选择联系人NoDo
   const chooseContact = () => {
     uni.addPhoneContact({
       success: (res) => {
@@ -171,12 +191,12 @@
         });
 
         // 延迟返回，让用户看到成功提示
-      setTimeout(() => {
-        // 发送刷新事件
-        uni.$emit('refreshPackageList');
-        // 返回上一页
-        uni.navigateBack();
-      }, 1500);
+        setTimeout(() => {
+          // 发送刷新事件
+          uni.$emit('refreshPackageList');
+          // 返回上一页
+          uni.navigateBack();
+        }, 1500);
       } else {
         uni.showToast({
           title: '添加失败',

@@ -44,7 +44,7 @@
       console.log(dateInfo);
       const res = await fetchOrderDataAPI(dateInfo);
 
-      if (res.code === 30011) { // 假设30011是成功状态码
+      if (res.code === 24011) { // 假设24011是成功状态码
         console.log(res.data);
         orders.value = res.data;
 

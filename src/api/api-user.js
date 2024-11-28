@@ -25,6 +25,7 @@ export const submitUserInfoAfterFirstLoginAPI = (userData) => {
     }
   });
 }
+//用户微信一键登录
 export const fetchUserProfileAPI = (code) => {
   return request({
     url: '/user/login',
@@ -34,9 +35,26 @@ export const fetchUserProfileAPI = (code) => {
     }
   });
 }
+//获得用户资金
 export const getPersonalBalanceAPI = () => {
   return request({
     url: '/user/mine-view/get-personal-balance',
     method: 'get',
   })
+}
+//获得用户地址信息
+export const fetchAddressDataAPI = (userInfo) => {
+  return request({
+    url: '/user/mine-view/get-personal-address',
+    method: 'get'
+  })
+
+}
+//获得用户优惠券
+export const fetchUnUsedCouponssDataAPI = () => {
+  return request({
+    url: '/user/mine-view/get-unusedcoupons',
+    method: 'get'
+  })
+
 }

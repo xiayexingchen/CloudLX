@@ -277,6 +277,7 @@
     try {
       const response = await fetchPackageDataAPI();
       console.log(response);
+      console.log("token:" + uni.getStorageSync('token'));
       allPackages.value = response.data;
       //test
       console.log(allPackages.value.pendingPackageList);
@@ -379,11 +380,29 @@
   };
   // 包裹操作函数
   const toDeliverPackage = (parcel) => {
+    // 使用 uni.navigateTo 跳转到目标页面，并传递 parcel.id 作为 URL 参数
     uni.navigateTo({
-      url: "/pages/delivery-detail/delivery-detail?parcel=1"
-      // parcel=${encodeURIComponent(JSON.stringify(parcel))}
+      url: `/pages/delivery-detail/delivery-detail?parcelId=${parcel.id}`,
+      success: (res) => {
+        // 使用 eventChannel 传递包裹信息到目标页面
+        res.eventChannel.emit('parcelData', {
+          trackingNumber: parcel.packageId,
+          address: parcel.packageSiteaddress,
+          locker: parcel.packageCabinetId,
+          itemType: parcel.packageType,
+          entryTime: parcel.packageInTime
+        });
+      },
+      fail: (err) => {
+        console.error('页面跳转失败:', err);
+        uni.showToast({
+          title: '页面跳转失败',
+          icon: 'none'
+        });
+      }
     });
   };
+
 
 
   const toReviewPackage = (parcel) => {
@@ -415,14 +434,14 @@
     fetchPackageData();
 
     // 添加刷新事件监听
-  uni.$on('refreshPackageList', () => {
-    fetchPackageData();
+    uni.$on('refreshPackageList', () => {
+      fetchPackageData();
+    });
   });
+  // 组件卸载前移除事件监听
+  onBeforeUnmount(() => {
+    uni.$off('refreshPackageList');
   });
-// 组件卸载前移除事件监听
-onBeforeUnmount(() => {
-  uni.$off('refreshPackageList');
-});
   // Tab切换处理
   function changeTab(index) {
     currentTab.value = index;

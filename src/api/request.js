@@ -4,7 +4,8 @@ const timeout = 5000;
 
 
 export default async (params) => {
-  const base_url = apiConfig.dev.apiUrl; // 从配置文件读取 base_url
+  //const base_url = apiConfig.dev.apiUrl; // 从配置文件读取 base_url
+  const base_url = apiConfig.prod.apiUrl; // 从配置文件读取 base_url
   const url = params.url;
   const method = params.method || 'GET';
   const data = params.data || {};
