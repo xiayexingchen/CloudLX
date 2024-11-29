@@ -12,7 +12,21 @@ export const fetchOrderDataAPI = (dateInfo) => {
     }
   })
 }
-
+//下单
+export const orderAPI = (orderInfo) => {
+  return request({
+    url: '/user/myOrderView/placeOrder',
+    method: 'post',
+    data: {
+      packageId: orderInfo.packageId,
+      startTime: orderInfo.startTime,
+      addressId: orderInfo.addressId,
+      couponId: orderInfo.couponId,
+      payment_method: orderInfo.payment_method,
+      amount: orderInfo.amount
+    }
+  })
+}
 // export const selectToAddPackageAPI = (addInfo) => {
 //   return request({
 //     url: '/user/packages/selectPackage',

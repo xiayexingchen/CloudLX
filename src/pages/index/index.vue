@@ -1,58 +1,62 @@
 <template>
   <view class="login-container">
-    <!-- 云朵装饰背景 -->
-    <view class="cloud-decoration">
-      <view class="cloud cloud-1"></view>
-      <view class="cloud cloud-2"></view>
-      <view class="cloud cloud-3"></view>
-    </view>
+    <!-- 简约背景 -->
+    <view class="background-wave"></view>
 
-    <!-- Logo区域 -->
-    <view class="logo-section">
-      <view class="logo-wrapper">
-        <image src="/static/loginLogo.png" mode="aspectFit" class="logo-image" />
+    <!-- 主要内容区域 -->
+    <view class="content-wrapper">
+      <!-- Logo区域 -->
+      <view class="logo-section">
+        <view class="avatar-wrapper">
+          <view class="avatar-border">
+            <view class="avatar-container">
+              <image src="/static/loginLogo.png" mode="aspectFit" class="avatar-image" />
+            </view>
+          </view>
+        </view>
+        <view class="brand-text">
+          <text class="brand-name">云行者包裹</text>
+          <text class="brand-slogan">让每一个包裹都乘云而行</text>
+        </view>
       </view>
-      <view class="brand-text">
-        <text class="brand-name">云行者包裹</text>
-        <text class="brand-slogan">让每一个包裹都乘云而行</text>
-      </view>
-    </view>
+      <!-- 登录区域 -->
+      <view class="login-section">
+        <view class="welcome-text">
+          <text class="title">欢迎使用</text>
+          <text class="subtitle">请使用微信账号登录体验完整功能</text>
+        </view>
 
-    <!-- 登录区域 -->
-    <view class="login-section">
-      <view class="welcome-text">
-        <text class="title">欢迎使用</text>
-        <text class="subtitle">请使用微信账号登录体验完整功能</text>
-      </view>
+        <button class="login-btn" @click="openAuthPopup" :disabled="!isChecked">
+          <text>微信一键登录</text>
+        </button>
 
-      <button class="login-btn" @click="openAuthPopup" :disabled="!isChecked">
-        <text>微信一键登录</text>
-      </button>
-      <!-- 隐私协议 -->
-      <view class="privacy-section">
-        <checkbox-group @change="handlePrivacyCheck">
-          <label class="privacy-label">
-            <checkbox :checked="isChecked" :value="isChecked" color="#4A90E2" />
-            <text class="privacy-text">我已阅读并同意</text>
-            <text class="privacy-link" @click="showPrivacyPolicy">《隐私协议》</text>
-          </label>
-        </checkbox-group>
+        <!-- 隐私协议 -->
+        <view class="privacy-section">
+          <checkbox-group @change="handlePrivacyCheck">
+            <label class="privacy-label">
+              <checkbox :checked="isChecked" :value="isChecked" color="var(--primary-color)" />
+              <text class="privacy-text">我已阅读并同意</text>
+              <text class="privacy-link" @click="showPrivacyPolicy">《隐私协议》</text>
+            </label>
+          </checkbox-group>
+        </view>
       </view>
     </view>
 
     <!-- 授权弹窗 -->
-    <u-popup mode="bottom" v-model="showAuthPopup">
+    <u-popup mode="bottom" v-model="showAuthPopup" :round="16">
       <view class="auth-popup">
         <view class="popup-header">
           <text class="popup-title">微信授权登录</text>
-          <text class="popup-desc">授权后将获得更好的服务体验</text>
         </view>
+
         <view class="auth-content">
           <view class="auth-item">
-            <u-icon name="account" size="20" color="#4A90E2" />
+            <u-icon name="account" size="22" color="var(--primary-color)" />
             <text>获得您的公开信息（昵称、头像等）</text>
           </view>
         </view>
+
         <view class="auth-buttons">
           <button class="auth-btn cancel" @click="showAuthPopup = false">取消</button>
           <button class="auth-btn confirm" @click="confirmAuth">确认授权</button>
@@ -97,11 +101,11 @@
     showAuthPopup.value = false;
     try {
       const response = await wxlogin();
-      if (response.code === 21021) {
+      if (response.code === 21021) { //新用户，要初始化信息
         uni.navigateTo({
           url: '/pages/userInfoInit/userInfoInit'
         });
-      } else { //21011?
+      } else { //21011老用户，直接登录
         uni.switchTab({
           url: '/pages/home/home'
         });
@@ -154,152 +158,178 @@
   };
 </script>
 <style lang="scss" scoped>
-  .login-container {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-    position: relative;
-    overflow: hidden;
+  // 清新配色系统
+  :root {
+    // 主色调：清新淡雅的天蓝色系
+    --primary-color: #3B82F6; // 主要品牌色，可替换#60A5FA等
+    --primary-dark: #3B82F6; // 深色调
+    --primary-light: #93C5FD; // 浅色调
+
+    // 背景色
+    --bg-primary: #F0F9FF; // 主背景色
+    --bg-secondary: #FFFFFF; // 次要背景
+
+    // 文字颜色
+    --text-primary: #1E40AF; // 主要文字
+    --text-secondary: #60A5FA; // 次要文字
+    --text-light: #FFFFFF; // 亮色文字
+
+    // 功能色
+    --success: #34D399; // 成功色
+    --error: #F87171; // 错误色
   }
 
-  .cloud-decoration {
+  .login-container {
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+    position: relative;
+  }
+
+  .background-wave {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
+    height: 45vh;
+    background: linear-gradient(180deg, var(--primary-color) 0%, var(--bg-primary) 100%);
+    border-radius: 0 0 50% 50% / 0 0 100px 100px;
+    opacity: 0.1;
+  }
+
+  .content-wrapper {
+    position: relative;
+    padding: 40px 30px;
     height: 100vh;
-    pointer-events: none;
-
-    .cloud {
-      position: absolute;
-      background: #FFFFFF;
-      border-radius: 50px;
-      opacity: 0.8;
-      filter: blur(20px);
-      animation: float 20s infinite ease-in-out;
-
-      &-1 {
-        width: 150px;
-        height: 60px;
-        top: 15%;
-        left: -30px;
-        animation-delay: -2s;
-      }
-
-      &-2 {
-        width: 100px;
-        height: 40px;
-        top: 25%;
-        right: -20px;
-        animation-delay: -5s;
-      }
-
-      &-3 {
-        width: 120px;
-        height: 50px;
-        top: 45%;
-        left: 30%;
-        animation-delay: -8s;
-      }
-    }
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
   .logo-section {
-    padding-top: 15vh;
-    text-align: center;
+    margin-top: 10vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
 
-    .logo-wrapper {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 30px;
-      box-shadow: 0 8px 32px rgba(100, 181, 246, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: float 6s infinite ease-in-out;
+    .avatar-wrapper {
+      width: 110px;
+      height: 110px;
+      display: flex; // 添加flex布局
+      justify-content: center; // 水平居中
+      align-items: center; // 垂直居中
+      position: relative;
+    }
 
-      .logo-image {
-        width: 90px;
-        height: 90px;
+    .avatar-border {
+      width: 100%;
+      height: 100%;
+      border-radius: 28px;
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+      padding: 2px;
+      display: flex; // 添加flex布局
+      justify-content: center; // 水平居中
+      align-items: center; // 垂直居中
+
+      &:hover {
+        box-shadow: 0 6px 24px rgba(96, 165, 250, 0.2);
       }
     }
 
+    .avatar-container {
+      width: calc(100% - 4px); // 减去padding的宽度
+      height: calc(100% - 4px); // 减去padding的高度
+      background: var(--bg-secondary);
+      border-radius: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .avatar-image {
+      width: 75%;
+      height: 75%;
+      object-fit: contain;
+      display: block; // 确保图片作为块级元素
+    }
+
     .brand-text {
-      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center; // 文字也居中对齐
+      gap: 12px;
 
       .brand-name {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: 600;
-        color: #1565C0;
-        display: block;
-        margin-bottom: 8px;
+        color: var(--text-primary);
+        line-height: 1.2;
       }
 
       .brand-slogan {
-        font-size: 16px;
-        color: #42A5F5;
-        font-weight: 500;
+        font-size: 15px;
+        color: var(--text-secondary);
+        line-height: 1.4;
       }
     }
   }
 
+
   .login-section {
-    margin-top: 12vh;
-    padding: 0 40px;
+    margin-bottom: 10vh;
 
     .welcome-text {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 30px;
 
       .title {
         font-size: 24px;
         font-weight: 600;
-        color: #1565C0;
+        color: var(--text-primary);
         display: block;
         margin-bottom: 8px;
       }
 
       .subtitle {
         font-size: 15px;
-        color: #42A5F5;
+        color: var(--text-secondary);
       }
     }
 
     .login-btn {
       width: 100%;
-      height: 54px;
-      background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%);
-      border-radius: 27px;
+      height: 50px;
+      background: var(--primary-color);
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      font-size: 17px;
-      color: #FFFFFF;
+      gap: 10px;
+      font-size: 16px;
+      color: var(--text-light);
       border: none;
-      box-shadow: 0 8px 24px rgba(33, 150, 243, 0.3);
-      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
+      transition: all 0.2s ease;
+
+      .wechat-icon {
+        width: 22px;
+        height: 22px;
+      }
 
       &:active {
-        transform: translateY(2px);
-        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+        transform: translateY(1px);
       }
 
       &:disabled {
-        background: #90CAF9;
+        background: var(--primary-light);
         box-shadow: none;
-      }
-
-      .wechat-icon {
-        width: 24px;
-        height: 24px;
       }
     }
   }
 
   .privacy-section {
-    margin-top: 24px;
+    margin-top: 20px;
     text-align: center;
 
     .privacy-label {
@@ -310,35 +340,33 @@
       font-size: 14px;
 
       .privacy-text {
-        color: #42A5F5;
+        color: var(--text-secondary);
       }
 
       .privacy-link {
-        color: #1565C0;
+        color: var(--primary-color);
       }
     }
   }
 
   .auth-popup {
-    background: #FFFFFF;
-    border-radius: 24px 24px 0 0;
+    background: var(--bg-secondary);
     padding: 24px;
 
     .popup-header {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
 
       .popup-title {
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 600;
-        color: #1565C0;
-        display: block;
-        margin-bottom: 8px;
+        color: var(--text-primary);
+        margin-bottom: 6px;
       }
 
       .popup-desc {
         font-size: 14px;
-        color: #42A5F5;
+        color: var(--text-secondary);
       }
     }
 
@@ -350,10 +378,10 @@
         align-items: center;
         gap: 12px;
         padding: 16px;
-        background: #E3F2FD;
+        background: var(--bg-primary);
         border-radius: 12px;
-        font-size: 15px;
-        color: #1565C0;
+        font-size: 14px;
+        color: var(--text-secondary);
       }
     }
 
@@ -363,34 +391,21 @@
 
       .auth-btn {
         flex: 1;
-        height: 48px;
-        border-radius: 24px;
-        font-size: 16px;
+        height: 44px;
+        border-radius: 10px;
+        font-size: 15px;
         border: none;
 
         &.cancel {
-          background: #E3F2FD;
-          color: #42A5F5;
+          background: var(--bg-primary);
+          color: var(--text-secondary);
         }
 
         &.confirm {
-          background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%);
-          color: #FFFFFF;
-          box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+          background: var(--primary-color);
+          color: var(--text-light);
         }
       }
-    }
-  }
-
-  @keyframes float {
-
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-
-    50% {
-      transform: translateY(-20px);
     }
   }
 </style>

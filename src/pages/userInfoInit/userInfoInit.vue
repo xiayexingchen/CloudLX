@@ -155,12 +155,12 @@
           icon: 'success'
         });
         // 自动聚焦到验证码输入框
-        nextTick(() => {
-          const codeInput = document.querySelector('input[placeholder="请输入验证码"]');
-          if (codeInput) {
-            codeInput.focus();
-          }
-        });
+        // nextTick(() => {
+        //   const codeInput = document.querySelector('input[placeholder="请输入验证码"]');
+        //   if (codeInput) {
+        //     codeInput.focus();
+        //   }
+        // });
       } else {
         uni.showToast({
           title: '验证码发送失败',

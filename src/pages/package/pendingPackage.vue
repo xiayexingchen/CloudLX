@@ -5,7 +5,7 @@
       @regionchange="onRegionChange">
       <!-- 地图控件 -->
       <cover-view class="map-controls">
-        <cover-image src="/static/loction.png" class="location-btn" @tap="moveToCurrentLocation" />
+        <cover-image src="/static/location.png" class="location-btn" @tap="moveToCurrentLocation" />
       </cover-view>
     </map>
 
@@ -14,7 +14,7 @@
       <!-- 状态栏 -->
       <view class="status-bar">
         <view class="status-icon">
-          <u-icon name="package" color="#007AFF" size="28" />
+          <u-icon name="bag-fill" color="#007AFF" size="28" />
         </view>
         <text class="status-text">待取件</text>
       </view>
@@ -75,8 +75,8 @@
 
   // 包裹信息
   const packageInfo = ref({
-    latitude: 30.5937,
-    longitude: 114.3055,
+    latitude: 28.178328,
+    longitude: 112.944991,
     trackingNumber: '',
     address: '',
     locker: '',
@@ -91,7 +91,7 @@
     latitude: packageInfo.value.latitude,
     longitude: packageInfo.value.longitude,
     title: '快递柜位置',
-    iconPath: '/static/locker.png',
+    iconPath: '/static/location.png',
     width: 32,
     height: 32
   }]);

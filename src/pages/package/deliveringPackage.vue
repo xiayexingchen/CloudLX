@@ -68,8 +68,8 @@
   } from 'vue';
 
   const packageInfo = ref({
-    latitude: 30.5937,
-    longitude: 114.3055,
+    latitude: 28.178328,
+    longitude: 112.944991,
     robotId: '',
     deliveryTime: '',
     packageType: '',
@@ -83,7 +83,7 @@
     latitude: packageInfo.value.latitude,
     longitude: packageInfo.value.longitude,
     title: '配送机器人',
-    iconPath: '/static/robot.png',
+    iconPath: '/static/location.png',
     width: 40,
     height: 40
   }]);

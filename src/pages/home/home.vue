@@ -2,27 +2,21 @@
   <view class="home-container">
     <!-- 搜索框 -->
     <view class="search-section">
-      <u-search v-model="searchText" placeholder="搜索包裹" :clearabled="true" shape="round" bg-color="#F0F4F8">
-      </u-search>
+      <u-search v-model="searchText" placeholder="搜索包裹" :clearabled="true" shape="round"
+        :background-color="'var(--bg-primary)'" :border-color="'var(--primary-light)'"
+        :input-style="{color: 'var(--text-primary)'}" />
     </view>
-    <!-- 轮播图 -->
-    <!-- <view class="u-wrap">
-      <swiper class="swiper-container" circular :indicator-dots="indicatorDots" :indicator-color='indicatorColor'
-        :autoplay="autoplay" :interval="interval" :duration="duration">
-        <swiper-item v-for="(item,index) in swiperList">
-          <image class="imgs" :src='item.image'></image>
-        </swiper-item>
-      </swiper>
-    </view> -->
-    <!-- 在 search-section 后添加轮播图部分 -->
+
+    <!-- 轮播图部分 -->
     <view class="swiper-section">
       <swiper class="swiper" circular autoplay interval="3000" duration="500" indicator-dots
-        indicator-active-color="#3B82F6">
+        :indicator-active-color="'var(--primary-color)'">
         <swiper-item v-for="(item, index) in swiperList" :key="index">
           <image :src="item.image" mode="aspectFill" class="swiper-image" />
         </swiper-item>
       </swiper>
     </view>
+
     <!-- 功能按钮区 -->
     <view class="action-section">
       <view class="action-button add" @click="toPackageAdd">
@@ -62,8 +56,9 @@
             <template v-if="currentTab !== 0">
               <view class="package-info">
                 <text class="package-type">{{ item.packageStatus }}</text>
+                <text>{{" "}}</text> <text>{{" "}}</text> <text>{{" "}}</text>
                 <text class="tracking-number">
-                  {{ item.packageOrderId  }}</text>
+                  {{item.packageOrderId }}</text>
               </view>
             </template>
             <view class="status-tag" :class="getStatusClass(item.packageStatus)">
@@ -97,11 +92,15 @@
                 <text class="delivering">配送中</text>
               </view> -->
               <view class="info-item">
-                <u-icon name="clock" size="16" color="#64748B"></u-icon>
+                <u-icon name="car" size="20" color="#64748B"></u-icon>
+                <text>包裹类型：{{ item.packageType }}</text>
+              </view>
+              <view class="info-item">
+                <u-icon name="clock" size="20" color="#64748B"></u-icon>
                 <text>预计送达时间：{{ item.packageEstimatedCompletedTime }}</text>
               </view>
               <view class="info-item">
-                <u-icon name="map-fill" size="16" color="#64748B"></u-icon>
+                <u-icon name="map-fill" size="20" color="#64748B"></u-icon>
                 <text>下单时间：{{ item.packageOrderCreatedTime }}</text>
               </view>
             </template>
@@ -113,7 +112,11 @@
                 <text class="signed">已签收</text>
               </view> -->
               <view class="info-item">
-                <u-icon name="info-circle" size="16" color="#64748B"></u-icon>
+                <u-icon name="car" size="20" color="#64748B"></u-icon>
+                <text>包裹类型：{{ item.packageType }}</text>
+              </view>
+              <view class="info-item">
+                <u-icon name="info-circle" size="20" color="#64748B"></u-icon>
                 <text>{{ item.packageDeliveryType === '机器人配送' ? '已从机器人处取出' : '已从柜子中取出' }}</text>
               </view>
               <!--              <view class="info-item">
@@ -121,7 +124,7 @@
                 <text>已送至：{{ item.deliveryAddress }}</text>
               </view> -->
               <view class="info-item">
-                <u-icon name="clock" size="16" color="#64748B"></u-icon>
+                <u-icon name="clock" size="20" color="#64748B"></u-icon>
                 <text>签收时间：{{ item.packageCompletedTime }}</text>
               </view>
             </template>
@@ -133,7 +136,7 @@
                 <text class="timeout-text">已超时</text>
               </view> -->
               <view class="info-item warning">
-                <u-icon name="info-circle" size="16" color="#ff9900"></u-icon>
+                <u-icon name="info-circle" size="20" color="#64748B"></u-icon>
                 <text>你的包裹已超时，请及时联系管理员</text>
               </view>
             </template>
@@ -144,7 +147,7 @@
             <!-- 待取包裹 -->
             <template v-if="currentTab === 0">
               <button class="action-btn primary" @click="toDeliverPackage(item)">
-                <u-icon name="arrow-right" size="16" color="#FFFFFF"></u-icon>
+                <u-icon name="arrow-right" size="20" color="#FFFFFF"></u-icon>
                 <text>机器人配送</text>
               </button>
             </template>
@@ -161,11 +164,11 @@
             <template v-else-if="currentTab === 2">
               <view class="button-group">
                 <button class="action-btn primary" @click="toReviewPackage(item)">
-                  <u-icon name="star" size="16" color="#FFFFFF"></u-icon>
+                  <u-icon name="star" size="20" color="#FFFFFF"></u-icon>
                   <text>评价</text>
                 </button>
                 <button class="action-btn secondary" @click="hidePackage(index)">
-                  <u-icon name="eye-off" size="16" color="#64748B"></u-icon>
+                  <u-icon name="eye-off" size="20" color="#64748B"></u-icon>
                   <text>隐藏</text>
                 </button>
               </view>
@@ -338,7 +341,9 @@
           orderId: parcel.packageOrderId,
           trackingNumber: parcel.packageId,
           packageType: parcel.packageType,
-          pickupAddress: parcel.address,
+          packageAddress: parcel.packageAddress,
+          packageCompletedTime: parcel.packageCompletedTime,
+          packageOrderCreatedTime: parcel.packageOrderCreatedTime,
           contactName: parcel.contactName,
           contactPhone: parcel.contactPhone,
           orderTime: parcel.orderTime,
@@ -469,36 +474,49 @@
 </script>
 
 <style lang="scss" scoped>
-  .home-container {
-    min-height: 100vh;
-    background: linear-gradient(to bottom, #F8FAFC, #EEF2F6);
+  :root {
+    // 主色调：清新淡雅的天蓝色系
+    --primary-color: #60A5FA; // 主要品牌色
+    --primary-dark: #3B82F6; // 深色调
+    --primary-light: #93C5FD; // 浅色调
+
+    // 背景色
+    --bg-primary: #F0F9FF; // 主背景色
+    --bg-secondary: #FFFFFF; // 次要背景
+
+    // 文字颜色
+    --text-primary: #1E40AF; // 主要文字
+    --text-secondary: #60A5FA; // 次要文字
+    --text-light: #FFFFFF; // 亮色文字
+
+    // 功能色
+    --success: #34D399; // 成功色
+    --error: #F87171; // 错误色
   }
 
-  // 搜索区域
+  .home-container {
+    min-height: 100vh;
+    background: var(--bg-primary);
+    padding-bottom: 20px;
+  }
+
   .search-section {
     position: sticky;
     top: 0;
     z-index: 100;
     padding: 12px 20px;
-    background: linear-gradient(to bottom, #F8FAFC, #F8FAFC);
-
-    :deep(.u-search) {
-      background: #FFFFFF;
-      border: 1px solid #E2E8F0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    }
+    background: var(--bg-secondary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
 
-  // 轮播图区域
   .swiper-section {
-    padding: 0 20px;
-    margin-bottom: 20px;
+    padding: 16px 20px;
 
     .swiper {
       height: 160px;
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 12px rgba(96, 165, 250, 0.1);
 
       .swiper-image {
         width: 100%;
@@ -508,13 +526,12 @@
     }
   }
 
-  // 功能按钮区域
   .action-section {
     padding: 0 20px;
     margin-bottom: 24px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 16px;
 
     .action-button {
       height: 72px;
@@ -524,29 +541,24 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      background: #FFFFFF;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      border: 1px solid #E2E8F0;
       transition: all 0.3s ease;
 
-      &:active {
-        transform: translateY(1px);
-      }
-
       &.add {
-        background: linear-gradient(135deg, #3B82F6, #2563EB);
-        border: none;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
       }
 
       &.code {
-        background: linear-gradient(135deg, #4F46E5, #4338CA);
-        border: none;
+        background: linear-gradient(135deg, var(--primary-dark), var(--text-primary));
       }
 
       text {
-        color: #FFFFFF;
+        color: var(--text-light);
         font-size: 14px;
         font-weight: 500;
+      }
+
+      &:active {
+        transform: translateY(1px);
       }
     }
   }

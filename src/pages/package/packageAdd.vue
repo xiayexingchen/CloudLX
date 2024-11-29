@@ -233,7 +233,7 @@
 
     text {
       font-size: 14px;
-      color: #3498db;
+      color: #3B82F6;
     }
   }
 
@@ -280,7 +280,7 @@
       transition: all 0.3s;
 
       &:focus-within {
-        border-color: #3498db;
+        border-color: #3B82F6;
         background-color: #fff;
       }
 
@@ -310,7 +310,7 @@
     border: 1px solid transparent;
 
     &:focus {
-      border-color: #3498db;
+      border-color: #3B82F6;
       background-color: #fff;
     }
   }
@@ -391,11 +391,11 @@
       }
 
       &-active {
-        background: #3498db;
+        background: #3B82F6;
 
         &:active {
           transform: scale(0.98);
-          background: darken(#3498db, 5%);
+          background: darken(#3B82F6, 5%);
         }
       }
     }

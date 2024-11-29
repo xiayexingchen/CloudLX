@@ -144,6 +144,10 @@
   import {
     fetchUnUsedCouponssDataAPI
   } from '@/api/api-user';
+  import {
+    orderAPI
+  } from '@/api/api-order';
+
   // 地址信息
   const address = ref({
     name: '',
@@ -279,40 +283,66 @@
   });
 
   // 提交订单
-  const submitOrder = () => {
+  // 提交订单
+  async function submitOrder() {
     if (!address.value) {
       uni.showToast({
         title: '请选择收货地址',
         icon: 'none'
-      })
-      return
+      });
+      return;
     }
     if (!selectedTime.value) {
       uni.showToast({
         title: '请选择配送时间',
         icon: 'none'
-      })
-      return
+      });
+      return;
     }
 
     // TODO: 调用提交订单API
     uni.showLoading({
       title: '提交中...'
-    })
+    });
 
-    // 模拟API调用
-    setTimeout(() => {
-      uni.hideLoading()
+    try {
+      const orderInfo = {
+        packageId: packageInfo.value.id,
+        startTime: selectedTime.value,
+        addressId: address.value.id,
+        couponId: selectedCoupon.value?.couponId || null,
+        payment_method: '钱包',
+        amount: totalAmount.value
+      };
+
+      const res = await orderAPI(orderInfo);
+
+      if (res.code === 24021) {
+        uni.hideLoading();
+        uni.showToast({
+          title: '订单提交成功',
+          icon: 'success',
+          duration: 1500, // 这里应该放在 showToast 配置里
+          success: () => {
+            setTimeout(() => {
+              uni.navigateBack();
+            }, 1500);
+          }
+        });
+      } else {
+        throw new Error(res.message || '提交订单失败');
+      }
+    } catch (error) {
+      uni.hideLoading();
       uni.showToast({
-        title: '订单提交成功',
-        icon: 'success'
-      })
-      // 跳转到订单详情页
-      uni.navigateTo({
-        url: '/pages/order/order-detail'
-      })
-    }, 1500)
+        title: error.message || '系统错误',
+        icon: 'none'
+      });
+    }
   }
+
+
+
   onLoad((options) => {
     const instance = getCurrentInstance().proxy
     const eventChannel = instance.getOpenerEventChannel();

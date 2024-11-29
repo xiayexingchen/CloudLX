@@ -1,7 +1,20 @@
 <template>
   <view class="identity-code-container">
+    <view class="identity-card">
+      <view class="card-header">
+        <!--        <text class="title">身份码</text>
+        <text class="time">{{ currentTime }}</text> -->
+      </view>
+      <view class="barcode">
+        <text class="barcode-text">{{ identityCode }}</text>
+        <view class="barcode-image"></view>
+      </view>
+    </view>
+  </view>
+</template>
+<!-- <template>
+  <view class="identity-code-container">
     <view class="identity-card" @click="handleCardClick">
-      <!-- ... existing name ... -->
       <view class="barcode">
         <text class="barcode-text">{{ identityCode }}</text>
         <view class="barcode-image"></view>
@@ -12,9 +25,12 @@
         </text>
         <text class="time">{{ currentTime }}</text>
       </view>
+            <view class="card-footer">
+        <text class="validity">本码1分钟内有效</text>
+      </view>
     </view>
   </view>
-</template>
+</template> -->
 
 <script setup>
   import {
@@ -25,22 +41,22 @@
   const identityCode = ref('CS8071565621545699A')
   const currentTime = ref('')
 
-  const updateTime = () => {
-    const now = new Date()
-    currentTime.value = now.toLocaleTimeString('zh-CN', {
-      hour12: false
-    })
-  }
+  // const updateTime = () => {
+  //   const now = new Date()
+  //   currentTime.value = now.toLocaleTimeString('zh-CN', {
+  //     hour12: false
+  //   })
+  // }
 
   const handleCardClick = () => {
     // 可以添加刷新动画或其他交互效果
     updateTime()
   }
 
-  onMounted(() => {
-    updateTime()
-    setInterval(updateTime, 1000)
-  })
+  // onMounted(() => {
+  //   updateTime()
+  //   setInterval(updateTime, 1000)
+  // })
 </script>
 
 <style scoped>
@@ -48,61 +64,74 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    background-color: #007aff;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    padding: 30rpx;
   }
 
   .identity-card {
     background-color: #fff;
-    padding: 30px;
-    border-radius: 15px;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s;
+    padding: 40rpx;
+    border-radius: 24rpx;
+    width: 85%;
+    box-shadow: 0 8rpx 32rpx rgba(37, 99, 235, 0.2);
   }
 
-  .identity-card:active {
-    transform: scale(0.98);
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40rpx;
+  }
+
+  .title {
+    font-size: 36rpx;
+    font-weight: 600;
+    color: #1F2937;
+  }
+
+  .time {
+    font-size: 32rpx;
+    color: #3B82F6;
+    font-weight: 500;
   }
 
   .barcode {
-    margin: 25px 0;
-    padding: 15px;
-    background-color: #f8f8f8;
-    border-radius: 8px;
+    background: #F8FAFC;
+    padding: 40rpx 30rpx;
+    border-radius: 16rpx;
+    border: 2rpx solid rgba(59, 130, 246, 0.1);
   }
 
   .barcode-text {
     font-family: monospace;
-    font-size: 18px;
-    letter-spacing: 1px;
+    font-size: 36rpx;
+    letter-spacing: 2rpx;
+    color: #1F2937;
+    font-weight: 500;
   }
 
   .barcode-image {
-    height: 80px;
-    margin-top: 10px;
-    background: repeating-linear-gradient(90deg, #000 0, #000 2px, #fff 2px, #fff 4px);
+    height: 120rpx;
+    margin-top: 30rpx;
+    background: repeating-linear-gradient(90deg,
+        #000 0,
+        #000 2px,
+        #fff 2px,
+        #fff 4px);
+    border-radius: 4rpx;
   }
 
   .card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 20px;
-    font-size: 14px;
+    margin-top: 40rpx;
+    text-align: center;
   }
 
-  .refresh-hint {
-    color: #666;
-    display: flex;
-    align-items: center;
-  }
-
-  .icon {
-    margin-right: 4px;
-  }
-
-  .time {
-    color: #888;
+  .validity {
+    font-size: 28rpx;
+    color: #6B7280;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 12rpx 32rpx;
+    border-radius: 100rpx;
   }
 </style>

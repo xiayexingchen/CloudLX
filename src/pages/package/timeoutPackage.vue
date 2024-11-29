@@ -3,7 +3,7 @@
     <!-- 状态区域 -->
     <view class="status-card">
       <view class="status-icon">
-        <u-icon name="warning-fill" color="#ff4d4f" size="48" />
+        <!--        <u-icon name="warning-fill" color="#ff4d4f" size="48" /> -->
       </view>
       <text class="status-title">已超时</text>
       <text class="status-desc">您的包裹已被转移至他处，请及时联系管理员</text>
@@ -27,10 +27,10 @@
           <text class="label">入柜时间</text>
           <text class="value">{{ packageInfo.entryTime }}</text>
         </view>
-        <view class="info-item">
+        <!--        <view class="info-item">
           <text class="label">超时时长</text>
           <text class="value highlight">{{ packageInfo.timeoutDuration }}</text>
-        </view>
+        </view> -->
       </view>
     </view>
 
@@ -119,7 +119,7 @@
   }
 
   .status-card {
-    background: linear-gradient(135deg, #ff4d4f, #ff7875);
+    background: linear-gradient(135deg, #3B82F6, #3B82F6);
     border-radius: 16px;
     padding: 24px;
     margin-bottom: 20px;
@@ -169,7 +169,7 @@
           transform: translateY(-50%);
           width: 4px;
           height: 16px;
-          background: #ff4d4f;
+          background: #3B82F6;
           border-radius: 2px;
         }
       }
@@ -197,7 +197,7 @@
           font-weight: 500;
 
           &.highlight {
-            color: #ff4d4f;
+            color: #3B82F6;
             font-weight: 600;
           }
         }
@@ -226,7 +226,7 @@
     }
 
     .call-button {
-      background: #ff4d4f;
+      background: #3B82F6;
       color: #ffffff;
       border: none;
       border-radius: 24px;

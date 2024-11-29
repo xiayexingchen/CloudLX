@@ -227,20 +227,27 @@
           <!-- 订单内容 -->
           <view class="order-content">
             <view class="info-row">
-              <u-icon name="map" size="16" color="#666"></u-icon>
-              <text class="address">{{ order.delivery_address }}</text>
+              <u-icon name="map" size="20" color="#666"></u-icon>
+              <text class="address">送至：{{order.delivery_address }}</text>
             </view>
 
-            <view class="info-row">
+            <!--            <view class="info-row">
               <u-icon name="account" size="16" color="#666"></u-icon>
               <text>{{ order.username }}</text>
               <text class="phone">{{order.phone_number }}</text>
-            </view>
-
-            <view class="info-row">
-              <u-icon name="clock" size="16" color="#666"></u-icon>
-              <text>预计完成：{{ order.estimated_completion_time }}</text>
-            </view>
+            </view> -->
+            <template v-if="order.status==='已完成'">
+              <view class="info-row">
+                <u-icon name="clock" size="20" color="#666"></u-icon>
+                <text>签收时间：{{ order.estimated_completion_time }}</text>
+              </view>
+            </template>
+            <template v-else>
+              <view class="info-row">
+                <u-icon name="clock" size="20" color="#666"></u-icon>
+                <text>预计完成时间：{{ order.estimated_completion_time }}</text>
+              </view>
+            </template>
           </view>
 
           <!-- 订单底部 -->
@@ -250,8 +257,8 @@
               <text class="amount">¥{{ order.total_amount}}</text><!-- order.total_amount.toFixed(2)||0 -->
             </view>
             <view class="actions">
-              <u-button v-if="order.status === '待发货'" type="primary" size="mini">退单</u-button>
-              <u-button size="mini" plain>删除</u-button>
+              <u-button v-if="order.status === '待发货'" type="primary" size="16">退单</u-button>
+              <u-button size="16" plain>删除</u-button>
             </view>
           </view>
         </view>
@@ -321,7 +328,7 @@
       color: #333;
 
       text {
-        font-size: 14px;
+        font-size: 16px;
       }
     }
   }
@@ -333,7 +340,7 @@
   .date-divider {
     padding: 10px 0;
     color: #666;
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .order-card {
@@ -356,7 +363,7 @@
       }
 
       .site-name {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 500;
         color: #333;
       }
@@ -364,7 +371,7 @@
       .status {
         padding: 2px 8px;
         border-radius: 4px;
-        font-size: 12px;
+        font-size: 14px;
 
         &.status-pending {
           background: #fff7e6;
@@ -383,7 +390,7 @@
       }
 
       .order-id {
-        font-size: 13px;
+        font-size: 15px;
         color: #999;
       }
     }
@@ -399,7 +406,7 @@
         gap: 8px;
         margin-bottom: 8px;
         color: #666;
-        font-size: 14px;
+        font-size: 16px;
 
         &:last-child {
           margin-bottom: 0;
@@ -432,12 +439,12 @@
         padding: 2px 8px;
         background: #f5f5f5;
         border-radius: 4px;
-        font-size: 12px;
+        font-size: 14px;
         color: #666;
       }
 
       .amount {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 500;
         color: #ff4d4f;
       }
@@ -461,7 +468,7 @@
       border-bottom: 1px solid #eee;
 
       text {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 500;
         color: #333;
       }
@@ -478,7 +485,7 @@
 
     text {
       margin-top: 10px;
-      font-size: 14px;
+      font-size: 16px;
     }
   }
 </style>

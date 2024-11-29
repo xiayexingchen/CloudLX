@@ -1,18 +1,23 @@
 <template>
-  <u-calendar v-model="show" :mode="mode" @change="change"></u-calendar>
+  <view>
+    <u-popup v-model="show">
+      <view class="a1">出淤泥而不染，濯清涟而不妖</view>
+    </u-popup>
+    <u-button @click="show = true">打开</u-button>
+  </view>
 </template>
 
-<script setup>
-  import {
-    ref
-  } from 'vue';
-
-  // 状态变量
-  const show = ref(true);
-  const mode = ref('range');
-
-  // 方法
-  const change = (e) => {
-    console.log(e);
-  };
+<script>
+  export default {
+    data() {
+      return {
+        show: false
+      }
+    }
+  }
 </script>
+<style>
+  .a1 {
+    color: #0069ff
+  }
+</style>

@@ -3,7 +3,7 @@
     <!-- 状态区域 -->
     <view class="status-section">
       <view class="status-icon">
-        <u-icon name="checkmark-circle" color="#4caf50" size="48" />
+        <!--        <u-icon name="checkmark-circle" color="#4caf50" size="48" /> -->
       </view>
       <text class="status-title">包裹已签收</text>
       <text class="status-desc">感谢您对云行者配送服务的信任，期待再次光临</text>
@@ -31,7 +31,7 @@
       </view>
     </view>
 
-    <!-- 地址信息卡片 -->
+    <!--    地址信息卡片
     <view class="info-card">
       <view class="card-header">
         <text class="card-title">地址信息</text>
@@ -51,27 +51,31 @@
           <text class="value">{{ packageInfo.contactPhone }}</text>
         </view>
       </view>
-    </view>
+    </view> -->
 
     <!-- 时间信息卡片 -->
     <view class="info-card">
       <view class="card-header">
-        <text class="card-title">时间信息</text>
+        <text class="card-title">订单信息</text>
       </view>
 
       <view class="info-list">
         <view class="info-item">
           <text class="label">下单时间</text>
-          <text class="value">{{ packageInfo.orderTime }}</text>
+          <text class="value">{{ packageInfo.packageOrderCreatedTime }}</text>
         </view>
         <view class="info-item">
           <text class="label">签收时间</text>
-          <text class="value">{{ packageInfo.receivedTime }}</text>
+          <text class="value">{{ packageInfo.packageCompletedTime }}</text>
         </view>
         <view class="info-item">
+          <text class="label">配送地址</text>
+          <text class="value">{{ packageInfo.packageAddress }}</text>
+        </view>
+        <!--        <view class="info-item">
           <text class="label">支付费用</text>
           <text class="value price">¥{{ packageInfo.payment }}</text>
-        </view>
+        </view> -->
       </view>
     </view>
   </view>
@@ -106,7 +110,7 @@
   }
 
   .status-section {
-    background: linear-gradient(135deg, #4caf50, #45a049);
+    background: linear-gradient(135deg, #3B82F6, #60A5FA);
     border-radius: 16px;
     padding: 24px;
     margin-bottom: 20px;
@@ -158,7 +162,7 @@
           transform: translateY(-50%);
           width: 4px;
           height: 16px;
-          background: #4caf50;
+          background: #3B82F6;
           border-radius: 2px;
         }
       }
