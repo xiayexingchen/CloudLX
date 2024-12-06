@@ -78,24 +78,28 @@
 
     import amap from '../../../lib/amap-wx.js'
 
-
+    // 获得上一个页面数据
     const packageInfo = ref({});
 
-    const getPackageInfo = () => {
-        const instance = getCurrentInstance().proxy
-        const eventChannel = instance.getOpenerEventChannel();
-        // 获取上一页面传递的数据
-        eventChannel.on('deliveryData', (data) => {
-            packageInfo.value = data;
-            console.log('im reciving deliveryData from home,', packageInfo.value)
-        });
+    const getPackageInfo = async () => {
+        try {
+            const instance = getCurrentInstance();
+            if (!instance) return;
+            const eventChannel = instance.proxy.getOpenerEventChannel();
+            // 监听来自上一页面的数据
+            eventChannel.on('deliveryData', (data) => {
+
+                packageInfo.value = data;
+                console.log('Received deliveryData from the previous page:', data);
+                getRobotInfo()
+
+            });
+        } catch (error) {
+            console.error('Failed to set up event listener for deliveryData:', error);
+        }
     };
 
-    onReady(() => {
-        getPackageInfo();
-    })
-
-
+    // 添加起点、终点、机器人当前位置的的markers
     const markers = ref([]);
     const addMarker = () => {
         markers.value.push({
@@ -124,8 +128,9 @@
         })
 
     }
-    const polyline = ref([]);
 
+    // 添加规划路线
+    const polyline = ref([])
     const drawTrace = () => {
         var myAmapFun = new amap.AMapWX({
             key: 'd2bd6886e703208fc8eb6b4ff8bcb8b2'
@@ -163,12 +168,11 @@
         })
     }
 
-
-
-    let robotInfo = ref({});
-    onMounted(async () => {
+    // 请求机器人信息
+    const robotInfo = ref({});
+    const getRobotInfo = async () => {
         try {
-            const result = await robotLocAPI(packageInfo.orderId);
+            const result = await robotLocAPI(packageInfo.value.orderId);
             robotInfo.value['latitude'] = result.data.latitude;
             robotInfo.value['longitude'] = result.data.longitude;
             console.log('Robot location data:', result);
@@ -178,7 +182,7 @@
 
 
         try {
-            const result = await robotDestAPI(packageInfo.orderId);
+            const result = await robotDestAPI(packageInfo.value.orderId);
             robotInfo.value['to'] = {
                 'latitude': result.data.to.latitude,
                 'longitude': result.data.to.longitude
@@ -193,9 +197,20 @@
             console.error('Failed to fetch robot location:', error);
         }
 
-
+        console.log('robotInfo:', robotInfo);
         addMarker();
         drawTrace();
+
+    }
+
+    // mounted的时候加载全部
+    onMounted(async () => {
+        try {
+            await getPackageInfo();
+        } catch (error) {
+            console.error('getPackageInfo error:', error);
+        }
+
     });
 
 
