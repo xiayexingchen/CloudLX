@@ -203,7 +203,7 @@
 
     }
 
-    // mounted的时候加载全部
+    // mounted的时候加载全部  
     onMounted(async () => {
         try {
             await getPackageInfo();
