@@ -1,14 +1,14 @@
 const apiConfig = {
-  dev: { //鍚庣ip
+  dev: { //后端ip
     //apiUrl: 'http://192.168.31.118:80',
     apiUrl: 'http://127.0.0.1:4523/m1/5326600-4997107-default' //apifox
-    //apiUrl: 'http://192.168.31.19:4523/m1/5326600-4997107-default' //鐪熸満璋冭瘯锛屼富鏈篿p
-    //apiUrl: 'http://192.168.8.90:4523/m1/5326600-4997107-default' //鐪熸満璋冭瘯锛屼富鏈篿p
+    //apiUrl: 'http://192.168.31.19:4523/m1/5326600-4997107-default' //真机调试，主机ip
+    //apiUrl: 'http://192.168.8.90:4523/m1/5326600-4997107-default' //真机调试，主机ip
   },
-  prod: { //apifox妯℃嫙鍚庣ip
+  prod: { //apifox模拟后端ip
     apiUrl: 'http://127.0.0.1:4523/m1/5326600-4997107-default'
   },
-  tmp: { //鐪熸満璋冭瘯锛岃嚜宸眎p
+  tmp: { //真机调试，自己ip
     apiUrl: 'http://10.72.63.251:4523/m1/5326600-4997107-default'
   },
 }
