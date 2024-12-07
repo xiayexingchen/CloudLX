@@ -69,8 +69,8 @@
       type: 'system'
     },
     {
-      name: '订单',
-      type: 'order'
+      name: '包裹',
+      type: 'package'
     },
     {
       name: '活动',

@@ -34,7 +34,7 @@
         <view class="privacy-section">
           <checkbox-group @change="handlePrivacyCheck">
             <label class="privacy-label">
-              <checkbox :checked="isChecked" :value="isChecked" color="var(--primary-color)" />
+              <checkbox :checked="isChecked" :value="isChecked" color="#3B82F6" />
               <text class="privacy-text">我已阅读并同意</text>
               <text class="privacy-link" @click="showPrivacyPolicy">《隐私协议》</text>
             </label>

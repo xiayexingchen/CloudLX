@@ -9,6 +9,8 @@ export const fetchPackageDataAPI = () => {
 
   })
 }
+
+// 选择包裹
 export const selectToAddPackageAPI = (addInfo) => {
   return request({
     url: '/user/packages/selectPackage',
@@ -20,6 +22,8 @@ export const selectToAddPackageAPI = (addInfo) => {
   });
 
 }
+
+// 添加包裹
 export const AddPackageAPI = (packageId) => {
   return request({
     url: '/user/packages/addPackage',
@@ -29,4 +33,15 @@ export const AddPackageAPI = (packageId) => {
     }
   });
 
+}
+
+// 搜索包裹
+export const searchPackageAPI = (packageId) => {
+  return request({
+    url: '/user/packages/searchPackage',
+    method: 'post',
+    data: {
+      packageId
+    }
+  })
 }

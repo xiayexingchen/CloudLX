@@ -1,7 +1,7 @@
 <template>
   <view class="home-container">
     <!-- 搜索框 -->
-    <view class="search-section">
+    <view class="search-section" @click="toSearch">
       <u-search v-model="searchText" placeholder="搜索包裹" :clearabled="true" shape="round"
         :background-color="'var(--bg-primary)'" :border-color="'var(--primary-light)'"
         :input-style="{color: 'var(--text-primary)'}" />
@@ -203,21 +203,29 @@
   import {
     fetchPackageDataAPI
   } from '../../api/api-parcel';
+  import {
+    onShow
+  } from '@dcloudio/uni-app'
   const indicatorDots = ref(true);
   const indicatorColor = ref("#FFF");
   const autoplay = ref(true);
   const interval = ref(2000);
   const duration = ref(500);
 
+  function toSearch() {
+    uni.navigateTo({
+      url: "/pages/search/search"
+    });
+  }
   // 轮播图数据
   const swiperList = ref([{
-      image: '/static/show1.png'
+      image: '/static/loginLogo.png'
     },
     {
-      image: '/static/show2.png'
+      image: '/static/loginLogo.png'
     },
     {
-      image: '/static/show3.jpg'
+      image: '/static/loginLogo.jpg'
     }
   ]);
 
@@ -434,6 +442,10 @@
     });
   }
 
+  // onShow(() => {
+  //   // 清空搜索框
+  //   searchText.value = ''
+  // })
   // 页面加载时获取数据
   onMounted(() => {
     fetchPackageData();

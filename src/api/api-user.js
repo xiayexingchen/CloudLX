@@ -58,3 +58,17 @@ export const fetchUnUsedCouponssDataAPI = () => {
   })
 
 }
+
+// ... existing code ...
+
+// 修改用户头像
+export const modifyAvatarAPI = (avatarData) => {
+  return request({
+    url: '/user/modifyAvatar',
+    method: 'post',
+    data: {
+      avatar: avatarData,
+      format: 'image/jpeg'
+    }
+  })
+}

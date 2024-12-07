@@ -1,13 +1,13 @@
 <template>
   <view class="mine-container">
     <!-- 用户信息卡片 -->
-    <view class="user-card" @click="toUserInfo">
+    <view class="user-card" @click="toUser">
       <view class="user-avatar">
         <u-avatar :src="userInfo.avatar" size="80" shape="circle"></u-avatar>
       </view>
       <view class="user-info">
         <text class="username">{{ userInfo.nickname }}</text>
-        <text class="user-id">ID: {{ userInfo.userId }}</text>
+        <!--        <text class="user-id">ID: {{ userInfo.userId }}</text> -->
       </view>
       <u-icon name="arrow-right" color="#ffffff" size="20"></u-icon>
     </view>
@@ -87,9 +87,9 @@
     }
   ])
   // 导航函数
-  const toUserInfo = () => {
+  const toUser = () => {
     uni.navigateTo({
-      url: '/pages/user-info/user-info'
+      url: '/pages/user/user'
     })
   }
 
