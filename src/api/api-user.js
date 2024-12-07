@@ -36,21 +36,60 @@ export const fetchUserProfileAPI = (code) => {
   });
 }
 //获得用户资金
-export const getPersonalBalanceAPI = () => {
+export const fetchPersonalBalanceAPI = () => {
   return request({
     url: '/user/mine-view/get-personal-balance',
     method: 'get',
   })
 }
+//充值用户资金
+export const addPersonalBalanceAPI = (amount) => {
+  return request({
+    url: '/user/mine-view/add-personal-balance',
+    method: 'post',
+    data: {
+      amount
+    }
+  })
+}
 //获得用户地址信息
-export const fetchAddressDataAPI = (userInfo) => {
+export const fetchAddressDataAPI = () => {
   return request({
     url: '/user/mine-view/get-personal-address',
     method: 'get'
   })
 
 }
-//获得用户优惠券
+//新增用户地址信息
+export const addAddressDataAPI = (addressInfo) => {
+  return request({
+    url: '/user/mine-view/add-personal-address',
+    method: 'post',
+    data: {
+      recipientName: addressInfo.recipientName,
+      region: addressInfo.region,
+      build: addressInfo.build,
+      isDefault: addressInfo.isDefault
+    }
+  })
+
+}
+//修改用户地址信息
+export const updateAddressDataAPI = (addressInfo) => {
+  return request({
+    url: '/user/mine-view/update-personal-address',
+    method: 'post',
+    data: {
+      addressId: addressInfo.addressId,
+      recipientName: addressInfo.recipientName,
+      region: addressInfo.region,
+      build: addressInfo.build,
+      isDefault: addressInfo.isDefault
+    }
+  })
+
+}
+//获得用户未使用优惠券
 export const fetchUnUsedCouponssDataAPI = () => {
   return request({
     url: '/user/mine-view/get-unusedcoupons',
@@ -58,11 +97,40 @@ export const fetchUnUsedCouponssDataAPI = () => {
   })
 
 }
+//获得用户已使用优惠券
+export const fetchUsedCouponssDataAPI = () => {
+  return request({
+    url: '/user/mine-view/get-usedcoupons',
+    method: 'get'
+  })
 
+}
+//获得用户信息
+export const fetchUserDataAPI = () => {
+  return request({
+    url: '/user/mine-view/get-personal-info',
+    method: 'get'
+  })
+
+}
+//更新用户信息
+export const updateUserDataAPI = (userInfo) => {
+  return request({
+    url: '/user/mine-view/update-personal-info',
+    method: 'post',
+    data: {
+      username: userInfo.username,
+      birthday: userInfo.birthday,
+      gender: userInfo.gender
+    }
+  })
+
+}
+//
 // ... existing code ...
 
 // 修改用户头像
-export const modifyAvatarAPI = (avatarData) => {
+export const updateAvatarAPI = (avatarData) => {
   return request({
     url: '/user/modifyAvatar',
     method: 'post',
@@ -70,5 +138,72 @@ export const modifyAvatarAPI = (avatarData) => {
       avatar: avatarData,
       format: 'image/jpeg'
     }
+  })
+}
+//获得头像url
+export const fetchAvatarAPI = () => {
+  return request({
+    url: '/user/getAvatarURL',
+    method: 'get',
+
+  })
+}
+//获得消息列表
+export const fetchMessagesAPI = () => {
+  return request({
+    url: '/user/message-view/get-messages',
+    method: 'get',
+
+  })
+}
+//删除消息
+export const deleteMessagesAPI = (messageId) => {
+  return request({
+    url: '/user/message-view/delete-message',
+    method: 'delete',
+    data: {
+      messageId
+    }
+
+  })
+}
+//已读消息
+export const readMessagesAPI = (messageId) => {
+  return request({
+    url: '/user/message-view/read-message',
+    method: 'post',
+    data: {
+      messageId
+    }
+
+  })
+}
+//获取身份吗
+export const fetchUserCodeAPI = () => {
+  return request({
+    url: '/user/get-userCode',
+    method: 'get',
+
+  })
+}
+//反馈建议
+export const feedbackAPI = (feedbackInfo) => {
+  return request({
+    url: '/user/mine-view/feedback-suggestion',
+    method: 'post',
+    data: {
+      content: feedbackInfo.content,
+      title: feedbackInfo.username + "-反馈建议",
+      type: feedbackInfo.type
+    }
+
+  })
+}
+//退出登录
+export const logoutAPI = () => {
+  return request({
+    url: '/user/logout',
+    method: 'post',
+
   })
 }

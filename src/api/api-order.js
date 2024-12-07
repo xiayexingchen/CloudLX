@@ -27,13 +27,3 @@ export const orderAPI = (orderInfo) => {
     }
   })
 }
-// export const selectToAddPackageAPI = (addInfo) => {
-//   return request({
-//     url: '/user/packages/selectPackage',
-//     method: 'post',
-//     data: {
-//       packageId: addInfo.packageId,
-//       phoneNumber: addInfo.phoneNumber
-//     }
-//   });
-//}
