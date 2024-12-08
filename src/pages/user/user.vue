@@ -2,10 +2,10 @@
   <view class="container">
     <!-- 头像区域 -->
     <view class="avatar-section">
-      <view class="avatar-wrapper">
-        <image class="avatar" src="/static/default-avatar.png" mode="aspectFill"></image>
-      </view>
+    <view class="avatar-wrapper" @click="chooseImage">
+      <image class="avatar" :src="avatarUrl || '/static/default-avatar.png'" mode="aspectFill"></image>
     </view>
+  </view>
 
     <!-- 信息列表 -->
     <view class="info-list">
@@ -82,10 +82,11 @@
 <script setup>
   import {
     ref,
-    reactive
+    reactive,
+    onMounted
   } from 'vue'
   import dayjs from 'dayjs'
-
+import { updateAvatarAPI, fetchAvatarAPI } from '@/api/api-user'
   // 用户信息
   const userInfo = reactive({
     username: 'Zhangsan',
@@ -97,7 +98,8 @@
   const showUsername = ref(false)
   const showDate = ref(false)
   const showGender = ref(false)
-
+// 头像URL
+const avatarUrl = ref('')
   // 临时存储编辑值
   const tempUsername = ref('')
 
@@ -105,7 +107,78 @@
   const genderOptions = ['男', '女']
 
 
+// 选择图片
+const chooseImage = () => {
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    sourceType: ['album', 'camera'],
+    success: async (res) => {
+      try {
+        // 显示加载中
+        uni.showLoading({
+          title: '上传中...',
+          mask: true
+        })
 
+        // 读取图片为base64
+        const base64 = await getImageBase64(res.tempFilePaths[0])
+        
+        // 上传头像
+        const updateResult = await updateAvatarAPI(base64)
+        console.log("base64"+base64);
+        if (updateResult.code === 23091) {
+          // 获取新的头像URL
+          await fetchAvatar()
+          
+          uni.showToast({
+            title: '更新成功',
+            icon: 'success'
+          })
+        }
+      } catch (err) {
+        console.error('更新头像失败:', err)
+        uni.showToast({
+          title: '更新失败',
+          icon: 'none'
+        })
+      } finally {
+        uni.hideLoading()
+      }
+    }
+  })
+}
+// 获取图片base64
+const getImageBase64 = (tempFilePath) => {
+  return new Promise((resolve, reject) => {
+    uni.getFileSystemManager().readFile({
+      filePath: tempFilePath,
+      encoding: 'base64',
+      success: (res) => {
+        resolve(res.data)
+      },
+      fail: (err) => {
+        reject(err)
+      }
+    })
+  })
+}
+
+// 获取头像URL
+const fetchAvatar = async () => {
+  try {
+    const res = await fetchAvatarAPI()
+    if (res.code === 23101) {
+      avatarUrl.value = 'http://120.46.199.126:80'+res.data
+    }
+  } catch (err) {
+    console.error('获取头像失败:', err)
+  }
+}
+// 页面加载时获取头像
+onMounted(() => {
+  fetchAvatar()
+})
   // 显示用户名编辑弹窗
   const showUsernamePopup = () => {
     tempUsername.value = userInfo.username
@@ -194,9 +267,14 @@
       width: 160rpx;
       height: 160rpx;
       border-radius: 80rpx;
+      cursor: pointer;
       border: 4rpx solid #fff;
       overflow: hidden;
       box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+
+      &:hover {
+      opacity: 0.8; // 添加悬停效果
+    }
     }
 
     .avatar {

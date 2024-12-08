@@ -225,7 +225,7 @@
       image: '/static/loginLogo.png'
     },
     {
-      image: '/static/loginLogo.jpg'
+      image: '/static/loginLogo.png'
     }
   ]);
 

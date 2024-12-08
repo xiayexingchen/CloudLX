@@ -1,285 +1,413 @@
 <template>
   <view class="container">
-    <!-- 顶部搜索栏 -->
-    <view class="search-bar">
-      <u-search v-model="searchText" placeholder="搜索消息" :show-action="false" @change="onSearch"></u-search>
-    </view>
-
-    <!-- 消息分类标签 -->
-    <view class="message-tabs">
-      <view v-for="tab in tabs" :key="tab.type" :class="['tab-item', { active: currentTab === tab.type }]"
-        @click="currentTab = tab.type">
+    <!-- Tab栏 - 三个均匀分布 -->
+    <view class="tabs">
+      <view v-for="tab in tabs" :key="tab.type" class="tab-item" :class="{ active: currentTab === tab.type }"
+        @click="handleTabChange(tab.type)">
         {{ tab.name }}
+        <view v-if="getUnreadCount(tab.type)" class="tab-badge">
+          {{ getUnreadCount(tab.type) }}
+        </view>
       </view>
     </view>
 
     <!-- 消息列表 -->
-    <scroll-view class="messages-list" scroll-y @scrolltolower="loadMore" :refresher-enabled="true"
+    <scroll-view class="messages-list" scroll-y @scrolltolower="loadMore" refresher-enabled
       @refresherrefresh="onRefresh">
       <view v-if="filteredMessages.length > 0">
-        <view v-for="(message, index) in filteredMessages" :key="index" class="message-item"
-          :class="{ unread: !message.isRead }" @click="handleMessageClick(message)">
-          <view class="message-icon">
-            <u-badge :count="message.unreadCount" :offset="[-2, -2]">
-              <u-icon :name="message.icon" :color="message.color" size="40"></u-icon>
-            </u-badge>
+        <u-swipe-action v-for="(message, index) in filteredMessages" :key="message.messageId" :show="message.show"
+          :index="index" :options="options" @click="handleSwipeClick" @open="handleSwipeOpen">
+    
+            <view class="message-item" :class="{ unread: !message.isRead }" @click="handleMessageClick(message)">
+              <view class="message-content">
+              <view class="message-header">
+                <text class="message-type">{{ message.messageType }}</text>
+                <text class="message-time">{{ formatTime(message.createdAt) }}</text>
+              </view>
+              <text class="message-title text-ellipsis">{{ message.title }}</text>
+              <text class="message-desc text-ellipsis">{{ formatContent(message.content) }}</text>
+              </view>
+      
           </view>
-          <view class="message-content">
-            <view class="message-header">
-              <text class="message-title">{{ message.title }}</text>
-              <text class="message-time">{{ formatTime(message.time) }}</text>
-            </view>
-            <view class="message-desc">{{ message.description }}</view>
-          </view>
-        </view>
+        </u-swipe-action>
       </view>
 
-      <!-- 空状态展示 -->
+      <!-- 空状态 -->
       <view v-else class="empty-state">
-        <u-icon name="info-circle" size="64" color="#999"></u-icon>
-        <text>暂无消息</text>
+        <u-empty mode="message" text="暂无消息"></u-empty>
       </view>
     </scroll-view>
   </view>
 </template>
 
+
 <script setup>
   import {
     ref,
-    computed
-  } from 'vue';
+    computed,
+    onMounted
+  } from 'vue'
   import {
     formatDistanceToNow
   } from 'date-fns'
   import {
     zhCN
   } from 'date-fns/locale'
+  import {
+    fetchMessagesAPI,
+    deleteMessagesAPI
+  } from '@/api/api-user'
 
-  // 搜索相关
-  const searchText = ref('');
-  const currentTab = ref('all');
-
-  // 分类标签
-  const tabs = [{
-      name: '全部',
-      type: 'all'
-    },
-    {
-      name: '系统',
-      type: 'system'
-    },
-    {
-      name: '包裹',
-      type: 'package'
-    },
-    {
-      name: '活动',
-      type: 'activity'
+  const messages = ref([])
+  const currentTab = ref('包裹提醒')
+  // 滑动按钮配置
+  const options = [{
+    text: '删除',
+    style: {
+      backgroundColor: '#dd524d'
     }
-  ];
-
-  // 模拟消息数据
-  const messages = ref([{
-      id: 1,
-      title: '包裹已送达',
-      description: '您的包裹已被放置在小区快递柜，取件码：1234',
-      time: new Date(Date.now() - 1000 * 60 * 10),
-      icon: 'car-fill',
-      color: '#1E90FF',
-      type: 'order',
-      isRead: false,
-      unreadCount: 1
-    },
-    {
-      id: 2,
-      title: '限时优惠活动',
-      description: '618大促即将开始，提前加购商品享受优惠！',
-      time: new Date(Date.now() - 1000 * 60 * 30),
-      icon: 'gift-fill',
-      color: '#FF6347',
-      type: 'activity',
-      isRead: true,
-      unreadCount: 0
-    },
-    {
-      id: 3,
-      title: '系统通知',
-      description: '系统将于今晚22:00进行例行维护',
-      time: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      icon: 'notification-fill',
-      color: '#FFD700',
-      type: 'system',
-      isRead: false,
-      unreadCount: 1
-    }
-  ]);
-
-  // 过滤消息列表
-  const filteredMessages = computed(() => {
-    return messages.value
-      .filter(msg => {
-        const matchSearch = msg.title.includes(searchText.value) ||
-          msg.description.includes(searchText.value);
-        const matchTab = currentTab.value === 'all' || msg.type === currentTab.value;
-        return matchSearch && matchTab;
+  }]
+  const handleSwipeClick = async (index) => {
+    try {
+      const message = filteredMessages.value[index]
+      uni.showModal({
+        title: '提示',
+        content: '确定要删除这条消息吗？',
+        success: async (res) => {
+          if (res.confirm) {
+            const result = await deleteMessagesAPI(message.messageId)
+            if (result.code === 25011) {
+              uni.showToast({
+                title: '删除成功',
+                icon: 'success'
+              })
+              // 重新获取消息列表
+              fetchMessages()
+            }
+          }
+        }
       })
-      .sort((a, b) => b.time - a.time);
-  });
+    } catch (err) {
+      console.error('删除消息失败:', err)
+      uni.showToast({
+        title: '删除失败',
+        icon: 'none'
+      })
+    }
+  }
 
+  // 处理滑动打开
+  const handleSwipeOpen = (index) => {
+    // 为当前操作的项添加 show 属性
+    filteredMessages.value = filteredMessages.value.map((item, idx) => ({
+      ...item,
+      show: idx === index
+    }))
+  }
+  // 简化的Tab配置
+  const tabs = [{
+      type: '活动提醒',
+      name: '活动'
+    },
+    {
+      type: '包裹提醒',
+      name: '包裹'
+    },
+    {
+      type: '订单提醒',
+      name: '订单'
+    }
+  ]
+
+  // 未读消息数量
+  const unreadCount = computed(() => {
+    return messages.value.filter(msg => !msg.isRead).length
+  })
+
+  // 过滤消息
+  const filteredMessages = computed(() => {
+    // if (currentTab.value === 'all') {
+    //   return messages.value
+    // }
+    return messages.value.filter(msg => msg.messageType === currentTab.value)
+  })
+
+  // 处理Tab切换
+  const handleTabChange = (type) => {
+    currentTab.value = type
+  }
+  // 获取每个分类的未读数量
+  const getUnreadCount = (type) => {
+    return messages.value.filter(msg =>
+      !msg.isRead && (type === 'all' || msg.messageType === type)
+    ).length
+  }
   // 格式化时间
   const formatTime = (time) => {
-    return formatDistanceToNow(time, {
-      addSuffix: true,
-      locale: zhCN
-    });
-  };
+    try {
+      if (!time) return ''
+      const date = new Date(time.replace(' ', 'T'))
+      return formatDistanceToNow(date, {
+        addSuffix: true,
+        locale: zhCN
+      })
+    } catch (err) {
+      return time
+    }
+  }
 
-  // 传递信息
+  // 格式化内容
+  const formatContent = (content) => {
+    return content.length > 50 ? content.slice(0, 50) + '...' : content
+  }
+
+  // 获取消息列表
+  const fetchMessages = async () => {
+    try {
+      const res = await fetchMessagesAPI()
+      if (res.code === 25011) {
+        messages.value = res.data
+      }
+    } catch (err) {
+      console.error('获取消息失败:', err)
+      uni.showToast({
+        title: '获取消息失败',
+        icon: 'none'
+      })
+    }
+  }
+  // 处理删除消息
+  const handleDelete = async (messageId) => {
+    try {
+      uni.showModal({
+        title: '提示',
+        content: '确定要删除这条消息吗？',
+        success: async (res) => {
+          if (res.confirm) {
+            const result = await deleteMessagesAPI(messageId)
+            if (result.code === 25011) {
+              uni.showToast({
+                title: '删除成功',
+                icon: 'success'
+              })
+              // 重新获取消息列表
+              fetchMessages()
+            }
+          }
+        }
+      })
+    } catch (err) {
+      console.error('删除消息失败:', err)
+      uni.showToast({
+        title: '删除失败',
+        icon: 'none'
+      })
+    }
+  }
+  // 处理消息点击
   const handleMessageClick = (message) => {
     uni.navigateTo({
       url: '/pages/message-detail/message-detail',
-      success: function(res) {
-        res.eventChannel.emit('messageData', {
-          type: message.type, // 'system' | 'package' | 'activity'
-          title: message.title,
-          content: message.description,
-          time: message.time,
-          // 包裹相关信息（如果是包裹类型消息）
-          packageStatus: message.packageStatus,
-          trackingNumber: message.trackingNumber,
-          packageType: message.packageType,
-          // 活动相关信息（如果是活动类型消息）
-          image: message.image,
-          // 操作按钮配置
-          actions: [{
-              type: 'view',
-              text: '查看详情',
-              url: `/pages/package/packageDetail?id=${message.packageId}`
-            },
-            {
-              type: 'call',
-              text: '联系客服',
-              phoneNumber: '400-123-4567'
-            },
-            {
-              type: 'share',
-              text: '分享'
-            }
-          ]
-        });
+      success: (res) => {
+        res.eventChannel.emit('messageData', message)
       }
-    });
-  };
+    })
+  }
 
   // 下拉刷新
   const onRefresh = async () => {
-    // TODO: 调用后端API刷新消息列表
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    uni.stopPullDownRefresh();
-  };
+    await fetchMessages()
+    uni.stopPullDownRefresh()
+  }
 
   // 加载更多
   const loadMore = () => {
-    // TODO: 调用后端API加载更多消息
-  };
+    // TODO: 实现加载更多逻辑
+  }
 
-  // 搜索处理
-  const onSearch = () => {
-    // 可以在这里处理实时搜索逻辑
-  };
+  onMounted(() => {
+    fetchMessages()
+  })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+  // 基础容器样式
   .container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    background-color: #f5f5f5;
+    min-height: 100vh;
+    background: #f5f7fa;
   }
 
-  .search-bar {
-    padding: 10px 15px;
-    background-color: #fff;
+  // 头部样式
+  .header {
+    background: #fff;
+    padding: 20px 16px;
+    border-bottom: 1px solid #eee;
+
+    .title {
+      font-size: 20px;
+      font-weight: 500;
+      color: #333;
+    }
   }
 
-  .message-tabs {
+  // 列表容器样式
+  .list-container {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  // 滑动项样式
+  .swipe-item {
+    width: 100%;
+    box-sizing: border-box;
+    background: #fff;
+  }
+
+  // 标签栏样式
+  .tabs {
     display: flex;
-    padding: 10px 15px;
-    background-color: #fff;
+    background: #fff;
+    padding: 0;
     border-bottom: 1px solid #eee;
   }
 
   .tab-item {
-    padding: 6px 12px;
-    margin-right: 15px;
-    border-radius: 15px;
-    font-size: 14px;
+    flex: 1;
+    padding: 14px 0;
+    font-size: 16px;
     color: #666;
+    position: relative;
+    text-align: center;
+
+    &.active {
+      color: #3B82F6;
+      font-weight: 500;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 20px;
+        height: 2px;
+        background: #3B82F6;
+        border-radius: 1px;
+      }
+    }
+
+    .tab-badge {
+      position: absolute;
+      top: 6px;
+      right: 20%;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      background: #3B82F6;
+      color: #fff;
+      font-size: 12px;
+      line-height: 16px;
+      text-align: center;
+      border-radius: 8px;
+    }
   }
 
-  .tab-item.active {
-    background-color: #e6f7ff;
-    color: #1890ff;
-  }
-
-  .messages-list {
-    flex: 1;
-  }
-
+  // 消息项样式
   .message-item {
-    display: flex;
-    padding: 15px;
-    background-color: #fff;
-    margin-bottom: 1px;
+    background: #fff;
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+    width: 100%;
+    overflow: hidden;
+
+    &.unread {
+      position: relative;
+
+      &::before {
+        content: '●';
+        position: absolute;
+        left: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #3B82F6;
+        font-size: 12px;
+      }
+
+      .message-content {
+        margin-left: 16px;
+      }
+    }
   }
 
-  .message-item.unread {
-    background-color: #f0f9ff;
+  // 滑动按钮样式
+  :deep(.u-swipe-action) {
+    width: 100% !important;
+    
+    .u-swipe-action-item {
+      width: 100% !important;
+      
+      &__content {
+        width: 100% !important;
+        box-sizing: border-box;
+      }
+      
+      &__right {
+        height: 100%;
+        display: flex;
+        align-items: stretch;
+      }
+    }
   }
 
-  .message-icon {
-    margin-right: 12px;
-  }
-
+  // 消息内容样式
   .message-content {
-    flex: 1;
+    width: 100%;
   }
 
   .message-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
+  }
+
+  .message-type {
+    font-size: 14px;
+    color: #3B82F6;
+  }
+
+  .message-time {
+    font-size: 14px;
+    color: #999;
+  }
+
+  // 文本样式
+  .text-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    display: block;
   }
 
   .message-title {
     font-size: 16px;
     font-weight: 500;
     color: #333;
-  }
-
-  .message-time {
-    font-size: 12px;
-    color: #999;
+    margin-bottom: 6px;
+    display: block;
   }
 
   .message-desc {
     font-size: 14px;
     color: #666;
-    line-height: 1.4;
+    line-height: 1.5;
+    display: block;
   }
 
+  // 空状态样式
   .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     padding: 40px 0;
-    color: #999;
-  }
-
-  .empty-state text {
-    margin-top: 10px;
-    font-size: 14px;
+    text-align: center;
   }
 </style>

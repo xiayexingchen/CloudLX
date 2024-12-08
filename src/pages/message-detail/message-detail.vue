@@ -1,61 +1,23 @@
 <template>
   <view class="message-detail">
     <!-- 消息头部 -->
-    <view class="message-header">
-      <view class="title-section">
-        <text class="message-type" :class="messageInfo.type">
-          {{ getTypeText(messageInfo.type) }}
-        </text>
-        <text class="message-title">{{ messageInfo.title }}</text>
+    <view class="header">
+      <view class="header-top">
+        <text class="message-type">{{ messageData.messageType }}</text>
+        <text class="time">{{ formatTime(messageData.createdAt) }}</text>
       </view>
-      <view class="message-meta">
-        <text class="time">{{ messageInfo.time }}</text>
-      </view>
+      <text class="title">{{ messageData.title }}</text>
     </view>
 
     <!-- 消息内容 -->
-    <view class="message-content">
-      <!-- 系统通知类型 -->
-      <template v-if="messageInfo.type === 'system'">
-        <view class="system-notice">
-          <view class="notice-icon">
-            <u-icon name="volume" color="#1890ff" size="24" />
-          </view>
-          <text class="notice-text">{{ messageInfo.content }}</text>
-        </view>
-      </template>
-
-      <!-- 包裹状态类型 -->
-      <template v-else-if="messageInfo.type === 'package'">
-        <view class="package-status">
-          <view class="status-icon">
-            <u-icon :name="getStatusIcon(messageInfo.packageStatus)" :color="getStatusColor(messageInfo.packageStatus)"
-              size="24" />
-          </view>
-          <view class="status-info">
-            <text class="status-text">{{ messageInfo.content }}</text>
-            <view class="package-meta">
-              <text class="tracking-number">包裹编号：{{ messageInfo.trackingNumber }}</text>
-              <text class="package-type">{{ messageInfo.packageType }}</text>
-            </view>
-          </view>
-        </view>
-      </template>
-
-      <!-- 活动通知类型 -->
-      <template v-else-if="messageInfo.type === 'activity'">
-        <view class="activity-notice">
-          <image v-if="messageInfo.image" :src="messageInfo.image" mode="widthFix" class="activity-image" />
-          <text class="activity-text">{{ messageInfo.content }}</text>
-        </view>
-      </template>
+    <view class="content">
+      {{ messageData.content }}
     </view>
 
-    <!-- 相关操作按钮 -->
-    <view class="action-buttons" v-if="messageInfo.actions?.length">
-      <button v-for="action in messageInfo.actions" :key="action.type" class="action-btn" :class="action.type"
-        @click="handleAction(action)">
-        {{ action.text }}
+    <!-- 底部操作区 -->
+    <view class="footer">
+      <button class="back-btn" @click="handleBack">
+        返回
       </button>
     </view>
   </view>
@@ -66,244 +28,190 @@
     ref,
     onMounted,
     getCurrentInstance
-  } from 'vue';
+  } from 'vue'
+  import {
+    formatDistanceToNow
+  } from 'date-fns'
+  import {
+    zhCN
+  } from 'date-fns/locale'
+  import {
+    readMessagesAPI
+  } from '../../api/api-user';
 
-  // 消息信息
-  const messageInfo = ref({});
+  const messageData = ref({})
 
-  // 获取消息类型文本
-  const getTypeText = (type) => {
-    const typeMap = {
-      system: '系统通知',
-      package: '包裹状态',
-      activity: '活动通知'
-    };
-    return typeMap[type] || '通知';
-  };
-
-  // 获取包裹状态图标
-  const getStatusIcon = (status) => {
-    const iconMap = {
-      pending: 'clock',
-      delivering: 'car',
-      completed: 'checkmark-circle',
-      timeout: 'warning'
-    };
-    return iconMap[status] || 'info-circle';
-  };
-
-  // 获取状态颜色
-  const getStatusColor = (status) => {
-    const colorMap = {
-      pending: '#faad14',
-      delivering: '#1890ff',
-      completed: '#52c41a',
-      timeout: '#ff4d4f'
-    };
-    return colorMap[status] || '#666';
-  };
-
-  // 处理按钮点击
-  const handleAction = (action) => {
-    switch (action.type) {
-      case 'view':
-        uni.navigateTo({
-          url: action.url
-        });
-        break;
-      case 'call':
-        uni.makePhoneCall({
-          phoneNumber: action.phoneNumber
-        });
-        break;
-      case 'share':
-        uni.share({
-          provider: 'weixin',
-          scene: 'WXSceneSession',
-          type: 0,
-          title: messageInfo.value.title,
-          summary: messageInfo.value.content,
-          success: function(res) {
-            console.log('分享成功');
-          }
-        });
-        break;
-      default:
-        console.log('未知操作类型');
-    }
-  };
-
-  // 页面加载时获取消息数据
+  // 获取页面传递的数据
   onMounted(() => {
     const instance = getCurrentInstance().proxy
     const eventChannel = instance.getOpenerEventChannel();
     eventChannel.on('messageData', (data) => {
-      messageInfo.value = data;
-    });
-  });
+      messageData.value = data
+      // 如果消息未读，可以在这里调用标记已读的 API
+      if (!data.isRead) {
+        markAsRead(data.messageId)
+      }
+    })
+  })
+
+  // 获取标签颜色
+  const getTagColor = (type) => {
+    const colors = {
+      '活动提醒': '#722ed1',
+      '系统通知': '#1890ff',
+      '订单提醒': '#52c41a'
+    }
+    return colors[type] || '#666'
+  }
+
+  // 格式化时间
+  const formatTime = (time) => {
+    if (!time) return ''
+    try {
+      const date = new Date(time.replace(' ', 'T'))
+      return date.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } catch (err) {
+      return time
+    }
+  }
+
+  // 标记消息已读
+  const markAsRead = async (messageId) => {
+    try {
+      const result = await readMessagesAPI(messageId)
+      if (result.code === 25011) {
+        console.log('消息已标记为已读')
+      }
+    } catch (err) {
+      console.error('标记已读失败:', err)
+    }
+  }
+
+
+  // 返回列表
+  const handleBack = () => {
+    uni.navigateBack()
+  }
+
+  // 删除消息
+  const handleDelete = () => {
+    uni.showModal({
+      title: '删除消息',
+      content: '确定要删除这条消息吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            // TODO: 调用删除消息 API
+            uni.showToast({
+              title: '删除成功',
+              icon: 'success'
+            })
+            setTimeout(() => {
+              uni.navigateBack()
+            }, 1500)
+          } catch (err) {
+            uni.showToast({
+              title: '删除失败',
+              icon: 'error'
+            })
+          }
+        }
+      }
+    })
+  }
 </script>
 
 <style lang="scss" scoped>
   .message-detail {
     min-height: 100vh;
-    background-color: #f5f6fa;
-    padding: 20px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
   }
 
-  .message-header {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  .header {
+    padding: 20px 16px;
+    border-bottom: 1px solid #eee;
+    background: #fff;
 
-    .title-section {
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 12px;
-
-      .message-type {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        margin-right: 8px;
-
-        &.system {
-          background: #e6f7ff;
-          color: #1890ff;
-        }
-
-        &.package {
-          background: #f6ffed;
-          color: #52c41a;
-        }
-
-        &.activity {
-          background: #fff7e6;
-          color: #faad14;
-        }
-      }
-
-      .message-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-      }
     }
 
-    .message-meta {
+    .message-type {
+      font-size: 14px;
+      color: #3B82F6;
+    }
+
+    .time {
       font-size: 14px;
       color: #999;
     }
-  }
 
-  .message-content {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-
-    .system-notice {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-
-      .notice-text {
-        flex: 1;
-        font-size: 15px;
-        line-height: 1.6;
-        color: #333;
-      }
-    }
-
-    .package-status {
-      display: flex;
-      gap: 12px;
-
-      .status-info {
-        flex: 1;
-
-        .status-text {
-          font-size: 15px;
-          color: #333;
-          margin-bottom: 8px;
-          display: block;
-        }
-
-        .package-meta {
-          font-size: 13px;
-          color: #666;
-
-          .tracking-number {
-            margin-right: 12px;
-          }
-        }
-      }
-    }
-
-    .activity-notice {
-      .activity-image {
-        width: 100%;
-        border-radius: 8px;
-        margin-bottom: 12px;
-      }
-
-      .activity-text {
-        font-size: 15px;
-        line-height: 1.6;
-        color: #333;
-      }
+    .title {
+      font-size: 18px;
+      font-weight: 500;
+      color: #333;
+      line-height: 1.4;
     }
   }
 
-  .action-buttons {
+  .content {
+    flex: 1;
+    padding: 20px 16px;
+    font-size: 16px;
+    color: #333;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .footer {
+    padding: 16px;
+    border-top: 1px solid #eee;
+    background: #fff;
+  }
+
+  .back-btn {
+    width: 100%;
+    height: 44px;
+    background: #3B82F6;
+    color: #fff;
+    font-size: 16px;
+    border-radius: 22px;
+    border: none;
     display: flex;
-    gap: 12px;
-    padding: 0 20px;
+    align-items: center;
+    justify-content: center;
 
-    .action-btn {
-      flex: 1;
-      height: 44px;
-      border-radius: 22px;
-      font-size: 15px;
-      border: none;
-
-      &.view {
-        background: #1890ff;
-        color: #fff;
-      }
-
-      &.call {
-        background: #52c41a;
-        color: #fff;
-      }
-
-      &.share {
-        background: #faad14;
-        color: #fff;
-      }
+    &:active {
+      opacity: 0.9;
     }
   }
 
-  // 暗黑模式适配
-  @media (prefers-color-scheme: dark) {
-    .message-detail {
-      background-color: #1a1a1a;
+  // 添加进入动画
+  .message-detail {
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
     }
 
-    .message-header,
-    .message-content {
-      background: #2c2c2c;
-
-      .message-title {
-        color: #fff;
-      }
-
-      .notice-text,
-      .status-text,
-      .activity-text {
-        color: #fff;
-      }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 </style>
