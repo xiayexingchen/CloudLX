@@ -135,14 +135,17 @@
     computed,
     reactive,
     onMounted,
-    getCurrentInstance
+    getCurrentInstance,
+    onUnmounted
   } from 'vue';
   import dayjs from 'dayjs';
   import {
-    onLoad
+    onLoad,
+    onShow
   } from "@dcloudio/uni-app"
   import {
-    fetchUnUsedCouponssDataAPI
+    fetchUnUsedCouponssDataAPI,
+    fetchAddressDataAPI
   } from '@/api/api-user';
   import {
     orderAPI
@@ -166,7 +169,26 @@
     };
     return imageMap[type] || imageMap.other;
   };
-
+  // 初始化默认地址
+  const initDefaultAddress = async () => {
+    try {
+      const res = await fetchAddressDataAPI()
+      if (res.code === 23031) {
+        // 查找默认地址
+        const defaultAddress = res.data.find(addr => addr.is_default)
+        if (defaultAddress) {
+          // 转换为当前页面的地址格式
+          address.value = {
+            id: defaultAddress.address_id,
+            name: defaultAddress.recipient_name,
+            fullAddress: `${defaultAddress.region} ${defaultAddress.building}`
+          }
+        }
+      }
+    } catch (error) {
+      console.error('获取默认地址失败:', error)
+    }
+  }
   // 配送时间选择
   const timeRange = ref([
     ['今天', '明天', '后天'],
@@ -179,17 +201,38 @@
   const selectedCoupon = ref(null);
   const deliveryFee = ref(2.5); // 配送费用
 
-  // 选择地址
-  const chooseAddress = () => {
-    // 这里添加进入地址列表页面的逻辑，同时设置返回时的淡入动画相关参数
-    uni.navigateTo({
-      url: '/pages/delivery-detail/delivery-address'
-    })
-  }
-  // 由于使用了 setup 语法，需要暴露 address 变量
-  defineExpose({
-    address
+ // 选择地址
+// 选择地址
+const chooseAddress = () => {
+  uni.navigateTo({
+    url: '/pages/address/address?mode=select'
   });
+};
+
+// 统一处理地址更新的函数
+const updateAddress = (selectedAddr) => {
+  console.log('收到选中的地址:', selectedAddr);
+  address.value = {
+    id: selectedAddr.addressId,
+    name: selectedAddr.recipientName,
+    fullAddress: `${selectedAddr.region} ${selectedAddr.building}`
+  };
+};
+
+// 监听地址选择事件
+onShow(() => {
+  uni.$on('addressSelected', updateAddress);
+});
+
+// 记得在页面卸载时移除事件监听
+onUnmounted(() => {
+  uni.$off('addressSelected');
+});
+
+  // // 由于使用了 setup 语法，需要暴露 address 变量
+  // defineExpose({
+  //   address
+  // });
   // 选择配送时间
   const onTimeChange = (e) => {
     const [dateIndex, timeIndex] = e.detail.value
@@ -341,7 +384,10 @@
     }
   }
 
-
+  // 页面加载时初始化默认地址
+  onMounted(() => {
+    initDefaultAddress()
+  })
 
   onLoad((options) => {
     const instance = getCurrentInstance().proxy

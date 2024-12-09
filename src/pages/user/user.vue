@@ -3,7 +3,12 @@
     <!-- 头像区域 -->
     <view class="avatar-section">
     <view class="avatar-wrapper" @click="chooseImage">
-      <image class="avatar" :src="avatarUrl || '/static/default-avatar.png'" mode="aspectFill"></image>
+      <image 
+        class="avatar" 
+        :key="avatarUrl"
+        :src="avatarUrl || '/static/default-avatar.png'" 
+        mode="aspectFill"
+      ></image>
     </view>
   </view>
 
@@ -51,7 +56,7 @@
       </u-popup>
 
       <!-- 生日选择器 -->
-      <u-calendar v-model="showDate" :mode="date" @change="change"></u-calendar>
+      <u-calendar v-model="showDate" :mode="calendarMode"  :defaultDate="userInfo.birthday"  @change="change"></u-calendar>
 
       <!-- 性别选择器 -->
       <u-popup v-model="showGender" mode="bottom" :safe-area-inset-bottom="true">
@@ -83,16 +88,19 @@
   import {
     ref,
     reactive,
-    onMounted
+    onMounted,
   } from 'vue'
+  import {
+    onShow
+  } from '@dcloudio/uni-app'
   import dayjs from 'dayjs'
-import { updateAvatarAPI, fetchAvatarAPI } from '@/api/api-user'
+  import { updateAvatarAPI, fetchAvatarAPI, fetchUserDataAPI, updateUserDataAPI } from '@/api/api-user'
   // 用户信息
   const userInfo = reactive({
-    username: 'Zhangsan',
-    birthday: '2003-12-25',
-    gender: '男'
-  })
+  username: '',
+  birthday: '',
+  gender: ''
+})
 
   // 弹窗控制
   const showUsername = ref(false)
@@ -102,7 +110,8 @@ import { updateAvatarAPI, fetchAvatarAPI } from '@/api/api-user'
 const avatarUrl = ref('')
   // 临时存储编辑值
   const tempUsername = ref('')
-
+// 添加日历模式
+const calendarMode = 'date'  // 添加这行
   // 性别选项
   const genderOptions = ['男', '女']
 
@@ -128,8 +137,10 @@ const chooseImage = () => {
         const updateResult = await updateAvatarAPI(base64)
         console.log("base64"+base64);
         if (updateResult.code === 23091) {
-          // 获取新的头像URL
-          await fetchAvatar()
+          // 添加短暂延时，确保服务器处理完成
+          setTimeout(async () => {
+            await fetchAvatar()
+          }, 500)
           
           uni.showToast({
             title: '更新成功',
@@ -148,6 +159,7 @@ const chooseImage = () => {
     }
   })
 }
+
 // 获取图片base64
 const getImageBase64 = (tempFilePath) => {
   return new Promise((resolve, reject) => {
@@ -169,16 +181,14 @@ const fetchAvatar = async () => {
   try {
     const res = await fetchAvatarAPI()
     if (res.code === 23101) {
-      avatarUrl.value = 'http://120.46.199.126:80'+res.data
+      // 添加时间戳防止缓存，强制刷新图片
+      avatarUrl.value = 'http://120.46.199.126:80' + res.data + '?t=' + new Date().getTime()
+      console.log("avatarUrl: " + avatarUrl.value);
     }
   } catch (err) {
     console.error('获取头像失败:', err)
   }
 }
-// 页面加载时获取头像
-onMounted(() => {
-  fetchAvatar()
-})
   // 显示用户名编辑弹窗
   const showUsernamePopup = () => {
     tempUsername.value = userInfo.username
@@ -190,22 +200,22 @@ onMounted(() => {
     showUsername.value = false
   }
 
-  // 确认用户名修改
-  const confirmUsername = () => {
-    if (tempUsername.value.trim()) {
-      userInfo.username = tempUsername.value
-      showUsername.value = false
-      uni.showToast({
-        title: '修改成功',
-        icon: 'success'
-      })
-    } else {
-      uni.showToast({
-        title: '用户名不能为空',
-        icon: 'none'
-      })
-    }
-  }
+  // // 确认用户名修改
+  // const confirmUsername = () => {
+  //   if (tempUsername.value.trim()) {
+  //     userInfo.username = tempUsername.value
+  //     showUsername.value = false
+  //     uni.showToast({
+  //       title: '修改成功',
+  //       icon: 'success'
+  //     })
+  //   } else {
+  //     uni.showToast({
+  //       title: '用户名不能为空',
+  //       icon: 'none'
+  //     })
+  //   }
+  // }
 
 
   // 打开日历
@@ -213,15 +223,15 @@ onMounted(() => {
     showDate.value = true
   }
 
-  // 日期变更处理
-  const change = (e) => {
-    userInfo.birthday = e.result
-    showDate.value = false
-    uni.showToast({
-      title: '修改成功',
-      icon: 'success'
-    })
-  }
+  // // 日期变更处理
+  // const change = (e) => {
+  //   userInfo.birthday = e.result
+  //   showDate.value = false
+  //   uni.showToast({
+  //     title: '修改成功',
+  //     icon: 'success'
+  //   })
+  // }
   // 显示性别选择器
   const showGenderPopup = () => {
     showGender.value = true
@@ -229,14 +239,14 @@ onMounted(() => {
 
 
   // 确认性别选择
-  const selectGender = (gender) => {
-    userInfo.gender = gender
-    showGender.value = false
-    uni.showToast({
-      title: '修改成功',
-      icon: 'success'
-    })
-  }
+  // const selectGender = (gender) => {
+  //   userInfo.gender = gender
+  //   showGender.value = false
+  //   uni.showToast({
+  //     title: '修改成功',
+  //     icon: 'success'
+  //   })
+  // }
   // 修改日期相关的变量和方法
   const minDate = dayjs().subtract(100, 'year').valueOf() // 转换为时间戳
   const maxDate = dayjs().valueOf() // 转换为时间戳
@@ -248,6 +258,121 @@ onMounted(() => {
       icon: 'success'
     })
   }
+  // 获取用户信息
+const fetchUserData = async () => {
+  try {
+    const res = await fetchUserDataAPI()
+    if (res.code === 23011) {
+      // 更新用户信息
+      userInfo.username = res.data.username
+      userInfo.birthday = res.data.birthday
+      userInfo.gender = res.data.gender
+      userInfo.birthday = dayjs(res.data.birthday).format('YYYY-MM-DD')
+    }
+  } catch (err) {
+    console.error('获取用户信息失败:', err)
+    uni.showToast({
+      title: '获取信息失败',
+      icon: 'none'
+    })
+  }
+}
+
+// 确认用户名修改
+const confirmUsername = async () => {
+  if (tempUsername.value.trim()) {
+    try {
+      const result = await updateUserDataAPI({
+        ...userInfo,
+        username: tempUsername.value
+      })
+      if (result.code === 23021) {
+
+        showUsername.value = false
+        // 重新获取用户信息
+        await fetchUserData()
+        uni.showToast({
+          title: '修改成功',
+          icon: 'success'
+        })
+      }
+    } catch (err) {
+      console.error('更新用户名失败:', err)
+      uni.showToast({
+        title: '修改失败',
+        icon: 'none'
+      })
+    }
+  } else {
+    uni.showToast({
+      title: '用户名不能为空',
+      icon: 'none'
+    })
+  }
+}
+
+// 日期变更处理
+const change = async (e) => {
+  try {
+    const result = await updateUserDataAPI({
+      ...userInfo,
+      birthday: e.result
+    })
+    if (result.code === 23021) {
+
+      showDate.value = false
+      // 重新获取用户信息
+      await fetchUserData()
+      uni.showToast({
+        title: '修改成功',
+        icon: 'success'
+      })
+    }
+  } catch (err) {
+    console.error('更新生日失败:', err)
+    uni.showToast({
+      title: '修改失败',
+      icon: 'none'
+    })
+  }
+}
+
+// 确认性别选择
+const selectGender = async (gender) => {
+  try {
+    const result = await updateUserDataAPI({
+      ...userInfo,
+      gender: gender
+    })
+    if (result.code === 23021) {
+
+      showGender.value = false
+            // 重新获取用户信息
+            await fetchUserData()
+      uni.showToast({
+        title: '修改成功',
+        icon: 'success'
+      })
+    }
+  } catch (err) {
+    console.error('更新性别失败:', err)
+    uni.showToast({
+      title: '修改失败',
+      icon: 'none'
+    })
+  }
+}
+
+// 页面加载和显示时获取数据
+onMounted(() => {
+  fetchUserData()
+  fetchAvatar()
+})
+
+onShow(() => {
+  fetchUserData()
+  fetchAvatar()
+})
 </script>
 
 <style lang="scss">

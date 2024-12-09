@@ -11,8 +11,9 @@
       <text class="section-title">反馈类型</text>
       <view class="type-grid">
         <view v-for="type in feedbackTypes" :key="type.id" :class="['type-item', { active: selectedType === type.id }]"
-          @click="selectedType = type.id">
-          <u-icon :name="type.icon" size="24" :color="selectedType === type.id ? '#fff' : '#666'"></u-icon>
+          @click="handleTypeSelect(type.id)"> <!-- 修改这里 -->
+          <u-icon :name="type.icon" size="24" :color="selectedType === type.id ? '#fff' : '#666'">
+          </u-icon>
           <text>{{ type.name }}</text>
         </view>
       </view>
@@ -22,35 +23,9 @@
     <view class="feedback-content">
       <text class="section-title">问题描述</text>
       <view class="content-input">
-        <textarea v-model="content" placeholder="请详细描述您遇到的问题或建议..." :maxlength="200" class="input-area"></textarea>
+        <textarea v-model="content" placeholder="请详细描述您遇到的问题或建议..." :maxlength="200" class="input-area">
+        </textarea>
         <text class="word-count">{{ content.length }}/200</text>
-      </view>
-    </view>
-
-    <!-- 图片上传 -->
-    <view class="image-upload">
-      <text class="section-title">图片上传 (选填)</text>
-      <text class="upload-tips">最多可上传3张图片</text>
-      <view class="upload-grid">
-        <view v-for="(image, index) in images" :key="index" class="image-item">
-          <image :src="image" mode="aspectFill"></image>
-          <view class="delete-btn" @click="deleteImage(index)">
-            <u-icon name="close" color="#fff" size="12"></u-icon>
-          </view>
-        </view>
-        <view class="upload-btn" v-if="images.length < 3" @click="chooseImage">
-          <u-icon name="camera-fill" size="24" color="#999"></u-icon>
-          <text>上传图片</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 联系方式 -->
-    <view class="contact-info">
-      <text class="section-title">联系方式 (选填)</text>
-      <view class="contact-input">
-        <u-icon name="phone" size="20" color="#666"></u-icon>
-        <input type="number" v-model="contact" placeholder="请留下您的手机号，方便我们联系您" maxlength="11" />
       </view>
     </view>
 
@@ -67,8 +42,20 @@
 <script setup>
   import {
     ref,
-    computed
+    computed,
+    onMounted,
+    getCurrentInstance
   } from 'vue'
+  import {
+    feedbackAPI
+  } from '@/api/api-user'
+  // 用户名
+  const username = ref('')
+
+  // 反馈类型
+  const selectedType = ref('')
+  const content = ref('')
+  const contact = ref('')
 
   // 反馈类型
   const feedbackTypes = [{
@@ -93,33 +80,29 @@
     }
   ]
 
-  const selectedType = ref('')
-  const content = ref('')
-  const images = ref([])
-  const contact = ref('')
-
+  // 添加类型选择处理函数
+  const handleTypeSelect = (typeId) => {
+    selectedType.value = typeId
+    console.log('Selected type:', typeId)
+  }
+  // 表单验证
   // 表单验证
   const isValid = computed(() => {
-    return selectedType.value && content.value.length >= 10
+    const isValidType = selectedType.value !== ''
+    const isValidContent = content.value.length >= 5
+    console.log('Form validation:', {
+      isValidType,
+      isValidContent
+    }) // 添加调试日志
+    return isValidType && isValidContent
   })
 
-  // 选择图片
-  const chooseImage = () => {
-    uni.chooseImage({
-      count: 3 - images.value.length,
-      success: (res) => {
-        images.value = [...images.value, ...res.tempFilePaths]
-      }
-    })
-  }
 
-  // 删除图片
-  const deleteImage = (index) => {
-    images.value.splice(index, 1)
-  }
 
   // 提交反馈
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    console.log('Submit button clicked') // 添加调试日志
+
     if (!isValid.value) {
       uni.showToast({
         title: '请完善反馈内容',
@@ -128,25 +111,60 @@
       return
     }
 
-    uni.showLoading({
-      title: '提交中...'
-    })
-
-    // 模拟提交
-    setTimeout(() => {
-      uni.hideLoading()
-      uni.showToast({
-        title: '提交成功',
-        icon: 'success',
-        duration: 2000,
-        success: () => {
-          setTimeout(() => {
-            uni.navigateBack()
-          }, 2000)
-        }
+    try {
+      uni.showLoading({
+        title: '提交中...'
       })
-    }, 1500)
+
+      // 获取选中类型的完整信息
+      const selectedTypeInfo = feedbackTypes.find(type => type.id === selectedType.value)
+      console.log('Selected Type Info:', selectedTypeInfo) // 添加调试日志
+
+      if (!selectedTypeInfo) {
+        throw new Error('未选择反馈类型')
+      }
+
+      const feedbackInfo = {
+        content: content.value,
+        username: username.value,
+        type: selectedTypeInfo.name
+      }
+
+      console.log('Feedback Info to be sent:', feedbackInfo) // 添加调试日志
+
+      const result = await feedbackAPI(feedbackInfo)
+      console.log('API Response:', result) // 添加调试日志
+
+      if (result.code === 23121) {
+        uni.showToast({
+          title: '提交成功',
+          icon: 'success',
+          duration: 2000,
+          success: () => {
+            setTimeout(() => {
+              uni.navigateBack()
+            }, 2000)
+          }
+        })
+      }
+    } catch (err) {
+      console.error('提交反馈失败:', err)
+      uni.showToast({
+        title: '提交失败',
+        icon: 'none'
+      })
+    } finally {
+      uni.hideLoading()
+    }
   }
+
+  onMounted(() => {
+    const instance = getCurrentInstance().proxy
+    const eventChannel = instance.getOpenerEventChannel();
+    eventChannel.on('userData', (data) => {
+      username.value = data.username
+    })
+  })
 </script>
 
 <style lang="scss" scoped>

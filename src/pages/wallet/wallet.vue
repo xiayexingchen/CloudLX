@@ -87,10 +87,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-
+import { ref, computed, onMounted } from 'vue';
+import { fetchRechargeActivityInfoAPI } from '@/api/api-activity'; // 添加这个导入
+import { 
+  fetchPersonalBalanceAPI,
+  addPersonalBalanceAPI
+} from '@/api/api-user'; 
 const balance = ref(0);
 const chargeOptions = ref([10, 30, 50, 100, 200, 500]);
+const rechargeActivities = ref([]); // 新增活动数据的 ref
 const selectedAmount = ref(null);
 const customAmount = ref('');
 const selectedPayment = ref('wxpay');
@@ -108,12 +113,20 @@ const formatBalance = (value) => {
 
 // 获取赠送金额
 const getBonus = (amount) => {
-  if (amount >= 500) return 50;
-  if (amount >= 200) return 20;
-  if (amount >= 100) return 10;
-  return 0;
+  const activity = rechargeActivities.value.find(a => a.recharge_amount === amount);
+  return activity ? activity.bonus_amount : 0;
 };
-
+// 添加获取余额的函数
+const fetchBalance = async () => {
+  try {
+    const res = await fetchPersonalBalanceAPI();
+    if (res.code === 200) {
+      balance.value = res.data.balance || 0;
+    }
+  } catch (error) {
+    console.error('获取余额失败:', error);
+  }
+};
 // 选择金额
 const selectAmount = (amount) => {
   selectedAmount.value = amount;
@@ -141,35 +154,71 @@ const canRecharge = computed(() => {
   const amount = Number(customAmount.value || selectedAmount.value || 0);
   return amount > 0 && selectedPayment.value;
 });
-
-// 充值处理
-const handleRecharge = () => {
+// 添加获取充值活动的函数
+const fetchRechargeActivities = async () => {
+  try {
+    const res = await fetchRechargeActivityInfoAPI();
+    if (res.code === 23111 && res.data) {
+      rechargeActivities.value = res.data;
+      // 用 API 返回的金额更新充值选项
+      chargeOptions.value = res.data.map(item => item.recharge_amount);
+    }
+  } catch (error) {
+    console.error('获取充值活动信息失败:', error);
+  }
+};
+// 更新充值处理函数
+const handleRecharge = async () => {
   if (!canRecharge.value) return;
   
-  uni.showLoading({ title: '处理中...' });
+  const amount = Number(customAmount.value || selectedAmount.value);
   
-  // 模拟支付过程
-  setTimeout(() => {
-    uni.hideLoading();
+  try {
+    uni.showLoading({ title: '充值中...' });
+    
+    const res = await addPersonalBalanceAPI(amount);
+    
+    if (res.code === 23061) {
+      // 充值成功后重新获取余额
+      await fetchBalance();
+      
+      uni.showToast({
+        title: '充值成功',
+        icon: 'success',
+        duration: 2000
+      });
+      
+      // 重置选择
+      selectedAmount.value = null;
+      customAmount.value = '';
+     
+    } else {
+      uni.showToast({
+        title: res.msg || '充值失败',
+        icon: 'error'
+      });
+    }
+  } catch (error) {
+    console.error('充值失败:', error);
     uni.showToast({
-      title: '充值成功',
-      icon: 'success',
-      duration: 2000,
-      success: () => {
-        setTimeout(() => {
-          uni.navigateBack();
-        }, 2000);
-      }
+      title: '充值失败，请重试',
+      icon: 'error'
     });
-  }, 1500);
+  } finally {
+    uni.hideLoading();
+  }
 };
-
 // 跳转到交易记录
 const toTransactionRecord = () => {
   uni.navigateTo({
     url: '/pages/transaction-record/transaction-record'
   });
 };
+// 更新 onMounted 钩子
+onMounted(async () => {
+  await fetchBalance();
+  await fetchRechargeActivities();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -353,7 +402,8 @@ const toTransactionRecord = () => {
   }
 
   .recharge-btn {
-    width: 120px;
+   // width: 120px;
+   padding: 0px 30px;
     height: 44px;
     background: #3498db;
     color: #fff;
@@ -363,7 +413,11 @@ const toTransactionRecord = () => {
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
-
+    margin-left: auto; // 添加这行，将按钮推到右边
+    margin: 0 0 0 auto; // 只保留 margin-left: auto，其他方向设为 0
+    &::after {
+      border: none;
+    }
     &:active {
       transform: scale(0.98);
       background: darken(#3498db, 5%);

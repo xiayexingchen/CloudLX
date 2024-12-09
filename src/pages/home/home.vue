@@ -7,14 +7,19 @@
         :input-style="{color: 'var(--text-primary)'}" />
     </view>
 
+
     <!-- 轮播图部分 -->
     <view class="swiper-section">
       <swiper class="swiper" circular autoplay interval="3000" duration="500" indicator-dots
-        :indicator-active-color="'var(--primary-color)'">
-        <swiper-item v-for="(item, index) in swiperList" :key="index">
-          <image :src="item.image" mode="aspectFill" class="swiper-image" />
+        :indicator-active-color="'var(--primary-color)'" @change="handleSwiperChange">
+        <swiper-item v-for="(item, index) in activityList" :key="item.activityId" @click="handleActivityClick(item)">
+          <image :src="getActivityImage(item.imageData)" mode="aspectFill" class="swiper-image" />
         </swiper-item>
       </swiper>
+      <!-- 可选：添加活动标题显示 -->
+      <view class="activity-title" v-if="activityList.length > 0">
+        {{ activityList[currentSwiperIndex]?.activityName }}
+      </view>
     </view>
 
     <!-- 功能按钮区 -->
@@ -198,11 +203,14 @@
     ref,
     onMounted,
     computed,
-    onBeforeUnmount
+    onBeforeUnmount,
   } from 'vue';
   import {
     fetchPackageDataAPI
   } from '../../api/api-parcel';
+  import {
+    fetchActivityAPI
+  } from '../../api/api-activity';
   import {
     onShow
   } from '@dcloudio/uni-app'
@@ -211,6 +219,55 @@
   const autoplay = ref(true);
   const interval = ref(2000);
   const duration = ref(500);
+  // 活动数据
+  const activityList = ref([]);
+  const currentSwiperIndex = ref(0);
+
+  // 获取活动图片完整路径
+  const getActivityImage = (imageData) => {
+    if (!imageData) return '/static/loginLogo.png'; // 默认图片
+    return 'http://120.46.199.126:80' + imageData; // 拼接完整的图片URL
+  };
+  // 处理轮播图切换
+  const handleSwiperChange = (e) => {
+    currentSwiperIndex.value = e.detail.current;
+  };
+  // 处理活动点击
+  const handleActivityClick = (activity) => {
+    if (activity.status === '进行中') {
+      uni.navigateTo({
+        url: `/pages/activity/activity?id=${activity.activityId}`,
+        // success: (res) => {
+        //   // 传递数据给详情页面
+        //   res.eventChannel.emit('activityData', { data: activity })
+        // }
+      });
+    } else {
+      uni.showToast({
+        title: '活动未开始',
+        icon: 'none'
+      });
+    }
+  };
+
+  // 获取活动数据
+  const fetchActivityData = async () => {
+    try {
+      const res = await fetchActivityAPI();
+      if (res.code === 26011) {
+        // 过滤掉没有图片的活动
+        activityList.value = res.data.filter(item => item.imageData);
+      } else {
+        throw new Error(res.msg || '获取活动数据失败');
+      }
+    } catch (error) {
+      console.error('获取活动数据失败:', error);
+      uni.showToast({
+        title: error.message || '获取活动数据失败',
+        icon: 'none'
+      });
+    }
+  };
 
   function toSearch() {
     uni.navigateTo({
@@ -218,16 +275,16 @@
     });
   }
   // 轮播图数据
-  const swiperList = ref([{
-      image: '/static/loginLogo.png'
-    },
-    {
-      image: '/static/loginLogo.png'
-    },
-    {
-      image: '/static/loginLogo.png'
-    }
-  ]);
+  // const swiperList = ref([{
+  //     image: '/static/loginLogo.png'
+  //   },
+  //   {
+  //     image: '/static/loginLogo.png'
+  //   },
+  //   {
+  //     image: '/static/loginLogo.png'
+  //   }
+  // ]);
 
   // Tab 列表和当前选择的 tab
   const tabList = ref([{
@@ -449,7 +506,7 @@
   // 页面加载时获取数据
   onMounted(() => {
     fetchPackageData();
-
+    fetchActivityData();
     // 添加刷新事件监听
     uni.$on('refreshPackageList', () => {
       fetchPackageData();
@@ -519,23 +576,46 @@
     padding: 12px 20px;
     background: var(--bg-secondary);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
   }
 
+  // .swiper-section {
+  //   padding: 16px 20px;
+
+  //   .swiper {
+  //     height: 160px;
+  //     border-radius: 16px;
+  //     overflow: hidden;
+  //     box-shadow: 0 4px 12px rgba(96, 165, 250, 0.1);
+
+  //     .swiper-image {
+  //       width: 100%;
+  //       height: 100%;
+  //       object-fit: cover;
+  //     }
+  //   }
+  // }
   .swiper-section {
-    padding: 16px 20px;
+    position: relative;
 
-    .swiper {
-      height: 160px;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(96, 165, 250, 0.1);
-
-      .swiper-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
+    .activity-title {
+      position: absolute;
+      bottom: 40rpx; // 调整位置，避免与指示点重叠
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #fff;
+      font-size: 28rpx;
+      padding: 0 20rpx;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      z-index: 1;
     }
+  }
+
+  .swiper-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .action-section {
