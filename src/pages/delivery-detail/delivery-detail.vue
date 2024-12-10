@@ -234,10 +234,19 @@ onUnmounted(() => {
   //   address
   // });
   // 选择配送时间
-  const onTimeChange = (e) => {
-    const [dateIndex, timeIndex] = e.detail.value
-    selectedTime.value = `${timeRange.value[0][dateIndex]} ${timeRange.value[1][timeIndex]}`
-  }
+ // 选择配送时间
+const onTimeChange = (e) => {
+  const [dateIndex, timeIndex] = e.detail.value
+  const date = getFormattedDate(dateIndex)
+  const time = timeRange.value[1][timeIndex]
+  selectedTime.value = `${date} ${time.split('-')[0]}`
+}
+// 获取格式化的日期
+const getFormattedDate = (dateIndex) => {
+  const date = new Date()
+  date.setDate(date.getDate() + dateIndex)
+  return dayjs(date).format('YYYY-MM-DD')
+}
 
   // 重新打开时间选择器
   const openTimeSelector = () => {
@@ -350,12 +359,12 @@ onUnmounted(() => {
 
     try {
       const orderInfo = {
-        packageId: packageInfo.value.id,
-        startTime: selectedTime.value,
-        addressId: address.value.id,
-        couponId: selectedCoupon.value?.couponId || null,
-        payment_method: '钱包',
-        amount: totalAmount.value
+        packageId: packageInfo.value.trackingNumber, // 使用运单号作为packageId
+      startTime: selectedTime.value,
+      addressId: address.value.id,
+      couponId: selectedCoupon.value?.couponId || null,
+      payment_method: '钱包',
+      amount: Number(totalAmount.value)
       };
 
       const res = await orderAPI(orderInfo);

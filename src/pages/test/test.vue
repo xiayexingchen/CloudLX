@@ -9,7 +9,8 @@
     ref,
     onMounted
   } from 'vue';
-  const imageSrc = ref('http://192.168.31.118:80/robot/video_stream');
+  // const imageSrc = ref('http://192.168.31.118:80/robot/video_stream');
+  const imageSrc = ref('http://120.46.199.126/robot/video_stream');
   // const imageSrc = ref('');
 
   // onMounted(() => {
