@@ -182,7 +182,7 @@ const fetchAvatar = async () => {
     const res = await fetchAvatarAPI()
     if (res.code === 23101) {
       // 添加时间戳防止缓存，强制刷新图片
-      avatarUrl.value = 'http://120.46.199.126:80' + res.data + '?t=' + new Date().getTime()
+      avatarUrl.value = 'http://120.46.199.126:8080' + res.data + '?t=' + new Date().getTime()
       console.log("avatarUrl: " + avatarUrl.value);
     }
   } catch (err) {

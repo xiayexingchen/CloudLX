@@ -22,25 +22,43 @@
 
     <!-- 根据活动类型显示不同内容 -->
     <template v-if="activityData.activityType === 'ticket'">
-      <!-- 优惠券活动 -->
-      <view class="coupon-section">
-        <view class="coupon-card">
-          <view class="coupon-left">
-            <view class="discount-value">
-              <text class="number">{{ formatDiscountValue(activityData.discountValue) }}</text>
-              <text class="unit">{{ activityData.couponType === '折扣券' ? '折' : '元' }}</text>
-            </view>
-            <text class="coupon-type">{{ activityData.couponType }}</text>
-          </view>
-          <view class="coupon-right">
-            <text class="validity">有效期</text>
-            <text class="dates">{{ formatDate(activityData.startTime) }} - {{ formatDate(activityData.endTime) }}</text>
-            <button class="receive-btn" :class="{ 'disabled': activityData.status !== '进行中' }" @click="receiveCoupon">
-              {{ getButtonText() }}
-            </button>
-          </view>
+  <!-- 优惠券活动部分 -->
+  <view class="coupon-section" v-if="activityData.activityType === 'ticket'">
+    <view class="coupon-wrapper">
+      <view class="coupon">
+        <!-- 左侧金额部分 -->
+        <view class="amount-section">
+          <text class="currency" v-if="activityData.couponType === '代金券'">¥</text>
+          <text class="amount">{{ formatDiscountValue(activityData.discountValue) }}</text>
+          <text class="unit">{{ activityData.couponType === '折扣券' ? '折' : '' }}</text>
+          <text class="type">{{ activityData.couponType }}</text>
         </view>
+
+        <!-- 右侧信息部分 -->
+        <view class="info-section">
+          <view class="title">{{ activityData.activityName }}</view>
+          <view class="date">
+            <text>有效期</text>
+            <text>{{ formatDate(activityData.startTime) }} - {{ formatDate(activityData.endTime) }}</text>
+          </view>
+          <button 
+            class="claim-btn" 
+            :class="{ 
+              'disabled': activityData.status !== '进行中' || isClaimed,
+              'claimed': isClaimed 
+            }" 
+            @click="receiveCoupon"
+          >
+            {{ getButtonText() }}
+          </button>
+        </view>
+
+        <!-- 装饰性圆点 -->
+        <view class="dots dots-left"></view>
+        <view class="dots dots-right"></view>
       </view>
+    </view>
+  </view>
     </template>
     <template v-else>
       <!-- 普通活动 -->
@@ -65,16 +83,21 @@
 <script setup>
   import {
     ref,
-    onMounted
+    onMounted,
+    getCurrentInstance
   } from 'vue';
   import dayjs from 'dayjs';
+  import {
+    fetchCouponStatusAPI,
+    updateCouponStatusAPI
+  } from '@/api/api-activity'; // 确保导入路径正确
 
   //const activityData = ref({});
   const activityData = ref({
     activityId: 1,
     activityName: "元旦有礼！",
     description: "活动详情描述...",
-    imageData: "/activity/example.jpg",
+    imageData: "",
     startTime: "2025-01-01 00:00:00",
     endTime: "2025-01-08 23:59:59",
     status: "进行中",
@@ -82,6 +105,8 @@
     couponType: "代金券",
     discountValue: 2.00
   })
+  // 新增：优惠券是否已领取的状态
+  const isClaimed = ref(false);
   // 格式化日期
   const formatDate = (date) => {
     return dayjs(date).format('YYYY.MM.DD');
@@ -97,11 +122,14 @@
 
   // 获取活动图片
   const getActivityImage = (imageData) => {
-    return import.meta.env.VITE_APP_BASE_API + imageData;
+    return 'http://120.46.199.126:8080' + imageData;
   };
 
-  // 获取按钮文字
+  // 修改：获取按钮文字逻辑
   const getButtonText = () => {
+    if (isClaimed.value) {
+      return '已领取';
+    }
     if (activityData.value.status === '未开始') {
       return '即将开始';
     } else if (activityData.value.status === '进行中') {
@@ -111,8 +139,24 @@
     }
   };
 
-  // 领取优惠券
-  const receiveCoupon = () => {
+  // 新增：检查优惠券状态
+  const checkCouponStatus = async (activityId) => {
+    try {
+      const res = await fetchCouponStatusAPI(activityId);
+      if (res.code === 26021) {
+        isClaimed.value = res.data;
+      }
+    } catch (error) {
+      console.error('获取优惠券状态失败:', error);
+      uni.showToast({
+        title: '获取优惠券状态失败',
+        icon: 'none'
+      });
+    }
+  };
+  // 修改：领取优惠券逻辑
+  const receiveCoupon = async () => {
+    // 检查活动状态
     if (activityData.value.status !== '进行中') {
       uni.showToast({
         title: activityData.value.status === '未开始' ? '活动未开始' : '活动已结束',
@@ -121,19 +165,44 @@
       return;
     }
 
-    // TODO: 调用领取优惠券API
-    uni.showLoading({
-      title: '领取中...'
-    });
-
-    // 模拟API调用
-    setTimeout(() => {
-      uni.hideLoading();
+    // 检查是否已领取
+    if (isClaimed.value) {
       uni.showToast({
-        title: '领取成功',
-        icon: 'success'
+        title: '您已领取过该优惠券',
+        icon: 'none'
       });
-    }, 1000);
+      return;
+    }
+
+    try {
+      uni.showLoading({
+        title: '领取中...'
+      });
+
+      const res = await updateCouponStatusAPI(activityData.value.activityId);
+
+      uni.hideLoading();
+
+      if (res.code === 26031) {
+        isClaimed.value = true;
+        uni.showToast({
+          title: '领取成功',
+          icon: 'success'
+        });
+      } else {
+        uni.showToast({
+          title: res.msg || '领取失败',
+          icon: 'none'
+        });
+      }
+    } catch (error) {
+      uni.hideLoading();
+      console.error('领取优惠券失败:', error);
+      uni.showToast({
+        title: '领取失败，请稍后重试',
+        icon: 'none'
+      });
+    }
   };
 
   // 页面加载时获取活动详情
@@ -144,14 +213,19 @@
     const activityId = currentPage.options.id;
 
     // 修复: 从当前页面实例获取 eventChannel
-    // const eventChannel = currentPage.$getOpenerEventChannel?.();
-    // if (eventChannel) {
-    //   // 接收上一页面传递的数据
-    //   eventChannel.on('activityData', function(data) {
-    //     console.log('接收到的活动数据:', data);
-    //     activityData.value = data.data;
-    //   });
-    // }
+    const instance = getCurrentInstance().proxy
+    const eventChannel = instance.getOpenerEventChannel();
+    if (eventChannel) {
+      // 接收上一页面传递的数据
+      eventChannel.on('activityData', function(data) {
+        console.log('接收到的活动数据:', data);
+        activityData.value = data.data;
+        // 获取到活动数据后检查优惠券状态
+        if (activityData.value.activityType === 'ticket') {
+          checkCouponStatus(activityData.value.activityId);
+        }
+      });
+    }
   });
 </script>
 
@@ -211,98 +285,145 @@
     }
 
     .coupon-section {
-      padding: 30rpx;
+  padding: 30rpx;
+  
+  .coupon-wrapper {
+    padding: 20rpx;
+    background: #fff;
+    border-radius: 16rpx;
+  }
 
-      .coupon-card {
-        background: linear-gradient(135deg, #ff6b6b, #ff8787);
-        border-radius: 16rpx;
-        height: 200rpx;
-        display: flex;
-        overflow: hidden;
+  .coupon {
+    position: relative;
+    display: flex;
+    background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+    border-radius: 12rpx;
+    height: 220rpx;
+    overflow: hidden;
+    box-shadow: 0 4rpx 16rpx rgba(255, 107, 107, 0.2);
+
+    // 左侧金额部分
+    .amount-section {
+      width: 35%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      position: relative;
+      padding: 20rpx;
+
+      .currency {
+        font-size: 36rpx;
+        color: #fff;
         position: relative;
+        top: 10rpx;
+      }
 
-        &::before {
-          content: '';
-          position: absolute;
-          left: 70%;
-          top: 0;
-          bottom: 0;
-          width: 20rpx;
-          background: radial-gradient(circle at 0 50%, transparent 25%, #f8f8f8 26%, #f8f8f8 75%, transparent 76%) repeat-y;
-          background-size: 20rpx 40rpx;
+      .amount {
+        font-size: 80rpx;
+        font-weight: bold;
+        color: #fff;
+        line-height: 1;
+        margin: 10rpx 0;
+      }
+
+      .unit {
+        font-size: 32rpx;
+        color: #fff;
+      }
+
+      .type {
+        font-size: 24rpx;
+        color: #fff;
+        margin-top: 10rpx;
+        padding: 4rpx 16rpx;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20rpx;
+      }
+    }
+
+    // 右侧信息部分
+    .info-section {
+      flex: 1;
+      padding: 30rpx;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      .title {
+        font-size: 32rpx;
+        color: #fff;
+        font-weight: 500;
+      }
+
+      .date {
+        display: flex;
+        flex-direction: column;
+        font-size: 24rpx;
+        color: rgba(255, 255, 255, 0.8);
+        
+        text {
+          margin: 4rpx 0;
         }
+      }
 
-        .coupon-left {
-          width: 70%;
-          padding: 30rpx;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          color: #fff;
-
-          .discount-value {
-            display: flex;
-            align-items: baseline;
-
-            .number {
-              font-size: 80rpx;
-              font-weight: bold;
-            }
-
-            .unit {
-              font-size: 32rpx;
-              margin-left: 8rpx;
-            }
-          }
-
-          .coupon-type {
-            font-size: 28rpx;
-            margin-top: 8rpx;
-          }
+      .claim-btn {
+        width: 180rpx;
+        height: 64rpx;
+        line-height: 64rpx;
+        font-size: 28rpx;
+        color: #FF6B6B;
+        background: #fff;
+        border-radius: 32rpx;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+        align-self: flex-end;
+        
+        &.disabled {
+          background: rgba(255, 255, 255, 0.6);
+          color: rgba(255, 107, 107, 0.6);
         }
-
-        .coupon-right {
-          flex: 1;
-          background: rgba(255, 255, 255, 0.1);
-          padding: 30rpx;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          color: #fff;
-
-          .validity {
-            font-size: 24rpx;
-            opacity: 0.8;
-          }
-
-          .dates {
-            font-size: 22rpx;
-            margin: 8rpx 0 16rpx;
-            opacity: 0.8;
-          }
-
-          .receive-btn {
-            width: 160rpx;
-            height: 60rpx;
-            line-height: 60rpx;
-            text-align: center;
-            background: #fff;
-            color: #ff6b6b;
-            border-radius: 30rpx;
-            font-size: 24rpx;
-            font-weight: bold;
-
-            &.disabled {
-              background: rgba(255, 255, 255, 0.5);
-              color: rgba(255, 107, 107, 0.5);
-            }
-          }
+        
+        &.claimed {
+          background: rgba(255, 255, 255, 0.5);
+          color: rgba(255, 255, 255, 0.8);
         }
       }
     }
 
+    // 装饰性圆点
+    .dots {
+      position: absolute;
+      width: 20rpx;
+      height: 20rpx;
+      background: #f8f8f8;
+      border-radius: 50%;
+      
+      &.dots-left {
+        left: -10rpx;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      
+      &.dots-right {
+        right: -10rpx;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 35%;
+      top: 0;
+      bottom: 0;
+      border-left: 2rpx dashed rgba(255, 255, 255, 0.3);
+    }
+  }
+}
     .activity-content {
       margin-top: 20rpx;
       padding: 30rpx;

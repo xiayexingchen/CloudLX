@@ -32,7 +32,7 @@
           </view>
 
           <!-- 删除按钮 - 仅在管理模式下显示 -->
-          <view v-if="isManageMode" class="delete-btn" @click.stop="deleteAddress(address)">
+          <view v-if="isManageMode" class="delete-btn" @click.stop="deleteAddress(address.address_id)">
             <u-icon name="trash" color="#666" size="40"></u-icon>
           </view>
         </view>
@@ -80,7 +80,8 @@
   import {
     fetchAddressDataAPI,
     addAddressDataAPI,
-    updateAddressDataAPI
+    updateAddressDataAPI,
+    deleteAddressAPI
   } from '@/api/api-user'
   import {
     onLoad,
@@ -124,38 +125,33 @@
   }
 
   // 删除地址
-  const deleteAddress = async (address) => {
-    uni.showModal({
-      title: '提示',
-      content: '确定要删除该地址吗？',
-      success: async (res) => {
-        if (res.confirm) {
-          try {
-            const addressInfo = {
-              addressId: address.address_id,
-              recipientName: address.recipient_name,
-              region: address.region,
-              build: address.building,
-              isDefault: false,
-              isDeleted: true
-            }
-            const res = await updateAddressDataAPI(addressInfo)
-            if (res.code === 200) {
+  // 处理删除消息
+  const deleteAddress = async (addressId) => {
+    try {
+      uni.showModal({
+        title: '提示',
+        content: '确定要删除这条消息吗？',
+        success: async (res) => {
+          if (res.confirm) {
+            const result = await deleteAddressAPI(addressId)
+            if (result.code === 23131) {
               uni.showToast({
                 title: '删除成功',
                 icon: 'success'
               })
-              fetchAddressList() // 重新获取地址列表
+              // 重新获取消息列表
+              fetchAddressList()
             }
-          } catch (error) {
-            uni.showToast({
-              title: '删除失败',
-              icon: 'error'
-            })
           }
         }
-      }
-    })
+      })
+    } catch (err) {
+      console.error('删除消息失败:', err)
+      uni.showToast({
+        title: '删除失败',
+        icon: 'none'
+      })
+    }
   }
 
   // 选择地址（仅在选择模式下生效）

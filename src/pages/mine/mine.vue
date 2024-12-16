@@ -36,10 +36,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
-import { debounce } from 'lodash'
-import { fetchAvatarAPI, fetchUserDataAPI } from '@/api/api-user'
+  import {
+    ref,
+    onMounted
+  } from 'vue'
+  import {
+    onShow
+  } from '@dcloudio/uni-app'
+  import {
+    debounce
+  } from 'lodash'
+  import {
+    fetchAvatarAPI,
+    fetchUserDataAPI,
+    logoutAPI
+  } from '@/api/api-user'
 
 
 
@@ -48,61 +59,61 @@ import { fetchAvatarAPI, fetchUserDataAPI } from '@/api/api-user'
     nickname: '',
   })
 
-// 头像URL
-const avatarUrl = ref('')
-// 保存上一次的URL用于比较
-const lastAvatarUrl = ref('')
-// 获取头像URL
-const fetchAvatar = async () => {
-  try {
-    const res = await fetchAvatarAPI()
-    if (res.code === 23101) {
-      const newUrl = 'http://120.46.199.126:80' + res.data + '?t=' + new Date().getTime()
-      
-      // 只有当URL发生变化时才更新
-      if (newUrl !== lastAvatarUrl.value) {
-        avatarUrl.value = newUrl
-        lastAvatarUrl.value = newUrl
-        console.log('头像已更新')
-      } else {
-        console.log('头像未变化，无需更新')
+  // 头像URL
+  const avatarUrl = ref('')
+  // 保存上一次的URL用于比较
+  const lastAvatarUrl = ref('')
+  // 获取头像URL
+  const fetchAvatar = async () => {
+    try {
+      const res = await fetchAvatarAPI()
+      if (res.code === 23101) {
+        const newUrl = 'http://120.46.199.126:8080' + res.data + '?t=' + new Date().getTime()
+
+        // 只有当URL发生变化时才更新
+        if (newUrl !== lastAvatarUrl.value) {
+          avatarUrl.value = newUrl
+          lastAvatarUrl.value = newUrl
+          console.log('头像已更新')
+        } else {
+          console.log('头像未变化，无需更新')
+        }
       }
+    } catch (err) {
+      console.error('获取头像失败:', err)
     }
-  } catch (err) {
-    console.error('获取头像失败:', err)
   }
-}
-// 获取用户信息
-const fetchUserData = async () => {
-  try {
-    const res = await fetchUserDataAPI()
-    if (res.code === 23011) {
-      // 只有当用户信息发生变化时才更新
-      if (JSON.stringify(userInfo.value) !== JSON.stringify(res.data)) {
-        userInfo.value = res.data
-        console.log('用户信息已更新')
-      } else {
-        console.log('用户信息未变化，无需更新')
+  // 获取用户信息
+  const fetchUserData = async () => {
+    try {
+      const res = await fetchUserDataAPI()
+      if (res.code === 23011) {
+        // 只有当用户信息发生变化时才更新
+        if (JSON.stringify(userInfo.value) !== JSON.stringify(res.data)) {
+          userInfo.value = res.data
+          console.log('用户信息已更新')
+        } else {
+          console.log('用户信息未变化，无需更新')
+        }
       }
+    } catch (err) {
+      console.error('获取用户信息失败:', err)
     }
-  } catch (err) {
-    console.error('获取用户信息失败:', err)
   }
-}
 
-// 创建防抖版本的获取函数
-const debouncedFetchAvatar = debounce(fetchAvatar, 300)
-const debouncedFetchUserData = debounce(fetchUserData, 300)
-onMounted(() => {
-  fetchAvatar()
-  fetchUserData()
-})
+  // 创建防抖版本的获取函数
+  const debouncedFetchAvatar = debounce(fetchAvatar, 300)
+  const debouncedFetchUserData = debounce(fetchUserData, 300)
+  onMounted(() => {
+    fetchAvatar()
+    fetchUserData()
+  })
 
 
-onShow(() => {
-  debouncedFetchAvatar()
-  debouncedFetchUserData()
-})
+  onShow(() => {
+    debouncedFetchAvatar()
+    debouncedFetchUserData()
+  })
   // 处理点击事件
   const handleClick = (item) => {
     // 使用 item.action 来调用对应的函数
@@ -167,18 +178,18 @@ onShow(() => {
     })
   }
 
-// 跳转到反馈页面
-const toFeedback = () => {
-  uni.navigateTo({
-    url: '/pages/feedback/feedback',
-    success: (res) => {
-      // 传递用户名到反馈页面
-      res.eventChannel.emit('userData', {
-        username: userInfo.value.username
-      })
-    }
-  })
-}
+  // 跳转到反馈页面
+  const toFeedback = () => {
+    uni.navigateTo({
+      url: '/pages/feedback/feedback',
+      success: (res) => {
+        // 传递用户名到反馈页面
+        res.eventChannel.emit('userData', {
+          username: userInfo.value.username
+        })
+      }
+    })
+  }
 
   const toDisclaimer = () => {
     uni.navigateTo({
@@ -186,24 +197,61 @@ const toFeedback = () => {
     })
   }
 
-  const handleLogout = () => {
-    uni.showModal({
-      title: '提示',
-      content: '确定要退出登录吗？',
-      success: (res) => {
-        if (res.confirm) {
-          // TODO: 执行退出登录逻辑
-          uni.clearStorageSync()
-          uni.reLaunch({
-            url: '/pages/login/login'
-          })
+  const handleLogout = async () => {
+  uni.showModal({
+    title: '提示',
+    content: '确定要退出登录吗？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          uni.showLoading({
+            title: '退出中...'
+          });
+          
+          // 调用退出登录 API
+          const result = await logoutAPI();
+          
+          uni.hideLoading();
+          
+          if (result.code === 23041) { // 假设 23041 是退出成功的状态码
+            // 清除本地存储的用户信息
+            uni.clearStorageSync();
+            
+            // 显示退出成功提示
+            uni.showToast({
+              title: '退出成功',
+              icon: 'success',
+              duration: 1500
+            });
+            
+            // 延迟跳转，让用户看到提示
+            setTimeout(() => {
+              // 重定向到登录页面
+              uni.reLaunch({
+                url: '/pages/index/index'
+              });
+            }, 1500);
+          } else {
+            uni.showToast({
+              title: result.msg || '退出失败',
+              icon: 'none'
+            });
+          }
+        } catch (error) {
+          uni.hideLoading();
+          console.error('退出登录失败:', error);
+          uni.showToast({
+            title: '退出失败，请稍后重试',
+            icon: 'none'
+          });
         }
       }
-    })
-  }
+    }
+  });
+};
 </script>
 
-// ... existing template code ...
+
 
 <style lang="scss" scoped>
   :root {

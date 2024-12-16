@@ -67,7 +67,7 @@
           @click="handleSubmit">
           添加包裹
         </button>
-        <text class="tips">添加包裹后将通知包裹主人</text>
+        <!--        <text class="tips">添加包裹后将通知包裹主人</text> -->
       </view>
     </view>
   </view>

@@ -85,7 +85,7 @@
   const markAsRead = async (messageId) => {
     try {
       const result = await readMessagesAPI(messageId)
-      if (result.code === 25011) {
+      if (result.code === 25021) {
         console.log('消息已标记为已读')
       }
     } catch (err) {

@@ -89,6 +89,18 @@ export const updateAddressDataAPI = (addressInfo) => {
   })
 
 }
+//删除地址信息
+export const deleteAddressAPI = (addressId) => {
+  return request({
+    url: '/user/mine-view/delete-personal-address',
+    method: 'delete',
+    data: {
+      addressId
+    }
+
+  })
+}
+
 //获得用户未使用优惠券
 export const fetchUnUsedCouponssDataAPI = () => {
   return request({
@@ -199,6 +211,14 @@ export const feedbackAPI = (feedbackInfo) => {
 
   })
 }
+//获取用户账单情况
+export const fetchPersonalPaymentsAPI = () => {
+  return request({
+    url: '/user/mine-view/get-payments',
+    method: 'get',
+  })
+}
+
 //退出登录
 export const logoutAPI = () => {
   return request({

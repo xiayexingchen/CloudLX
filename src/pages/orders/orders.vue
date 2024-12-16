@@ -14,7 +14,7 @@
   // 状态变量
 
   const showCalendar = ref(false);
-  const startDate = ref(dayjs().subtract(7, 'day').format('YYYY-MM-DD'));
+  const startDate = ref(dayjs().subtract(60, 'day').format('YYYY-MM-DD'));
   const endDate = ref(dayjs().format('YYYY-MM-DD'));
   const orders = ref([]);
   const loading = ref(false);
@@ -154,7 +154,36 @@
     });
   };
 
-
+// 处理订单点击
+const handleOrderClick = (order) => {
+  uni.navigateTo({
+    url: '/pages/order-detail/order-detail',
+    success: (res) => {
+      // 传递订单数据到详情页
+      res.eventChannel.emit('orderData', {
+        site_name: order.site_name,
+        completed_at: order.completed_at,
+        delivery_address: order.delivery_address,
+        estimated_completion_time: order.estimated_completion_time,
+        total_amount: order.total_amount,
+        created_at: order.created_at,
+        phone_number: order.phone_number,
+        package_id: order.package_id,
+        type: order.type,
+        order_id: order.order_id,
+        username: order.username,
+        status: order.status
+      });
+    },
+    fail: (err) => {
+      console.error('页面跳转失败:', err);
+      uni.showToast({
+        title: '页面跳转失败',
+        icon: 'none'
+      });
+    }
+  });
+};
 
   // 复制单号
   const copyTrackingNumber = (number) => {
@@ -214,7 +243,7 @@
     <view class="orders-list">
       <block v-for="(group, date) in groupedOrders" :key="date">
         <view class="date-divider">{{ date }}</view>
-        <view class="order-card" v-for="order in group" :key="order.order_id">
+        <view class="order-card" v-for="order in group" :key="order.order_id" @click="handleOrderClick(order)">
           <!-- 订单头部 -->
           <view class="order-header">
             <view class="left">

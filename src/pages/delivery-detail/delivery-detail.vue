@@ -192,7 +192,7 @@
   // 配送时间选择
   const timeRange = ref([
     ['今天', '明天', '后天'],
-    ['09:00-11:00', '14:00-16:00', '16:00-18:00']
+    ['09:00-11:00', '18:20-16:00', '21:55-18:00']
   ])
   const selectedTime = ref('')
   // 优惠券相关状态变量
@@ -201,52 +201,52 @@
   const selectedCoupon = ref(null);
   const deliveryFee = ref(2.5); // 配送费用
 
- // 选择地址
-// 选择地址
-const chooseAddress = () => {
-  uni.navigateTo({
-    url: '/pages/address/address?mode=select'
-  });
-};
-
-// 统一处理地址更新的函数
-const updateAddress = (selectedAddr) => {
-  console.log('收到选中的地址:', selectedAddr);
-  address.value = {
-    id: selectedAddr.addressId,
-    name: selectedAddr.recipientName,
-    fullAddress: `${selectedAddr.region} ${selectedAddr.building}`
+  // 选择地址
+  // 选择地址
+  const chooseAddress = () => {
+    uni.navigateTo({
+      url: '/pages/address/address?mode=select'
+    });
   };
-};
 
-// 监听地址选择事件
-onShow(() => {
-  uni.$on('addressSelected', updateAddress);
-});
+  // 统一处理地址更新的函数
+  const updateAddress = (selectedAddr) => {
+    console.log('收到选中的地址:', selectedAddr);
+    address.value = {
+      id: selectedAddr.addressId,
+      name: selectedAddr.recipientName,
+      fullAddress: `${selectedAddr.region} ${selectedAddr.building}`
+    };
+  };
 
-// 记得在页面卸载时移除事件监听
-onUnmounted(() => {
-  uni.$off('addressSelected');
-});
+  // 监听地址选择事件
+  onShow(() => {
+    uni.$on('addressSelected', updateAddress);
+  });
+
+  // 记得在页面卸载时移除事件监听
+  onUnmounted(() => {
+    uni.$off('addressSelected');
+  });
 
   // // 由于使用了 setup 语法，需要暴露 address 变量
   // defineExpose({
   //   address
   // });
   // 选择配送时间
- // 选择配送时间
-const onTimeChange = (e) => {
-  const [dateIndex, timeIndex] = e.detail.value
-  const date = getFormattedDate(dateIndex)
-  const time = timeRange.value[1][timeIndex]
-  selectedTime.value = `${date} ${time.split('-')[0]}`
-}
-// 获取格式化的日期
-const getFormattedDate = (dateIndex) => {
-  const date = new Date()
-  date.setDate(date.getDate() + dateIndex)
-  return dayjs(date).format('YYYY-MM-DD')
-}
+  // 选择配送时间
+  const onTimeChange = (e) => {
+    const [dateIndex, timeIndex] = e.detail.value
+    const date = getFormattedDate(dateIndex)
+    const time = timeRange.value[1][timeIndex]
+    selectedTime.value = `${date} ${time.split('-')[0]}`
+  }
+  // 获取格式化的日期
+  const getFormattedDate = (dateIndex) => {
+    const date = new Date()
+    date.setDate(date.getDate() + dateIndex)
+    return dayjs(date).format('YYYY-MM-DD')
+  }
 
   // 重新打开时间选择器
   const openTimeSelector = () => {
@@ -336,45 +336,77 @@ const getFormattedDate = (dateIndex) => {
 
   // 提交订单
   // 提交订单
-  async function submitOrder() {
-    if (!address.value) {
-      uni.showToast({
-        title: '请选择收货地址',
-        icon: 'none'
-      });
-      return;
-    }
-    if (!selectedTime.value) {
-      uni.showToast({
-        title: '请选择配送时间',
-        icon: 'none'
-      });
-      return;
+// delivery-detail.vue
+import { fetchPersonalBalanceAPI } from '@/api/api-user';
+
+// 提交订单
+async function submitOrder() {
+  if (!address.value) {
+    uni.showToast({
+      title: '请选择收货地址',
+      icon: 'none'
+    });
+    return;
+  }
+  if (!selectedTime.value) {
+    uni.showToast({
+      title: '请选择配送时间',
+      icon: 'none'
+    });
+    return;
+  }
+
+  // 检查余额
+  try {
+    const balanceRes = await fetchPersonalBalanceAPI();
+    if (balanceRes.code === 23051) {
+      const balance = balanceRes.data;
+      const orderAmount = Number(totalAmount.value);
+
+      if (balance < orderAmount) {
+        // 显示确认框
+        uni.showModal({
+          title: '余额不足',
+          content: `当前余额：¥${balance}\n订单金额：¥${orderAmount}\n是否前往充值？`,
+          confirmText: '去充值',
+          cancelText: '取消',
+          success: (res) => {
+            if (res.confirm) {
+              // 用户点击确认，跳转到钱包页面
+              uni.navigateTo({
+                url: '/pages/wallet/wallet'
+              });
+            }
+          }
+        });
+        return;
+      }
     }
 
-    // TODO: 调用提交订单API
+    // 余额充足，继续提交订单
     uni.showLoading({
       title: '提交中...'
     });
 
     try {
       const orderInfo = {
-        packageId: packageInfo.value.trackingNumber, // 使用运单号作为packageId
-      startTime: selectedTime.value,
-      addressId: address.value.id,
-      couponId: selectedCoupon.value?.couponId || null,
-      payment_method: '钱包',
-      amount: Number(totalAmount.value)
+        packageId: packageInfo.value.trackingNumber,
+        startTime: selectedTime.value,
+        addressId: address.value.id,
+        couponId: selectedCoupon.value?.couponId || null,
+        payment_method: '钱包',
+        amount: Number(totalAmount.value)
       };
 
       const res = await orderAPI(orderInfo);
 
       if (res.code === 24021) {
         uni.hideLoading();
+        uni.$emit('refreshPackageList');
         uni.showToast({
           title: '订单提交成功',
           icon: 'success',
-          duration: 1500, // 这里应该放在 showToast 配置里
+          duration: 1500,
           success: () => {
             setTimeout(() => {
               uni.navigateBack();
@@ -391,7 +423,14 @@ const getFormattedDate = (dateIndex) => {
         icon: 'none'
       });
     }
+  } catch (error) {
+    console.error('获取余额失败:', error);
+    uni.showToast({
+      title: '获取余额信息失败',
+      icon: 'none'
+    });
   }
+}
 
   // 页面加载时初始化默认地址
   onMounted(() => {

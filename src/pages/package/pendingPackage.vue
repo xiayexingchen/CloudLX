@@ -54,7 +54,7 @@
             </scroll-view>
 
             <!-- 操作按钮 -->
-            <view class="action-buttons">
+            <!-- <view class="action-buttons">
                 <button class="action-btn navigate" @click="handleNavigation">
                     <u-icon name="map" size="20" />
                     <text>导航到柜子</text>
@@ -63,7 +63,7 @@
                     <u-icon name="server-man" size="20" />
                     <text>联系客服</text>
                 </button>
-            </view>
+            </view> -->
         </view>
     </view>
 </template>

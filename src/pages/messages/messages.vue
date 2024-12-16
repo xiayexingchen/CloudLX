@@ -17,17 +17,17 @@
       <view v-if="filteredMessages.length > 0">
         <u-swipe-action v-for="(message, index) in filteredMessages" :key="message.messageId" :show="message.show"
           :index="index" :options="options" @click="handleSwipeClick" @open="handleSwipeOpen">
-    
-            <view class="message-item" :class="{ unread: !message.isRead }" @click="handleMessageClick(message)">
-              <view class="message-content">
+
+          <view class="message-item" :class="{ unread: !message.isRead }" @click="handleMessageClick(message)">
+            <view class="message-content">
               <view class="message-header">
                 <text class="message-type">{{ message.messageType }}</text>
                 <text class="message-time">{{ formatTime(message.createdAt) }}</text>
               </view>
               <text class="message-title text-ellipsis">{{ message.title }}</text>
               <text class="message-desc text-ellipsis">{{ formatContent(message.content) }}</text>
-              </view>
-      
+            </view>
+
           </view>
         </u-swipe-action>
       </view>
@@ -57,7 +57,7 @@
     fetchMessagesAPI,
     deleteMessagesAPI
   } from '@/api/api-user'
-
+  import { onShow } from '@dcloudio/uni-app';
   const messages = ref([])
   const currentTab = ref('包裹提醒')
   // 滑动按钮配置
@@ -185,7 +185,7 @@
         success: async (res) => {
           if (res.confirm) {
             const result = await deleteMessagesAPI(messageId)
-            if (result.code === 25011) {
+            if (result.code === 25031) {
               uni.showToast({
                 title: '删除成功',
                 icon: 'success'
@@ -224,7 +224,10 @@
   const loadMore = () => {
     // TODO: 实现加载更多逻辑
   }
-
+// 在页面显示时刷新数据
+onShow(() => {
+  fetchMessages();
+});
   onMounted(() => {
     fetchMessages()
   })
@@ -342,15 +345,15 @@
   // 滑动按钮样式
   :deep(.u-swipe-action) {
     width: 100% !important;
-    
+
     .u-swipe-action-item {
       width: 100% !important;
-      
+
       &__content {
         width: 100% !important;
         box-sizing: border-box;
       }
-      
+
       &__right {
         height: 100%;
         display: flex;

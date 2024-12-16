@@ -27,3 +27,23 @@ export const orderAPI = (orderInfo) => {
     }
   })
 }
+//取消订单
+export const cancelOrderAPI = (orderId) => {
+  return request({
+    url: '/user/myOrderView/cancelOrder',
+    method: 'post',
+    data: {
+      orderId: orderId
+    }
+  })
+}
+//确认收货
+export const confirmDeliveryAPI = (orderId) => {
+  return request({
+    url: '/user/myOrderView/confirmDelivery',
+    method: 'post',
+    data: {
+      orderId: orderId
+    }
+  })
+}

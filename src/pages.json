@@ -148,12 +148,12 @@
         "navigationBarTitleText": ""
       }
     },
-    {
-      "path": "pages/delivery-detail/delivery-address",
-      "style": {
-        "navigationBarTitleText": ""
-      }
-    },
+    // {
+    //   "path": "pages/delivery-detail/delivery-address",
+    //   "style": {
+    //     "navigationBarTitleText": ""
+    //   }
+    // },
     {
       "path": "pages/search/search",
       "style": {
@@ -176,6 +176,20 @@
       "path": "pages/activity/activity",
       "style": {
         "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path" : "pages/order-detail/order-detail",
+      "style" : 
+      {
+        "navigationBarTitleText" : ""
+      }
+    },
+    {
+      "path" : "pages/transaction-record/transaction-record",
+      "style" : 
+      {
+        "navigationBarTitleText" : ""
       }
     }
   ],

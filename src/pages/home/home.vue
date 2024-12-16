@@ -58,9 +58,17 @@
               </view>
             </template>
             <!-- 2. 有订单号包裹 -->
-            <template v-if="currentTab !== 0">
+            <template v-if="currentTab == 1||currentTab == 2">
               <view class="package-info">
                 <text class="package-type">{{ item.packageStatus }}</text>
+                <text>{{" "}}</text> <text>{{" "}}</text> <text>{{" "}}</text>
+                <text class="tracking-number">
+                  {{item.packageOrderId }}</text>
+              </view>
+            </template>
+            <template v-if="currentTab == 3">
+              <view class="package-info">
+                <text class="package-type">已超时</text>
                 <text>{{" "}}</text> <text>{{" "}}</text> <text>{{" "}}</text>
                 <text class="tracking-number">
                   {{item.packageOrderId }}</text>
@@ -82,7 +90,8 @@
               </view>
               <view class="info-item">
                 <u-icon name="map" size="20" color="#64748B"></u-icon>
-                <text>包裹位置：{{ `${item.packageSiteName} - ${item.packageSiteaddress}` }}</text>
+                <text>包裹位置：{{ `${item.packageSiteName} ` }}</text>
+
               </view>
               <view class="info-item">
                 <u-icon name="clock" size="20" color="#64748B"></u-icon>
@@ -136,8 +145,8 @@
 
             <!-- 4. 已超时包裹 -->
             <template v-if="currentTab === 3">
-              <!--              <view class="info-item timeout">
-                <u-icon name="warning" size="24" color="#ff9900"></u-icon>
+              <!--            <view class="info-item timeout">
+                <u-icon name="warning" size="24" color="#64748B"></u-icon>
                 <text class="timeout-text">已超时</text>
               </view> -->
               <view class="info-item warning">
@@ -151,18 +160,27 @@
           <view class="card-actions" @click.stop>
             <!-- 待取包裹 -->
             <template v-if="currentTab === 0">
-              <button class="action-btn primary" @click="toDeliverPackage(item)">
+              <button class="action-btn primary" @click="toDeliverPackage(item)" :disabled="isPackageDelivering(item)"
+                :class="{ 'disabled': isPackageDelivering(item) }">
                 <u-icon name="arrow-right" size="20" color="#FFFFFF"></u-icon>
-                <text>机器人配送</text>
+                <text>{{ isPackageDelivering(item) ? '待发货' : '机器人配送' }}</text>
               </button>
             </template>
 
-            <!-- 正在配送 - 无按钮 -->
+            <!-- 正在配送 - 添加退单按钮 -->
             <template v-else-if="currentTab === 1">
-              <!--              <button class="action-btn primary" @click="toPickupPackage(item)">
-                <u-icon name="arrow-right" size="16" color="#FFFFFF"></u-icon>
-                <text>取消订单</text>
-              </button> -->
+              <template v-if="item.packageStatus === '待发货'">
+                <button class="action-btn primary" @click="cancelOrder(item)">
+                  <u-icon name="close" size="20" color="#FFFFFF"></u-icon>
+                  <text>退单</text>
+                </button>
+              </template>
+              <template v-else-if="item.packageStatus === '已完成'">
+                <button class="action-btn primary" @click="confirmDelivery(item)">
+                  <u-icon name="checkmark" size="20" color="#FFFFFF"></u-icon>
+                  <text>确认签收</text>
+                </button>
+              </template>
             </template>
 
             <!-- 今日签收 -->
@@ -213,6 +231,10 @@
     fetchActivityAPI
   } from '../../api/api-activity';
   import {
+    cancelOrderAPI,
+    confirmDeliveryAPI
+  } from '../../api/api-order';
+  import {
     onShow
   } from '@dcloudio/uni-app'
   const indicatorDots = ref(true);
@@ -227,7 +249,7 @@
   // 获取活动图片完整路径
   const getActivityImage = (imageData) => {
     if (!imageData) return '/static/loginLogo.png'; // 默认图片
-    return 'http://120.46.199.126:80' + imageData; // 拼接完整的图片URL
+    return 'http://120.46.199.126:8080' + imageData; // 拼接完整的图片URL
   };
   // 处理轮播图切换
   const handleSwiperChange = (e) => {
@@ -238,10 +260,12 @@
     if (activity.status === '进行中') {
       uni.navigateTo({
         url: `/pages/activity/activity?id=${activity.activityId}`,
-        // success: (res) => {
-        //   // 传递数据给详情页面
-        //   res.eventChannel.emit('activityData', { data: activity })
-        // }
+        success: (res) => {
+          // 传递数据给详情页面
+          res.eventChannel.emit('activityData', {
+            data: activity
+          })
+        }
       });
     } else {
       uni.showToast({
@@ -250,7 +274,67 @@
       });
     }
   };
-
+  // 添加退单方法
+  const cancelOrder = async (parcel) => {
+    try {
+      uni.showModal({
+        title: '确认退单',
+        content: '确定要取消该订单吗？',
+        success: async (res) => {
+          if (res.confirm) {
+            console.log("parcel.packageId" + parcel.packageOrderId)
+            const response = await cancelOrderAPI(parcel.packageOrderId);
+            if (response.code === 24031) {
+              uni.showToast({
+                title: '退单成功',
+                icon: 'success'
+              });
+              // 刷新包裹列表
+              fetchPackageData();
+            } else {
+              throw new Error(response.msg || '退单失败');
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('退单失败:', error);
+      uni.showToast({
+        title: error.message || '退单失败',
+        icon: 'none'
+      });
+    }
+  };
+  // 添加确认签收方法
+  const confirmDelivery = async (parcel) => {
+    try {
+      uni.showModal({
+        title: '确认签收',
+        content: '确定要签收该包裹吗？',
+        success: async (res) => {
+          if (res.confirm) {
+            const response = await confirmDeliveryAPI(parcel.packageOrderId);
+            if (response.code === 24051) {
+              uni.showToast({
+                title: '签收成功',
+                icon: 'success'
+              });
+              // 刷新包裹列表
+              fetchPackageData();
+            } else {
+              throw new Error(response.msg || '签收失败');
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('签收失败:', error);
+      uni.showToast({
+        title: error.message || '签收失败',
+        icon: 'none'
+      });
+    }
+  };
   // 获取活动数据
   const fetchActivityData = async () => {
     try {
@@ -271,22 +355,25 @@
   };
 
   function toSearch() {
-    uni.navigateTo({
-      url: "/pages/search/search"
-    });
-  }
-  // 轮播图数据
-  // const swiperList = ref([{
-  //     image: '/static/loginLogo.png'
-  //   },
-  //   {
-  //     image: '/static/loginLogo.png'
-  //   },
-  //   {
-  //     image: '/static/loginLogo.png'
-  //   }
-  // ]);
-
+  uni.navigateTo({
+    url: "/pages/search/search",
+    success: function(res) {
+      // 通过eventChannel向搜索页面传递数据
+      res.eventChannel.emit('acceptPackageData', {
+        pendingPackages: allPackages.value.pendingPackageList || [],
+        deliveringPackages: allPackages.value.deliveringPackageList || [],
+        completedPackages: allPackages.value.completedPackageList || [],
+        timeoutPackages: allPackages.value.timeoutPackageList || []
+      });
+    }
+  });
+}
+  const isPackageDelivering = (parcel) => {
+    // 检查包裹是否在配送列表中
+    return allPackages.value.deliveringPackageList.some(
+      p => p.packageId === parcel.packageId && p.packageStatus === '待发货'
+    );
+  };
   // Tab 列表和当前选择的 tab
   const tabList = ref([{
       name: '待取包裹',
@@ -345,13 +432,8 @@
   const fetchPackageData = async () => {
     try {
       const response = await fetchPackageDataAPI();
-      console.log(response);
-      console.log("token:" + uni.getStorageSync('token'));
       allPackages.value = response.data;
-      //test
       console.log(allPackages.value.pendingPackageList);
-      console.log(currentPackageList.value);
-      console.log(currentPackageList.value[0])
     } catch (error) {
       console.error('获取包裹信息失败:', error);
       uni.showToast({
@@ -379,7 +461,7 @@
         eventName: 'pendingData',
         getData: (parcel) => ({
           trackingNumber: parcel.packageId,
-          address: parcel.packageSiteaddress,
+          address: parcel.packageSiteName,
           locker: parcel.packageCabinetId,
           itemType: parcel.packageType,
           entryTime: parcel.packageInTime,
@@ -451,6 +533,14 @@
   };
   // 包裹操作函数
   const toDeliverPackage = (parcel) => {
+    // 如果包裹正在配送中，则不执行操作
+    if (isPackageDelivering(parcel)) {
+      uni.showToast({
+        title: '该包裹正在等待发货',
+        icon: 'none'
+      });
+      return;
+    }
     // 使用 uni.navigateTo 跳转到目标页面，并传递 parcel.id 作为 URL 参数
     uni.navigateTo({
       url: `/pages/delivery-detail/delivery-detail?parcelId=${parcel.id}`,
@@ -597,6 +687,7 @@
   //   }
   // }
   .swiper-section {
+    padding: 16px 20px;
     position: relative;
 
     .activity-title {
@@ -804,6 +895,11 @@
         &.primary {
           background: #3B82F6;
           color: #FFFFFF;
+
+          // 添加悬停效果
+          &:hover {
+            background: #2563EB;
+          }
         }
 
         &.secondary {
@@ -814,6 +910,12 @@
         &.warning {
           background: #EF4444;
           color: #FFFFFF;
+        }
+
+        &.disabled {
+          background: #94A3B8 !important; // 使用更浅的颜色表示禁用状态
+          cursor: not-allowed;
+          opacity: 0.7;
         }
       }
     }
