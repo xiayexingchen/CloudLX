@@ -2,10 +2,10 @@
   <view class="home-container">
     <!-- 搜索框 -->
     <view class="search-section" @click="toSearch">
-      <u-search v-model="searchText" placeholder="搜索包裹" :clearabled="true" shape="round"
-        :background-color="'var(--bg-primary)'" :border-color="'var(--primary-light)'"
-        :input-style="{color: 'var(--text-primary)'}" />
+      <u-search placeholder="搜索包裹" :clearabled="true" shape="round" :background-color="'var(--bg-primary)'"
+        :border-color="'var(--primary-light)'" :input-style="{color: 'var(--text-primary)'}" />
     </view>
+    <!-- v-model="searchText" -->
 
 
     <!-- 轮播图部分 -->
@@ -58,9 +58,17 @@
               </view>
             </template>
             <!-- 2. 有订单号包裹 -->
-            <template v-if="currentTab == 1||currentTab == 2">
+            <template v-if="currentTab == 1">
               <view class="package-info">
                 <text class="package-type">{{ item.packageStatus }}</text>
+                <text>{{" "}}</text> <text>{{" "}}</text> <text>{{" "}}</text>
+                <text class="tracking-number">
+                  {{item.packageOrderId }}</text>
+              </view>
+            </template>
+            <template v-if="currentTab == 2">
+              <view class="package-info">
+                <text class="package-type">已签收</text>
                 <text>{{" "}}</text> <text>{{" "}}</text> <text>{{" "}}</text>
                 <text class="tracking-number">
                   {{item.packageOrderId }}</text>
@@ -160,7 +168,7 @@
           <view class="card-actions" @click.stop>
             <!-- 待取包裹 -->
             <template v-if="currentTab === 0">
-              <button class="action-btn primary" @click="toDeliverPackage(item)" :disabled="isPackageDelivering(item)"
+              <button class="action-btn primary" @click="toDeliver(item)" :disabled="isPackageDelivering(item)"
                 :class="{ 'disabled': isPackageDelivering(item) }">
                 <u-icon name="arrow-right" size="20" color="#FFFFFF"></u-icon>
                 <text>{{ isPackageDelivering(item) ? '待发货' : '机器人配送' }}</text>
@@ -186,14 +194,24 @@
             <!-- 今日签收 -->
             <template v-else-if="currentTab === 2">
               <view class="button-group">
-                <button class="action-btn primary" @click="toReviewPackage(item)">
-                  <u-icon name="star" size="20" color="#FFFFFF"></u-icon>
-                  <text>评价</text>
-                </button>
-                <button class="action-btn secondary" @click="hidePackage(index)">
-                  <u-icon name="eye-off" size="20" color="#64748B"></u-icon>
-                  <text>隐藏</text>
-                </button>
+                <!-- 只有存在 orderID 时才显示评价相关按钮 -->
+                <template v-if="item.packageOrderId">
+                  <!-- 已评价状态 -->
+                  <button v-if="isPackageReviewed(item.packageOrderId)" class="action-btn disabled" disabled>
+                    <u-icon name="checkmark-circle" size="20" color="#FFFFFF"></u-icon>
+                    <text>已评价</text>
+                  </button>
+                  <!-- 未评价状态 -->
+                  <button v-else class="action-btn primary" @click="toReviewPackage(item)">
+                    <u-icon name="star" size="20" color="#FFFFFF"></u-icon>
+                    <text>评价</text>
+                  </button>
+                </template>
+
+                <!-- <button class="action-btn secondary" @click="hidePackage(index)">
+      <u-icon name="eye-off" size="20" color="#64748B"></u-icon>
+      <text>隐藏</text>
+    </button> -->
               </view>
             </template>
 
@@ -232,7 +250,8 @@
   } from '../../api/api-activity';
   import {
     cancelOrderAPI,
-    confirmDeliveryAPI
+    confirmDeliveryAPI,
+    fetchReviewRecordAPI
   } from '../../api/api-order';
   import {
     onShow
@@ -245,7 +264,7 @@
   // 活动数据
   const activityList = ref([]);
   const currentSwiperIndex = ref(0);
-
+  //const searchText = ref('');
   // 获取活动图片完整路径
   const getActivityImage = (imageData) => {
     if (!imageData) return '/static/loginLogo.png'; // 默认图片
@@ -355,19 +374,19 @@
   };
 
   function toSearch() {
-  uni.navigateTo({
-    url: "/pages/search/search",
-    success: function(res) {
-      // 通过eventChannel向搜索页面传递数据
-      res.eventChannel.emit('acceptPackageData', {
-        pendingPackages: allPackages.value.pendingPackageList || [],
-        deliveringPackages: allPackages.value.deliveringPackageList || [],
-        completedPackages: allPackages.value.completedPackageList || [],
-        timeoutPackages: allPackages.value.timeoutPackageList || []
-      });
-    }
-  });
-}
+    uni.navigateTo({
+      url: "/pages/search/search",
+      success: function(res) {
+        // 通过eventChannel向搜索页面传递数据
+        res.eventChannel.emit('acceptPackageData', {
+          pendingPackages: allPackages.value.pendingPackageList || [],
+          deliveringPackages: allPackages.value.deliveringPackageList || [],
+          completedPackages: allPackages.value.completedPackageList || [],
+          timeoutPackages: allPackages.value.timeoutPackageList || []
+        });
+      }
+    });
+  }
   const isPackageDelivering = (parcel) => {
     // 检查包裹是否在配送列表中
     return allPackages.value.deliveringPackageList.some(
@@ -532,7 +551,7 @@
     });
   };
   // 包裹操作函数
-  const toDeliverPackage = (parcel) => {
+  const toDeliver = (parcel) => {
     // 如果包裹正在配送中，则不执行操作
     if (isPackageDelivering(parcel)) {
       uni.showToast({
@@ -551,7 +570,8 @@
           address: parcel.packageSiteaddress,
           locker: parcel.packageCabinetId,
           itemType: parcel.packageType,
-          entryTime: parcel.packageInTime
+          entryTime: parcel.packageInTime,
+          siteName: parcel.packageSiteName
         });
       },
       fail: (err) => {
@@ -564,11 +584,44 @@
     });
   };
 
+  // 已评价订单ID列表
+  const reviewedOrderIds = ref([]);
 
+  // 获取已评价订单列表
+  const fetchReviewedOrders = async () => {
+    try {
+      const res = await fetchReviewRecordAPI();
+      if (res.code === 24091) {
+        reviewedOrderIds.value = res.data;
+      }
+    } catch (error) {
+      console.error('获取评价记录失败:', error);
+    }
+  };
 
-  const toReviewPackage = (parcel) => {
+  // 检查包裹是否已评价
+  const isPackageReviewed = (orderId) => {
+    return reviewedOrderIds.value.includes(orderId);
+  };
+
+  // 跳转到评价页面
+  const toReviewPackage = (item) => {
     uni.navigateTo({
-      url: "/pages/review/review"
+      url: `/pages/review/review?orderId=${item.packageOrderId}`,
+      success: (res) => {
+        res.eventChannel.emit('acceptDataFromOpenerPage', {
+          orderId: item.packageOrderId,
+          packageType: item.packageType,
+          completedTime: item.packageCompletedTime,
+        });
+      },
+      // events: {
+      //   // 监听评价完成事件
+      //   reviewCompleted: () => {
+      //     // 评价完成后立即更新评价状态
+      //     reviewedOrderIds.value.push(item.packageOrderId);
+      //   }
+      // }
     });
   };
 
@@ -589,15 +642,16 @@
       }
     });
   }
+  // 页面显示时刷新评价记录
+  onShow(() => {
+    fetchReviewedOrders();
+  });
 
-  // onShow(() => {
-  //   // 清空搜索框
-  //   searchText.value = ''
-  // })
   // 页面加载时获取数据
   onMounted(() => {
     fetchPackageData();
     fetchActivityData();
+    fetchReviewedOrders();
     // 添加刷新事件监听
     uni.$on('refreshPackageList', () => {
       fetchPackageData();
@@ -608,9 +662,13 @@
     uni.$off('refreshPackageList');
   });
   // Tab切换处理
-  function changeTab(index) {
+  const changeTab = async (index) => {
     currentTab.value = index;
-  }
+    if (index === 2) { // 切换到近日签收标签
+      await fetchReviewedOrders();
+    }
+    // ... 其他切换逻辑
+  };
 
   function toPackageAdd() {
     uni.navigateTo({
@@ -914,8 +972,19 @@
 
         &.disabled {
           background: #94A3B8 !important; // 使用更浅的颜色表示禁用状态
+          color: #FFFFFF !important;
           cursor: not-allowed;
           opacity: 0.7;
+        }
+
+        &.reviewed {
+          background-color: #F3F4F6;
+          color: #10B981;
+          cursor: default;
+
+          &:active {
+            opacity: 1;
+          }
         }
       }
     }

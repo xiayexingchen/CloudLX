@@ -90,13 +90,14 @@
       name: '微信支付',
       icon: 'weixin-fill',
       color: '#07c160'
-    },
-    {
-      id: 'alipay',
-      name: '支付宝',
-      icon: 'alipay-fill',
-      color: '#1677ff'
     }
+    //,
+    // {
+    //   id: 'alipay',
+    //   name: '支付宝',
+    //   icon: 'alipay-fill',
+    //   color: '#1677ff'
+    // }
   ];
 
   // 格式化余额

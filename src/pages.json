@@ -179,17 +179,15 @@
       }
     },
     {
-      "path" : "pages/order-detail/order-detail",
-      "style" : 
-      {
-        "navigationBarTitleText" : ""
+      "path": "pages/order-detail/order-detail",
+      "style": {
+        "navigationBarTitleText": ""
       }
     },
     {
-      "path" : "pages/transaction-record/transaction-record",
-      "style" : 
-      {
-        "navigationBarTitleText" : ""
+      "path": "pages/transaction-record/transaction-record",
+      "style": {
+        "navigationBarTitleText": ""
       }
     }
   ],

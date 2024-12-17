@@ -1,7 +1,5 @@
 <template>
   <view class="identity-code-container">
-    <view class="background-animation"></view>
-
     <view class="code-card">
       <!-- 顶部装饰 -->
       <view class="card-decoration">
@@ -14,10 +12,16 @@
         <text class="code-label">身份码</text>
         <text class="code-value">{{ userCode }}</text>
 
-        <!-- 条形码 -->
-        <view class="barcode-container">
-          <u-code ref="uCode" :text="userCode" code-type="barcode" :width="300" :height="100" bgColor="#ffffff"
-            color="#000000"></u-code>
+        <!-- CSS生成的身份码图案 -->
+        <view class="css-barcode">
+          <view v-for="(width, index) in barcodePattern" 
+                :key="index" 
+                class="code-line"
+                :style="{
+                  width: width + 'rpx',
+                  backgroundColor: index % 2 === 0 ? '#000' : '#fff'
+                }">
+          </view>
         </view>
       </view>
     </view>
@@ -25,149 +29,139 @@
 </template>
 
 <script setup>
-  import {
-    ref,
-    onMounted
-  } from 'vue';
-  import {
-    fetchUserCodeAPI
-  } from '@/api/api-user';
+import { ref, computed } from 'vue';
 
-  const userCode = ref('');
+const userCode = ref('B0R6BWM3VE'); // 你的身份码
 
-  // 获取身份码
-  const fetchUserCode = async () => {
-    try {
-      const res = await fetchUserCodeAPI();
-      if (res.code === 21061) {
-        userCode.value = res.data;
-      }
-    } catch (error) {
-      console.error('获取身份码失败:', error);
-    }
-  };
-
-  onMounted(() => {
-    fetchUserCode();
+// 生成条形码模式
+const barcodePattern = computed(() => {
+  // 开始和结束的保护字符
+  const guardPattern = [3, 3, 3, 3]; // [黑,白,黑,白]
+  
+  // 将字符转换为条形码宽度模式
+  const codePattern = userCode.value.repeat(2).split('').map(char => {
+    const value = char.charCodeAt(0);
+    // 根据字符ASCII值生成不同的宽度（2-4rpx）
+    return value % 3 + 2;
   });
+  
+  // 组合完整的条形码模式
+  return [...guardPattern, ...codePattern, ...guardPattern.reverse()];
+});
 </script>
 
 <style lang="scss" scoped>
-  .identity-code-container {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #1a1a1a;
-    position: relative;
-    overflow: hidden;
+.identity-code-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+  padding: 30rpx;
+}
+
+.code-card {
+  width: 90%;
+  max-width: 600rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24rpx;
+  padding: 40rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.card-decoration {
+  margin-bottom: 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  
+  .decoration-circle {
+    width: 12rpx;
+    height: 12rpx;
+    border-radius: 50%;
+    background: #93C5FD;
   }
-
-  .background-animation {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(125deg, #3B82F6, #93C5FD);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
-    opacity: 0.9;
+  
+  .decoration-line {
+    flex: 1;
+    height: 4rpx;
+    background: linear-gradient(90deg, #93C5FD 0%, transparent 100%);
   }
+}
 
-  @keyframes gradientBG {
-    0% {
-      background-position: 0% 50%
-    }
+.code-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+}
 
-    50% {
-      background-position: 100% 50%
-    }
+.code-label {
+  font-size: 28rpx;
+  color: #64748B;
+  letter-spacing: 2rpx;
+}
 
-    100% {
-      background-position: 0% 50%
-    }
+.code-value {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #1E293B;
+  letter-spacing: 4rpx;
+  font-family: monospace;
+}
+
+.css-barcode {
+  width: 100%;
+  height: 140rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  padding: 20rpx;
+  border-radius: 16rpx;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 10rpx rgba(0, 0, 0, 0.05);
+  
+  .code-line {
+    height: 100%;
+    display: inline-block;
   }
+}
 
-  .code-card {
-    width: 85%;
-    max-width: 600rpx;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(20px);
-    border-radius: 30rpx;
-    padding: 40rpx;
-    box-shadow: 0 8rpx 32rpx rgba(59, 130, 246, 0.3);
-    position: relative;
-    z-index: 1;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+// 扫描动画效果
+.css-barcode::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2rpx;
+  background: linear-gradient(90deg, 
+    transparent,
+    #60A5FA,
+    transparent
+  );
+  animation: scan 2s linear infinite;
+  opacity: 0.5;
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(-100%);
   }
-
-  .card-decoration {
-    display: flex;
-    align-items: center;
-    margin-bottom: 40rpx;
-
-    .decoration-circle {
-      width: 20rpx;
-      height: 20rpx;
-      background: #3B82F6;
-      border-radius: 50%;
-      margin-right: 20rpx;
-      animation: pulse 2s infinite;
-    }
-
-    .decoration-line {
-      flex: 1;
-      height: 2rpx;
-      background: linear-gradient(to right, #3B82F6, transparent);
-    }
+  100% {
+    transform: translateY(200%);
   }
+}
 
-  .code-content {
-    text-align: center;
-    padding: 40rpx 0;
-
-    .code-label {
-      font-size: 28rpx;
-      color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 20rpx;
-      display: block;
-    }
-
-    .code-value {
-      font-size: 60rpx;
-      font-weight: bold;
-      color: #fff;
-      letter-spacing: 4rpx;
-      font-family: monospace;
-      text-shadow: 0 0 10rpx rgba(59, 130, 246, 0.5);
-      margin-bottom: 40rpx;
-      display: block;
-    }
+// 添加卡片悬浮效果
+.code-card {
+  transition: transform 0.3s ease;
+  
+  &:active {
+    transform: scale(0.98);
   }
-
-  .barcode-container {
-    background: #ffffff;
-    padding: 20rpx;
-    border-radius: 16rpx;
-    margin: 0 auto;
-    width: fit-content;
-  }
-
-  @keyframes pulse {
-    0% {
-      transform: scale(1);
-      opacity: 1;
-    }
-
-    50% {
-      transform: scale(1.2);
-      opacity: 0.8;
-    }
-
-    100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
+}
 </style>

@@ -47,3 +47,44 @@ export const confirmDeliveryAPI = (orderId) => {
     }
   })
 }
+//删除订单
+export const deleteOrderAPI = (orderId) => {
+  return request({
+    url: '/user/myOrderView/deleteCompletedOrder',
+    method: 'delete',
+    data: {
+      orderId
+    }
+
+  })
+}
+//获取配送的机器人的id 
+export const getRobotIdAPI = (orderId) => {
+  return request({
+    url: '/user/myOrderView/get-robotId',
+    method: 'post',
+    data: {
+      orderId: orderId
+    }
+  })
+}
+//评价订单
+export const reviewAPI = (reviewInfo) => {
+  return request({
+    url: '/user/myOrderView/review-order',
+    method: 'post',
+    data: {
+      orderId: reviewInfo.orderId,
+      review_text: reviewInfo.review_text,
+      evaluation_score: reviewInfo.evaluation_score
+    }
+  })
+}
+//获取已评价的订单的信息
+
+export const fetchReviewRecordAPI = () => {
+  return request({
+    url: '/user/myOrderView/get-reviewRecordList',
+    method: 'get',
+  })
+}

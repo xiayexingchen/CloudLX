@@ -15,19 +15,30 @@
     <scroll-view class="messages-list" scroll-y @scrolltolower="loadMore" refresher-enabled
       @refresherrefresh="onRefresh">
       <view v-if="filteredMessages.length > 0">
-        <u-swipe-action v-for="(message, index) in filteredMessages" :key="message.messageId" :show="message.show"
-          :index="index" :options="options" @click="handleSwipeClick" @open="handleSwipeOpen">
+        <u-swipe-action 
+      v-for="(message, index) in filteredMessages" 
+      :key="message.messageId"
+      :show="message.show"
+      :index="index"
+      :options="options"
+      @click="handleSwipeClick"
+      @open="handleSwipeOpen"
+    >
 
           <view class="message-item" :class="{ unread: !message.isRead }" @click="handleMessageClick(message)">
             <view class="message-content">
-              <view class="message-header">
-                <text class="message-type">{{ message.messageType }}</text>
-                <text class="message-time">{{ formatTime(message.createdAt) }}</text>
-              </view>
-              <text class="message-title text-ellipsis">{{ message.title }}</text>
-              <text class="message-desc text-ellipsis">{{ formatContent(message.content) }}</text>
-            </view>
-
+      <!-- 消息头部 -->
+      <view class="message-header">
+        <text class="message-type">{{ message.messageType }}</text>
+        <text class="message-time">{{ formatTime(message.createdAt) }}</text>
+      </view>
+      
+      <!-- 消息主体 -->
+      <view class="message-body">
+        <text class="message-title single-line">{{ message.title }}</text>
+        <text class="message-desc single-line">{{ formatContent(message.content) }}</text>
+      </view>
+    </view>
           </view>
         </u-swipe-action>
       </view>
@@ -57,7 +68,9 @@
     fetchMessagesAPI,
     deleteMessagesAPI
   } from '@/api/api-user'
-  import { onShow } from '@dcloudio/uni-app';
+  import {
+    onShow
+  } from '@dcloudio/uni-app';
   const messages = ref([])
   const currentTab = ref('包裹提醒')
   // 滑动按钮配置
@@ -224,10 +237,10 @@
   const loadMore = () => {
     // TODO: 实现加载更多逻辑
   }
-// 在页面显示时刷新数据
-onShow(() => {
-  fetchMessages();
-});
+  // 在页面显示时刷新数据
+  onShow(() => {
+    fetchMessages();
+  });
   onMounted(() => {
     fetchMessages()
   })
@@ -239,7 +252,10 @@ onShow(() => {
     min-height: 100vh;
     background: #f5f7fa;
   }
-
+  .messages-list {
+  width: 100%;
+  height: 100%;
+}
   // 头部样式
   .header {
     background: #fff;
@@ -317,55 +333,84 @@ onShow(() => {
 
   // 消息项样式
   .message-item {
-    background: #fff;
-    padding: 16px;
-    border-bottom: 1px solid #eee;
-    width: 100%;
-    overflow: hidden;
+  width: 100vw;
+  box-sizing: border-box;
+  background: #fff;
+  padding: 24rpx;
+  border-bottom: 1px solid #eee;
+ // overflow: hidden; // 添加这行确保内容不会溢出
 
-    &.unread {
-      position: relative;
+  &.unread {
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      left: 8rpx;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 12rpx;
+      height: 12rpx;
+      background: #564dff;
+      border-radius: 50%;
+      box-shadow: 0 0 4rpx rgba(255, 77, 79, 0.5); // 添加阴影效果
+    }
 
-      &::before {
-        content: '●';
-        position: absolute;
-        left: 6px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #3B82F6;
-        font-size: 12px;
-      }
-
-      .message-content {
-        margin-left: 16px;
-      }
+    .message-content {
+  width: 100%;
+  box-sizing: border-box;
+  //padding-right: 120rpx;
     }
   }
+}
+// 文本单行省略
+.single-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%; // 限制最大宽度
+  display: block;
+}
 
   // 滑动按钮样式
-  :deep(.u-swipe-action) {
-    width: 100% !important;
+:deep(.u-swipe-action) {
+  width: 100vw !important; // 使用视口宽度
+  background: #fff;
+  overflow: hidden;
 
-    .u-swipe-action-item {
-      width: 100% !important;
+  .u-swipe-action-item {
+    width: 100vw !important;
+    background: #fff;
+    position: relative;
 
-      &__content {
-        width: 100% !important;
-        box-sizing: border-box;
-      }
+    &__content {
+      width: 100vw !important;
+      background: #fff;
+      position: relative;
+      z-index: 1;
+    }
 
-      &__right {
-        height: 100%;
-        display: flex;
-        align-items: stretch;
-      }
+    &__right {
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 100%;
+      z-index: 2;
     }
   }
-
-  // 消息内容样式
-  .message-content {
-    width: 100%;
+}
+// 删除按钮样式
+.u-swipe-action-item__right {
+  .u-swipe-action__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 30rpx;
+    flex-shrink: 0; // 防止按钮被压缩
+    background-color: #dd524d;
+    color: #fff;
   }
+}
 
   .message-header {
     display: flex;
@@ -377,13 +422,19 @@ onShow(() => {
   .message-type {
     font-size: 14px;
     color: #3B82F6;
+    font-weight: 500;
   }
 
   .message-time {
     font-size: 14px;
     color: #999;
   }
-
+  .message-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  width: 100%; // 确保宽度100%
+}
   // 文本样式
   .text-ellipsis {
     white-space: nowrap;
@@ -392,21 +443,34 @@ onShow(() => {
     width: 100%;
     display: block;
   }
-
   .message-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 6px;
-    display: block;
-  }
+    
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+  line-height: 1.4;
+}
 
-  .message-desc {
-    font-size: 14px;
-    color: #666;
-    line-height: 1.5;
-    display: block;
-  }
+.message-desc {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.4;
+}
+// 标题和描述文本的省略处理
+.message-title,
+.message-desc {
+  display: block; // 确保是块级元素
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
 
   // 空状态样式
   .empty-state {

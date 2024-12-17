@@ -40,8 +40,8 @@
         <text class="title">管理员联系方式</text>
       </view>
       <view class="contact-info">
-        <text class="contact-name">{{ packageInfo.adminName }}</text>
-        <text class="contact-phone">{{ packageInfo.adminPhone }}</text>
+        <text class="contact-name">刘*</text>
+        <text class="contact-phone">130****1111</text>
         <button class="call-button" @click="handleCall">
           <u-icon name="phone-fill" color="#fff" size="20" />
           <text>一键拨号</text>

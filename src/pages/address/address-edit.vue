@@ -67,10 +67,11 @@
     isDefault: false
   })
   // 区域选项
-  const regionOptions = ['天马学生公寓', '其他区域']
+  const regionOptions = ['天马学生公寓', '德智学生公寓', '其他区域']
   const regionIndex = ref(0)
   // 判断是否为编辑模式
   const isEdit = ref(false)
+  const isDefaultDisabled = ref(false); // 添加这个变量的定义
   // 楼栋选择器数据
   const buildingOptions = ref([
     ['一区', '二区', '三区'],
@@ -91,21 +92,22 @@
   };
 
   // 检查是否有现有地址
-const checkExistingAddresses = async () => {
-  try {
-    const res = await fetchAddressDataAPI();
-    if (res.code === 23031) {
-      // 如果地址列表为空，强制设置当前地址为默认地址
-      if (!res.data || res.data.length === 0) {
-        addressForm.value.isDefault = true;
-        // 可以选择禁用默认地址开关
-        isDefaultDisabled.value = true;
+  // 修改检查现有地址的方法
+  const checkExistingAddresses = async () => {
+    try {
+      const res = await fetchAddressDataAPI();
+      if (res.code === 23031) {
+        // 如果地址列表为空，强制设置当前地址为默认地址
+        if (!res.data || res.data.length === 0) {
+          formData.value.isDefault = true;
+          // 禁用默认地址开关
+          isDefaultDisabled.value = true;
+        }
       }
+    } catch (error) {
+      console.error('获取地址列表失败:', error);
     }
-  } catch (error) {
-    console.error('获取地址列表失败:', error);
-  }
-};
+  };
 
   // 处理列变化
   const onColumnChange = (e) => {
@@ -225,13 +227,14 @@ const checkExistingAddresses = async () => {
         icon: 'none'
       })
     }
-  // 如果是第一个地址，强制设置为默认地址
-  if (isDefaultDisabled.value && !addressForm.value.isDefault) {
-    return uni.showToast({
-      title: '首个地址必须设为默认地址',
-      icon: 'none'
-    });
-  }
+    // 如果是第一个地址，强制设置为默认地址
+    // 如果是第一个地址，强制设置为默认地址
+    if (isDefaultDisabled.value && !formData.value.isDefault) {
+      return uni.showToast({
+        title: '首个地址必须设为默认地址',
+        icon: 'none'
+      });
+    }
     try {
       uni.showLoading({
         title: '保存中...'

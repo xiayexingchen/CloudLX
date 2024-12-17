@@ -262,6 +262,7 @@
 
       .word-count {
         position: absolute;
+        // width: 100%;
         right: 12px;
         bottom: 12px;
         font-size: 12px;

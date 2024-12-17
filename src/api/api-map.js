@@ -5,10 +5,10 @@ import request from './request.js'
 export const robotDestAPI = async (packageId) => {
   console.log('packageId in robotDestAPI: ', packageId);
   return request({
-    url: '/user/myMapView/robotDest',
+    url: '/user/myMapView/get-robotDestination',
     method: 'post',
     data: {
-      packageId: packageId
+      robotId: parseInt(robotId)
     }
   })
 }
@@ -17,10 +17,10 @@ export const robotDestAPI = async (packageId) => {
 export const robotLocAPI = async (packageId) => {
   console.log('packageId in robotLocAPI: ', packageId);
   return request({
-    url: '/user/myMapView/robotLoc',
+    url: '/user/myMapView/get-robotLocation',
     method: 'post',
     data: {
-      packageId: packageId
+      robotId: parseInt(robotId)
     }
   })
 }

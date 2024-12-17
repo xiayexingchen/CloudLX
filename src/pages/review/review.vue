@@ -1,13 +1,14 @@
 <template>
   <view class="review-container">
-    <!-- 顶部配送信息卡片 -->
-    <view class="delivery-card">
-      <view class="delivery-info">
-        <u-icon name="checkmark-circle-fill" color="#19be6b" size="50"></u-icon>
-        <view class="delivery-text">
-          <text class="success-text">配送已完成</text>
-          <text class="time">{{ orderInfo.deliveryTime }}</text>
-        </view>
+    <!-- 顶部配送信息 -->
+    <view class="package-info" v-if="orderInfo.packageType">
+      <view class="info-item">
+        <text class="label">包裹类型</text>
+        <text class="value">{{ orderInfo.packageType }}</text>
+      </view>
+      <view class="info-item">
+        <text class="label">完成时间</text>
+        <text class="value">{{ orderInfo.completedTime }}</text>
       </view>
     </view>
 
@@ -15,52 +16,26 @@
     <view class="rating-section">
       <view class="rating-title">为本次配送服务评分</view>
       <view class="stars">
-        <u-rate v-model="rating" count="5" activeColor="#ff9900" inactiveColor="#c8c9cc" size="40"
-          @change="onRatingChange"></u-rate>
+        <u-rate v-model="rating" :count="5" :size="40" active-color="#F59E0B" inactive-color="#E5E7EB" :gutter="20"
+          active-icon="star-fill" inactive-icon="star" @change="onRatingChange"></u-rate>
       </view>
-      <view class="rating-text">{{ ratingText }}</view>
-    </view>
-
-    <!-- 评价标签 -->
-    <view class="tags-section">
-      <u-row gutter="20">
-        <u-col span="4" v-for="(tag, index) in tags" :key="index">
-          <view class="tag-item" :class="{ active: tag.selected }" @click="toggleTag(index)">
-            {{ tag.text }}
-          </view>
-        </u-col>
-      </u-row>
+      <view class="rating-text" :style="{ color: ratingColors[rating - 1] }">
+        {{ ratingText }}
+      </view>
     </view>
 
     <!-- 评价输入框 -->
     <view class="comment-section">
-      <u--textarea v-model="comment" placeholder="请输入您的评价内容（选填）" height="200" count maxlength="200"></u--textarea>
-    </view>
-
-    <!-- 上传图片 -->
-    <view class="upload-section">
-      <u--upload :fileList="fileList" @afterRead="afterRead" @delete="deletePic" multiple :maxCount="4" width="160"
-        height="160"></u--upload>
-      <view class="upload-tips">最多上传4张图片</view>
-    </view>
-
-    <!-- 匿名评价开关 -->
-    <view class="anonymous-section">
-      <u-cell :border="false">
-        <template v-slot:title>
-          <view class="anonymous-title">匿名评价</view>
-        </template>
-        <template v-slot:right-icon>
-          <u-switch v-model="isAnonymous"></u-switch>
-        </template>
-      </u-cell>
+      <textarea v-model="comment" class="comment-input" placeholder="请描述一下您对本次配送服务的感受吧~" :maxlength="200"
+        show-confirm-bar="false"></textarea>
+      <view class="word-count">{{ comment.length }}/200</view>
     </view>
 
     <!-- 提交按钮 -->
     <view class="submit-section">
-      <u-button type="primary" @click="submitReview" :loading="submitting">
+      <button class="submit-btn" :disabled="!isValid" :class="{ 'btn-active': isValid }" @tap="submitReview">
         提交评价
-      </u-button>
+      </button>
     </view>
   </view>
 </template>
@@ -68,242 +43,244 @@
 <script setup>
   import {
     ref,
-    computed
+    computed,
+    onMounted,
+    getCurrentInstance
   } from 'vue'
-
+  import {
+    reviewAPI
+  } from '@/api/api-order'
+  import {
+    onLoad,
+    onShow
+  } from "@dcloudio/uni-app"
   // 订单信息
   const orderInfo = ref({
     orderId: '',
-    deliveryTime: '2024-03-20 14:30:00',
-  })
+    packageType: '',
+    completedTime: ''
+  });
 
   // 评分相关
   const rating = ref(5)
+  const ratingColors = ['#DC2626', '#F59E0B', '#F59E0B', '#10B981', '#10B981']
   const ratingText = computed(() => {
     const texts = ['非常差', '差', '一般', '好', '非常好']
-    return texts[rating.value - 1]
+    return rating.value ? texts[rating.value - 1] : '请评分'
   })
-
-  // 快捷标签
-  const tags = ref([{
-      text: '配送很快',
-      selected: false
-    },
-    {
-      text: '服务好',
-      selected: false
-    },
-    {
-      text: '很准时',
-      selected: false
-    },
-    {
-      text: '很专业',
-      selected: false
-    },
-    {
-      text: '态度好',
-      selected: false
-    },
-    {
-      text: '很礼貌',
-      selected: false
-    },
-  ])
 
   // 评价内容
   const comment = ref('')
-  const fileList = ref([])
-  const isAnonymous = ref(false)
-  const submitting = ref(false)
 
-  // 评分变化
+  // 表单验证
+  const isValid = computed(() => {
+    return rating.value > 0 && comment.value.trim().length > 0
+  })
+
+  // 评分变化处理
+  // 评分变化处理
   const onRatingChange = (value) => {
     rating.value = value
-  }
-
-  // 切换标签
-  const toggleTag = (index) => {
-    tags.value[index].selected = !tags.value[index].selected
-  }
-
-  // 上传图片
-  const afterRead = (event) => {
-    const {
-      file
-    } = event
-    // 这里处理图片上传逻辑
-    fileList.value.push({
-      url: file.url,
-      status: 'uploading',
-      message: '上传中'
-    })
-
-    // 模拟上传
-    setTimeout(() => {
-      fileList.value[fileList.value.length - 1].status = 'success'
-      fileList.value[fileList.value.length - 1].message = ''
-    }, 1000)
-  }
-
-  // 删除图片
-  const deletePic = (event) => {
-    fileList.value.splice(event.index, 1)
+    // 可以在这里添加震动反馈
+    uni.vibrateShort()
   }
 
   // 提交评价
   const submitReview = async () => {
-    if (rating.value === 0) {
-      uni.$u.toast('请选择评分')
-      return
-    }
-
-    submitting.value = true
-
-    const selectedTags = tags.value
-      .filter(tag => tag.selected)
-      .map(tag => tag.text)
-
-    const reviewData = {
-      orderId: orderInfo.value.orderId,
-      rating: rating.value,
-      tags: selectedTags,
-      comment: comment.value,
-      images: fileList.value.map(file => file.url),
-      isAnonymous: isAnonymous.value
+    if (!isValid.value) {
+      uni.showToast({
+        title: '请完成评分和评价',
+        icon: 'none'
+      });
+      return;
     }
 
     try {
-      // TODO: 调用评价接口
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      uni.showLoading({
+        title: '提交中...'
+      });
 
-      uni.$u.toast('评价提交成功')
-      setTimeout(() => {
-        uni.navigateBack()
-      }, 1500)
+      const reviewInfo = {
+        orderId: orderInfo.value.orderId,
+        review_text: comment.value.trim(),
+        evaluation_score: rating.value
+      };
+
+      const res = await reviewAPI(reviewInfo);
+
+      if (res.code === 24081) {
+        uni.showToast({
+          title: '评价成功',
+          icon: 'success'
+        });
+        // 延迟返回并触发事件
+        setTimeout(() => {
+          uni.navigateBack({
+            delta: 1,
+            // success: (result) => {
+            //   // 在返回成功的回调中触发事件
+            //   result.eventChannel.emit('reviewCompleted');
+            // }
+          });
+        }, 1500);
+      } else {
+        throw new Error(res.msg || '评价失败');
+      }
     } catch (error) {
-      uni.$u.toast('评价提交失败，请重试')
+      console.error('提交评价失败:', error);
+      uni.showToast({
+        title: error.message || '评价失败，请重试',
+        icon: 'none'
+      });
     } finally {
-      submitting.value = false
+      uni.hideLoading();
     }
-  }
+  };
+  // 页面加载
+  // onLoad((options) => {
+  //   if (options.orderId) {
+  //     orderInfo.value.orderId = options.orderId
+  //   }
+  // })
+  // 接收上一页传来的数据
+  onMounted(() => {
+    const instance = getCurrentInstance().proxy
+    const eventChannel = instance.getOpenerEventChannel();
+    eventChannel.on('acceptDataFromOpenerPage', (data) => {
+      orderInfo.value = data;
+    });
+  });
 </script>
 
 <style lang="scss" scoped>
   .review-container {
     min-height: 100vh;
-    background-color: #f5f5f5;
-    padding-bottom: 40rpx;
+    background-color: #F3F4F6;
+    padding: 24rpx;
+  }
 
-    .delivery-card {
-      background-color: #ffffff;
-      margin: 20rpx;
-      padding: 30rpx;
-      border-radius: 12rpx;
+  .delivery-card {
+    background: #FFFFFF;
+    border-radius: 16rpx;
+    padding: 32rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 
-      .delivery-info {
-        display: flex;
-        align-items: center;
+    .delivery-info {
+      display: flex;
+      align-items: center;
+      gap: 20rpx;
 
-        .delivery-text {
-          margin-left: 20rpx;
+      .delivery-text {
+        .success-text {
+          font-size: 32rpx;
+          font-weight: 600;
+          color: #10B981;
+          display: block;
+          margin-bottom: 8rpx;
+        }
 
-          .success-text {
-            font-size: 32rpx;
-            font-weight: bold;
-            color: #19be6b;
-            display: block;
-          }
-
-          .time {
-            font-size: 24rpx;
-            color: #909399;
-            margin-top: 6rpx;
-            display: block;
-          }
+        .time {
+          font-size: 24rpx;
+          color: #6B7280;
         }
       }
     }
+  }
 
-    .rating-section {
-      background-color: #ffffff;
-      padding: 40rpx 30rpx;
-      margin: 20rpx;
-      border-radius: 12rpx;
-      text-align: center;
+  .rating-section {
+    background: #FFFFFF;
+    border-radius: 16rpx;
+    padding: 32rpx;
+    margin-bottom: 24rpx;
+    text-align: center;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 
-      .rating-title {
+    .rating-title {
+      font-size: 28rpx;
+      color: #374151;
+      margin-bottom: 32rpx;
+    }
+
+    .stars {
+      margin-bottom: 24rpx;
+      display: flex;
+      justify-content: center;
+    }
+
+    .rating-text {
+      font-size: 28rpx;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+  }
+
+
+  .comment-section {
+    background: #FFFFFF;
+    border-radius: 16rpx;
+    padding: 32rpx;
+    margin-bottom: 48rpx;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  }
+
+  .submit-section {
+    padding: 0 32rpx;
+    margin-top: 48rpx;
+
+    .submit-btn {
+      width: 100%;
+      height: 88rpx;
+      background: #3B82F6;
+      color: #FFFFFF;
+      font-size: 32rpx;
+      font-weight: 500;
+      border-radius: 44rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.7;
+      transition: all 0.3s;
+
+      &.btn-active {
+        opacity: 1;
+        box-shadow: 0 4rpx 12rpx rgba(59, 130, 246, 0.2);
+      }
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      &:disabled {
+        background: #E5E7EB;
+        color: #9CA3AF;
+        box-shadow: none;
+      }
+    }
+  }
+
+  .package-info {
+    background: #FFFFFF;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12rpx 0;
+
+      .label {
+        color: #64748B;
         font-size: 28rpx;
-        color: #303133;
-        margin-bottom: 30rpx;
       }
 
-      .stars {
-        margin-bottom: 20rpx;
-      }
-
-      .rating-text {
-        font-size: 26rpx;
-        color: #ff9900;
-      }
-    }
-
-    .tags-section {
-      background-color: #ffffff;
-      padding: 30rpx;
-      margin: 20rpx;
-      border-radius: 12rpx;
-
-      .tag-item {
-        background-color: #f5f5f5;
-        color: #666;
-        padding: 16rpx 20rpx;
-        text-align: center;
-        border-radius: 100rpx;
-        font-size: 24rpx;
-        margin-bottom: 20rpx;
-
-        &.active {
-          background-color: #ecf5ff;
-          color: #2979ff;
-        }
-      }
-    }
-
-    .comment-section {
-      background-color: #ffffff;
-      padding: 30rpx;
-      margin: 20rpx;
-      border-radius: 12rpx;
-    }
-
-    .upload-section {
-      background-color: #ffffff;
-      padding: 30rpx;
-      margin: 20rpx;
-      border-radius: 12rpx;
-
-      .upload-tips {
-        font-size: 24rpx;
-        color: #909399;
-        margin-top: 20rpx;
-      }
-    }
-
-    .anonymous-section {
-      background-color: #ffffff;
-      margin: 20rpx;
-      border-radius: 12rpx;
-
-      .anonymous-title {
+      .value {
+        color: #334155;
         font-size: 28rpx;
-        color: #303133;
+        font-weight: 500;
       }
-    }
-
-    .submit-section {
-      padding: 30rpx;
-      margin-top: 40rpx;
     }
   }
 </style>

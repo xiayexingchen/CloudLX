@@ -154,13 +154,6 @@
           title: '验证码已发送',
           icon: 'success'
         });
-        // 自动聚焦到验证码输入框
-        // nextTick(() => {
-        //   const codeInput = document.querySelector('input[placeholder="请输入验证码"]');
-        //   if (codeInput) {
-        //     codeInput.focus();
-        //   }
-        // });
       } else {
         uni.showToast({
           title: '验证码发送失败',
@@ -200,9 +193,10 @@
 
     try {
       console.log(formData.value);
-      const response = await submitUserInfoAfterFirstLoginAPI(formData.value);
-
-      if (response.code === 21041) {
+      const res = await submitUserInfoAfterFirstLoginAPI(formData.value);
+      console.log(res);
+      // 修改这里：检查 21041 状态码
+      if (res.code === 21041) { // 之前可能是其他状态码
         uni.showToast({
           title: '提交成功',
           icon: 'success'
@@ -218,15 +212,13 @@
         };
         showDate.value = '';
 
-        // 延迟跳转
-        setTimeout(() => {
-          uni.switchTab({
-            url: '/pages/home/home'
-          });
-        }, 1500);
+        // 跳转
+        uni.switchTab({
+          url: '/pages/home/home'
+        });
       } else {
         uni.showToast({
-          title: '验证码已过期或不存在',
+          title: res.msg || '提交失败',
           icon: 'none'
         });
       }

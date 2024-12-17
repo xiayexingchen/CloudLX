@@ -4,7 +4,7 @@
     <view class="search-header">
       <view class="search-box">
         <u-icon name="search" size="20" color="#666"></u-icon>
-        <input class="search-input" v-model="searchKeyword" placeholder="输入运单号搜索" @confirm="handleSearch" />
+        <input class="search-input" v-model="searchKeyword" placeholder="输入包裹关键词搜索" @confirm="handleSearch" />
         <u-icon v-if="searchKeyword" name="close" size="20" color="#666" @click="clearSearch"></u-icon>
       </view>
       <text class="confirm-btn" @click="handleSearch">搜索</text>
@@ -150,84 +150,148 @@
     searchResults.value = [];
     showNoResult.value = false;
   };
-// 处理搜索
-const handleSearch = () => {
-  if (!searchKeyword.value.trim()) {
-    uni.showToast({
-      title: '请输入搜索关键词',
-      icon: 'none'
+  // 处理搜索
+  const handleSearch = () => {
+    if (!searchKeyword.value.trim()) {
+      uni.showToast({
+        title: '请输入搜索关键词',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // 调试日志：打印搜索关键词
+    console.log('搜索关键词:', searchKeyword.value);
+
+    // 调试日志：打印所有包裹数据
+    console.log('所有包裹数据:', allPackages.value);
+
+    const searchKey = searchKeyword.value.toLowerCase();
+    const allPackagesList = [
+      ...allPackages.value.pendingPackages || [],
+      ...allPackages.value.deliveringPackages || [],
+      ...allPackages.value.completedPackages || [],
+      ...allPackages.value.timeoutPackages || []
+    ];
+
+    // 调试日志：打印合并后的包裹列表
+    console.log('合并后的包裹列表:', allPackagesList);
+
+    searchResults.value = allPackagesList.filter(pkg => {
+      // 调试日志：打印每个包裹的搜索字段
+      console.log('正在检查包裹:', {
+        id: pkg.packageId,
+        orderId: pkg.packageOrderId,
+        cabinetId: pkg.packageCabinetId,
+        type: pkg.packageType,
+        siteName: pkg.packageSiteName
+      });
+
+      const result = (
+        pkg.packageId?.toLowerCase().includes(searchKey) ||
+        pkg.packageOrderId?.toLowerCase().includes(searchKey) ||
+        pkg.packageCabinetId?.toLowerCase().includes(searchKey) ||
+        pkg.packageType?.toLowerCase().includes(searchKey) ||
+        pkg.packageSiteName?.toLowerCase().includes(searchKey)
+      );
+
+      // 调试日志：打印匹配结果
+      console.log('是否匹配:', result);
+      return result;
     });
-    return;
+
+    // 调试日志：打印搜索结果
+    console.log('搜索结果:', searchResults.value);
+
+    showNoResult.value = searchResults.value.length === 0;
+    if (searchResults.value.length > 0) {
+      saveSearchHistory(searchKeyword.value);
+    }
+  };
+
+// 处理包裹点击
+const handlePackageClick = (pkg) => {
+  // 判断包裹属于哪个列表
+  let listType;
+  if (allPackages.value.pendingPackages?.some(p => p.packageId === pkg.packageId)) {
+    listType = 'pending';
+  } else if (allPackages.value.deliveringPackages?.some(p => p.packageId === pkg.packageId)) {
+    listType = 'delivering';
+  } else if (allPackages.value.completedPackages?.some(p => p.packageId === pkg.packageId)) {
+    listType = 'completed';
+  } else if (allPackages.value.timeoutPackages?.some(p => p.packageId === pkg.packageId)) {
+    listType = 'timeout';
   }
 
-  // 调试日志：打印搜索关键词
-  console.log('搜索关键词:', searchKeyword.value);
-  
-  // 调试日志：打印所有包裹数据
-  console.log('所有包裹数据:', allPackages.value);
+  const listRouteMap = {
+    pending: {
+      url: '/pages/package/pendingPackage',
+      eventName: 'pendingData',
+      getData: (pkg) => ({
+        trackingNumber: pkg.packageId,
+        address: pkg.packageSiteName,
+        locker: pkg.packageCabinetId,
+        itemType: pkg.packageType,
+        entryTime: pkg.packageInTime,
+        latitude: pkg.latitude,
+        longitude: pkg.longitude
+      })
+    },
+    delivering: {
+      url: '/pages/package/deliveringPackage',
+      eventName: 'deliveryData',
+      getData: (pkg) => ({
+        robotId: pkg.robotId,
+        deliveryTime: pkg.packageEstimatedCompletedTime,
+        packageType: pkg.packageType,
+        orderId: pkg.packageOrderId,
+        address: pkg.packageAddress,
+        latitude: pkg.latitude,
+        longitude: pkg.longitude
+      })
+    },
+    completed: {
+      url: '/pages/package/completedPackage',
+      eventName: 'completedData',
+      getData: (pkg) => ({
+        orderId: pkg.packageOrderId,
+        trackingNumber: pkg.packageId,
+        packageType: pkg.packageType,
+        packageAddress: pkg.packageAddress,
+        packageCompletedTime: pkg.packageCompletedTime,
+        packageOrderCreatedTime: pkg.packageOrderCreatedTime,
+        contactName: pkg.contactName,
+        contactPhone: pkg.contactPhone,
+        orderTime: pkg.orderTime,
+        receivedTime: pkg.receivedTime,
+        payment: pkg.payment
+      })
+    },
+    timeout: {
+      url: '/pages/package/timeoutPackage',
+      eventName: 'timeoutData',
+      getData: (pkg) => ({
+        trackingNumber: pkg.packageId,
+        itemType: pkg.packageType,
+        entryTime: pkg.packageInTime,
+        timeoutDuration: `超时${pkg.timeoutDuration}`,
+        adminName: pkg.adminName,
+        adminPhone: pkg.adminPhone
+      })
+    }
+  };
 
-  const searchKey = searchKeyword.value.toLowerCase();
-  const allPackagesList = [
-    ...allPackages.value.pendingPackages || [],
-    ...allPackages.value.deliveringPackages || [],
-    ...allPackages.value.completedPackages || [],
-    ...allPackages.value.timeoutPackages || []
-  ];
-
-  // 调试日志：打印合并后的包裹列表
-  console.log('合并后的包裹列表:', allPackagesList);
-
-  searchResults.value = allPackagesList.filter(pkg => {
-    // 调试日志：打印每个包裹的搜索字段
-    console.log('正在检查包裹:', {
-      id: pkg.packageOrderId,
-      cabinetId: pkg.packageCabinetId,
-      type: pkg.packageType,
-      siteName: pkg.packageSiteName
+  const routeInfo = listRouteMap[listType];
+  if (routeInfo) {
+    uni.navigateTo({
+      url: `${routeInfo.url}?id=${pkg.id}`,
+      success: function(res) {
+        res.eventChannel.emit(routeInfo.eventName, routeInfo.getData(pkg));
+      }
     });
-
-    const result = (
-      pkg.packageOrderId?.toLowerCase().includes(searchKey) ||
-      pkg.packageCabinetId?.toLowerCase().includes(searchKey) ||
-      pkg.packageType?.toLowerCase().includes(searchKey) ||
-      pkg.packageSiteName?.toLowerCase().includes(searchKey)
-    );
-
-    // 调试日志：打印匹配结果
-    console.log('是否匹配:', result);
-    return result;
-  });
-
-  // 调试日志：打印搜索结果
-  console.log('搜索结果:', searchResults.value);
-
-  showNoResult.value = searchResults.value.length === 0;
-  if (searchResults.value.length > 0) {
-    saveSearchHistory(searchKeyword.value);
   }
 };
 
-  // 处理包裹点击
-  const handlePackageClick = (pkg) => {
-    const statusRouteMap = {
-      '待取件': '/pages/package/pendingPackage',
-      '配送中': '/pages/package/deliveringPackage',
-      '已签收': '/pages/package/completedPackage',
-      '已超时': '/pages/package/timeoutPackage'
-    };
-
-    const url = statusRouteMap[pkg.packageStatus];
-    if (url) {
-      uni.navigateTo({
-        url: `${url}?id=${pkg.id}`,
-        success: function(res) {
-          res.eventChannel.emit('packageData', {
-            pkg
-          });
-        }
-      });
-    }
-  };
 
   onMounted(() => {
     loadSearchHistory();
@@ -242,248 +306,249 @@ const handleSearch = () => {
 
 
 <style lang="scss">
-.search-container {
-  min-height: 100vh;
-  background-color: #f8f8f8;
-  padding-bottom: 40rpx;
-}
+  .search-container {
+    min-height: 100vh;
+    background-color: #f8f8f8;
+    padding-bottom: 40rpx;
+  }
 
-.search-header {
-  display: flex;
-  align-items: center;
-  padding: 20rpx;
-  background-color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-
-  .search-box {
-    flex: 1;
+  .search-header {
     display: flex;
     align-items: center;
-    background-color: #f5f5f5;
-    border-radius: 32rpx;
-    padding: 0 20rpx;
-    height: 64rpx;
-    margin-right: 20rpx;
+    padding: 20rpx;
+    background-color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 
-    .search-input {
+    .search-box {
       flex: 1;
-      height: 64rpx;
-      margin: 0 20rpx;
-      font-size: 28rpx;
-    }
-  }
-
-  .confirm-btn {
-    font-size: 28rpx;
-    color: #333;
-  }
-}
-
-.search-history {
-  background-color: #fff;
-  margin-top: 20rpx;
-  padding: 20rpx;
-
-  .history-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20rpx;
-
-    .title {
-      font-size: 28rpx;
-      color: #333;
-      font-weight: 500;
-    }
-  }
-
-  .history-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20rpx;
-
-    .history-item {
       display: flex;
       align-items: center;
       background-color: #f5f5f5;
-      padding: 12rpx 24rpx;
       border-radius: 32rpx;
-      font-size: 24rpx;
-      color: #666;
+      padding: 0 20rpx;
+      height: 64rpx;
+      margin-right: 20rpx;
 
-      .u-icon {
-        margin-right: 8rpx;
+      .search-input {
+        flex: 1;
+        height: 64rpx;
+        margin: 0 20rpx;
+        font-size: 28rpx;
       }
     }
-  }
-}
 
-.search-results {
-  height: calc(100vh - 140rpx);
-  padding: 0 20rpx;
-}
-
-.result-list {
-  padding: 20rpx 0;
-}
-
-.result-item {
-  background: #FFFFFF;
-  border-radius: 12rpx;
-  padding: 20rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-
-  .item-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 16rpx;
-
-    .type-icon {
-      width: 40rpx;
-      height: 40rpx;
-      margin-right: 16rpx;
+    .confirm-btn {
+      font-size: 28rpx;
+      color: #333;
     }
+  }
 
-    .package-info {
-      flex: 1;
+  .search-history {
+    background-color: #fff;
+    margin-top: 20rpx;
+    padding: 20rpx;
+
+    .history-header {
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20rpx;
 
-      .package-id {
+      .title {
         font-size: 28rpx;
         color: #333;
         font-weight: 500;
-        margin-bottom: 4rpx;
       }
+    }
 
-      .package-type {
+    .history-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20rpx;
+
+      .history-item {
+        display: flex;
+        align-items: center;
+        background-color: #f5f5f5;
+        padding: 12rpx 24rpx;
+        border-radius: 32rpx;
         font-size: 24rpx;
         color: #666;
-      }
-    }
 
-    .status-tag {
-      padding: 4rpx 16rpx;
-      border-radius: 20rpx;
-      font-size: 24rpx;
-      
-      &.pending {
-        background: #E0F2FE;
-        color: #0284C7;
-      }
-      
-      &.delivering {
-        background: #F0FDF4;
-        color: #16A34A;
-      }
-      
-      &.completed {
-        background: #F1F5F9;
-        color: #64748B;
-      }
-      
-      &.timeout {
-        background: #FEF2F2;
-        color: #DC2626;
+        .u-icon {
+          margin-right: 8rpx;
+        }
       }
     }
   }
 
-  .item-content {
-    .info-row {
+  .search-results {
+    height: calc(100vh - 140rpx);
+    padding: 0 20rpx;
+  }
+
+  .result-list {
+    padding: 20rpx 0;
+  }
+
+  .result-item {
+    background: #FFFFFF;
+    border-radius: 12rpx;
+    padding: 20rpx;
+    margin-bottom: 20rpx;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+
+    .item-header {
       display: flex;
       align-items: center;
-      font-size: 26rpx;
-      color: #64748B;
-      margin-bottom: 8rpx;
-      
-      &:last-child {
-        margin-bottom: 0;
+      margin-bottom: 16rpx;
+
+      .type-icon {
+        width: 40rpx;
+        height: 40rpx;
+        margin-right: 16rpx;
       }
 
-      .u-icon {
-        margin-right: 8rpx;
-      }
-
-      text {
+      .package-info {
         flex: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        display: flex;
+        flex-direction: column;
+
+        .package-id {
+          font-size: 28rpx;
+          color: #333;
+          font-weight: 500;
+          margin-bottom: 4rpx;
+        }
+
+        .package-type {
+          font-size: 24rpx;
+          color: #666;
+        }
+      }
+
+      .status-tag {
+        padding: 4rpx 16rpx;
+        border-radius: 20rpx;
+        font-size: 24rpx;
+
+        &.pending {
+          background: #E0F2FE;
+          color: #0284C7;
+        }
+
+        &.delivering {
+          background: #F0FDF4;
+          color: #16A34A;
+        }
+
+        &.completed {
+          background: #F1F5F9;
+          color: #64748B;
+        }
+
+        &.timeout {
+          background: #FEF2F2;
+          color: #DC2626;
+        }
+      }
+    }
+
+    .item-content {
+      .info-row {
+        display: flex;
+        align-items: center;
+        font-size: 26rpx;
+        color: #64748B;
+        margin-bottom: 8rpx;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .u-icon {
+          margin-right: 8rpx;
+        }
+
+        text {
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
       }
     }
   }
-}
 
-.empty-tip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 100rpx 0;
-  
-  .u-empty {
-    margin-bottom: 20rpx;
+  .empty-tip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100rpx 0;
+
+    .u-empty {
+      margin-bottom: 20rpx;
+    }
+
+    text {
+      font-size: 28rpx;
+      color: #999;
+    }
   }
 
-  text {
-    font-size: 28rpx;
-    color: #999;
+  // 点击效果
+  .result-item:active {
+    transform: scale(0.98);
+    transition: transform 0.2s ease;
   }
-}
 
-// 点击效果
-.result-item:active {
-  transform: scale(0.98);
-  transition: transform 0.2s ease;
-}
+  // 搜索框动画
+  .search-box {
+    transition: all 0.3s ease;
 
-// 搜索框动画
-.search-box {
-  transition: all 0.3s ease;
-  
-  &:focus-within {
-    box-shadow: 0 0 0 2rpx rgba(59, 130, 246, 0.1);
+    &:focus-within {
+      box-shadow: 0 0 0 2rpx rgba(59, 130, 246, 0.1);
+    }
   }
-}
 
-// 历史记录项动画
-.history-item {
-  transition: all 0.2s ease;
-  
-  &:active {
-    transform: scale(0.95);
-    opacity: 0.8;
+  // 历史记录项动画
+  .history-item {
+    transition: all 0.2s ease;
+
+    &:active {
+      transform: scale(0.95);
+      opacity: 0.8;
+    }
   }
-}
 
-// 加载动画
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20rpx);
+  // 加载动画
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20rpx);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .result-item {
+    animation: fadeIn 0.3s ease;
   }
-}
 
-.result-item {
-  animation: fadeIn 0.3s ease;
-}
+  // 滚动条样式
+  ::-webkit-scrollbar {
+    width: 6rpx;
+    background: transparent;
+  }
 
-// 滚动条样式
-::-webkit-scrollbar {
-  width: 6rpx;
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 3rpx;
-}
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3rpx;
+  }
 </style>

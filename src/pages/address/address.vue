@@ -4,10 +4,13 @@
     <view class="header">
       <text>我的收货地址</text>
     </view>
-
+    <view class="tip-box" v-if="siteName">
+      <text class="tip-text">仅显示{{ siteName }}的地址</text>
+    </view>
     <!-- 地址列表 -->
     <scroll-view scroll-y class="address-list">
-      <view class="address-item" v-for="address in addressList" :key="address.address_id"
+
+      <view class="address-item" v-for="address in filteredAddressList" :key="address.address_id"
         @click="mode === 'select' && selectAddress(address)">
         <!-- 左侧头像区 -->
         <view class="avatar">
@@ -36,21 +39,17 @@
             <u-icon name="trash" color="#666" size="40"></u-icon>
           </view>
         </view>
-
-        <!-- 注释掉默认地址选择器 -->
-        <!-- <view class="default-checkbox" v-if="isManageMode">
-        <view v-if="address.is_default">
-          <u-icon name="checkmark-circle" color="#3B82F6" size="40"></u-icon>
-        </view>
-        <view v-else>
-          <u-icon name="circle" color="#ddd" size="40"></u-icon>
-        </view>
-      </view> -->
+        
       </view>
       <!-- 无地址提示 -->
       <view class="empty-state" v-if="!addressList.length">
-        <!-- <image src="/static/images/empty-address.png" mode="aspectFit"></image> -->
+        <u-icon name="home" size="64" color="#999"></u-icon>
         <text>暂无收货地址</text>
+      </view>
+      <!-- 空状态 -->
+      <view v-if="addressList.length > 0 && filteredAddressList.length === 0" class="empty-state">
+        <u-icon name="info-circle" size="64" color="#999"></u-icon>
+        <text>暂无{{ siteName }}的可用地址</text>
       </view>
     </scroll-view>
 
@@ -75,7 +74,8 @@
   import {
     ref,
     onMounted,
-    getCurrentInstance
+    getCurrentInstance,
+    computed
   } from 'vue'
   import {
     fetchAddressDataAPI,
@@ -103,6 +103,18 @@
   const exitManage = () => {
     isManageMode.value = false
   }
+  const siteName = ref('');
+  // 过滤后的地址列表
+  const filteredAddressList = computed(() => {
+    if (!siteName.value) return addressList.value;
+
+    // 根据站点名过滤地址
+    return addressList.value.filter(addr => {
+      // 这里的匹配逻辑可以根据实际需求调整
+      // 例如：可以用 includes 进行模糊匹配，或者用 === 进行精确匹配
+      return addr.region.includes(siteName.value);
+    });
+  });
   // 初始化
   onMounted(() => {
     fetchAddressList()
@@ -156,6 +168,14 @@
 
   // 选择地址（仅在选择模式下生效）
   const selectAddress = (address) => {
+    // 如果地址不属于指定站点，显示提示
+    if (!address.region.includes(siteName.value)) {
+      uni.showToast({
+        title: `只能选择${siteName.value}的地址`,
+        icon: 'none'
+      });
+      return;
+    }
     if (mode.value === 'select') {
       const selectedAddr = {
         addressId: address.address_id,
@@ -210,6 +230,9 @@
     console.log('页面参数:', options) // 调试日志
     mode.value = options.mode || 'manage'
     console.log('当前模式:', mode.value) // 调试日志
+    if (options.siteName) {
+      siteName.value = decodeURIComponent(options.siteName);
+    }
   })
 
   // 退出管理模式
@@ -256,6 +279,18 @@
       align-items: center;
       justify-content: center;
       font-size: 32rpx;
+    }
+  }
+
+  .tip-box {
+    padding: 16rpx 24rpx;
+    background-color: #fff7e6;
+    margin: 20rpx;
+    border-radius: 8rpx;
+
+    .tip-text {
+      font-size: 28rpx;
+      color: #fa8c16;
     }
   }
 
@@ -415,5 +450,21 @@
       justify-content: center;
       font-size: 32rpx;
     }
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80rpx 0;
+    text-align: center;
+
+    text {
+      font-size: 28rpx;
+      color: #999;
+      margin: 20rpx 0 40rpx;
+    }
+
   }
 </style>

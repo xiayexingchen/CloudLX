@@ -198,57 +198,57 @@
   }
 
   const handleLogout = async () => {
-  uni.showModal({
-    title: '提示',
-    content: '确定要退出登录吗？',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          uni.showLoading({
-            title: '退出中...'
-          });
-          
-          // 调用退出登录 API
-          const result = await logoutAPI();
-          
-          uni.hideLoading();
-          
-          if (result.code === 23041) { // 假设 23041 是退出成功的状态码
-            // 清除本地存储的用户信息
-            uni.clearStorageSync();
-            
-            // 显示退出成功提示
-            uni.showToast({
-              title: '退出成功',
-              icon: 'success',
-              duration: 1500
+    uni.showModal({
+      title: '提示',
+      content: '确定要退出登录吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            uni.showLoading({
+              title: '退出中...'
             });
-            
-            // 延迟跳转，让用户看到提示
-            setTimeout(() => {
-              // 重定向到登录页面
-              uni.reLaunch({
-                url: '/pages/index/index'
+
+            // 调用退出登录 API
+            const result = await logoutAPI();
+
+            uni.hideLoading();
+
+            if (result.code === 21051) { // 假设 23041 是退出成功的状态码
+              // 清除本地存储的用户信息
+              uni.clearStorageSync();
+
+              // 显示退出成功提示
+              uni.showToast({
+                title: '退出成功',
+                icon: 'success',
+                duration: 1500
               });
-            }, 1500);
-          } else {
+
+              // 延迟跳转，让用户看到提示
+              setTimeout(() => {
+                // 重定向到登录页面
+                uni.reLaunch({
+                  url: '/pages/index/index'
+                });
+              }, 1500);
+            } else {
+              uni.showToast({
+                title: result.msg || '退出失败',
+                icon: 'none'
+              });
+            }
+          } catch (error) {
+            uni.hideLoading();
+            console.error('退出登录失败:', error);
             uni.showToast({
-              title: result.msg || '退出失败',
+              title: '退出失败，请稍后重试',
               icon: 'none'
             });
           }
-        } catch (error) {
-          uni.hideLoading();
-          console.error('退出登录失败:', error);
-          uni.showToast({
-            title: '退出失败，请稍后重试',
-            icon: 'none'
-          });
         }
       }
-    }
-  });
-};
+    });
+  };
 </script>
 
 
