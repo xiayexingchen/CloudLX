@@ -248,7 +248,7 @@ onMounted(() => {
 }
 
 .transaction-list {
-  padding: 0 20px;
+ // padding: 0 20px;
   max-height: calc(100vh - 140px);
 }
 

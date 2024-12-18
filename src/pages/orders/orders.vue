@@ -115,7 +115,8 @@
   } from 'vue';
   import dayjs from 'dayjs';
   import {
-    onLoad
+    onLoad,
+    onShow,
   } from '@dcloudio/uni-app';
   import {
     fetchOrderDataAPI,
@@ -289,21 +290,21 @@
   };
   // 日期选择处理
 
-  const onHide = (order) => {
-    uni.showModal({
-      title: '确认隐藏',
-      content: '确定要隐藏该订单吗？',
-      success: (res) => {
-        if (res.confirm) {
-          orders.value = orders.value.filter(item => item.id !== order.id);
-          uni.showToast({
-            title: '已隐藏订单',
-            icon: 'success'
-          });
-        }
-      }
-    });
-  };
+  // const onHide = (order) => {
+  //   uni.showModal({
+  //     title: '确认隐藏',
+  //     content: '确定要隐藏该订单吗？',
+  //     success: (res) => {
+  //       if (res.confirm) {
+  //         orders.value = orders.value.filter(item => item.id !== order.id);
+  //         uni.showToast({
+  //           title: '已隐藏订单',
+  //           icon: 'success'
+  //         });
+  //       }
+  //     }
+  //   });
+  // };
 
   // 处理订单点击
   const handleOrderClick = (order) => {
@@ -370,7 +371,9 @@
   onMounted(() => {
     fetchOrderData();
   });
-
+  onShow(() => {
+    fetchOrderData();
+  });
   // 删除订单处理函数
   const handleDeleteOrder = async (order) => {
     // 阻止事件冒泡，避免触发订单详情

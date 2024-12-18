@@ -52,7 +52,14 @@
     logoutAPI
   } from '@/api/api-user'
 
-
+  import {
+    useAvatar
+  } from '@/common/userAvatar'
+  // 使用共享的头像管理
+  const {
+    avatarUrl,
+    fetchAvatar
+  } = useAvatar()
 
   // 用户信息
   const userInfo = ref({
@@ -60,29 +67,29 @@
   })
 
   // 头像URL
-  const avatarUrl = ref('')
+  // const avatarUrl = ref('')
   // 保存上一次的URL用于比较
   const lastAvatarUrl = ref('')
   // 获取头像URL
-  const fetchAvatar = async () => {
-    try {
-      const res = await fetchAvatarAPI()
-      if (res.code === 23101) {
-        const newUrl = 'http://120.46.199.126:8080' + res.data + '?t=' + new Date().getTime()
+  // const fetchAvatar = async () => {
+  //   try {
+  //     const res = await fetchAvatarAPI()
+  //     if (res.code === 23101) {
+  //       const newUrl = 'http://120.46.199.126:8080' + res.data + '?t=' + new Date().getTime()
 
-        // 只有当URL发生变化时才更新
-        if (newUrl !== lastAvatarUrl.value) {
-          avatarUrl.value = newUrl
-          lastAvatarUrl.value = newUrl
-          console.log('头像已更新')
-        } else {
-          console.log('头像未变化，无需更新')
-        }
-      }
-    } catch (err) {
-      console.error('获取头像失败:', err)
-    }
-  }
+  //       // 只有当URL发生变化时才更新
+  //       if (newUrl !== lastAvatarUrl.value) {
+  //         avatarUrl.value = newUrl
+  //         lastAvatarUrl.value = newUrl
+  //         console.log('头像已更新')
+  //       } else {
+  //         console.log('头像未变化，无需更新')
+  //       }
+  //     }
+  //   } catch (err) {
+  //     console.error('获取头像失败:', err)
+  //   }
+  // }
   // 获取用户信息
   const fetchUserData = async () => {
     try {
@@ -111,7 +118,7 @@
 
 
   onShow(() => {
-    debouncedFetchAvatar()
+    //debouncedFetchAvatar()
     debouncedFetchUserData()
   })
   // 处理点击事件

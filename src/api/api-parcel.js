@@ -2,11 +2,11 @@
 import request from './request.js'
 
 // 获取包裹数据
-export const fetchPackageDataAPI = () => {
+export const fetchPackageDataAPI = (showLoading = true) => {
   return request({
     url: '/user/packages/getPackagesList',
     method: 'get',
-
+    showLoading // 传入 showLoading 参数
   })
 }
 

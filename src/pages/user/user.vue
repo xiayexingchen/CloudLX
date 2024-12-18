@@ -2,15 +2,11 @@
   <view class="container">
     <!-- 头像区域 -->
     <view class="avatar-section">
-    <view class="avatar-wrapper" @click="chooseImage">
-      <image 
-        class="avatar" 
-        :key="avatarUrl"
-        :src="avatarUrl || '/static/default-avatar.png'" 
-        mode="aspectFill"
-      ></image>
+      <view class="avatar-wrapper" @click="chooseImage">
+        <image class="avatar" :key="avatarUrl" :src="avatarUrl || '/static/default-avatar.png'" mode="aspectFill">
+        </image>
+      </view>
     </view>
-  </view>
 
     <!-- 信息列表 -->
     <view class="info-list">
@@ -56,7 +52,8 @@
       </u-popup>
 
       <!-- 生日选择器 -->
-      <u-calendar v-model="showDate" :mode="calendarMode"  :defaultDate="userInfo.birthday"  @change="change"></u-calendar>
+      <u-calendar v-model="showDate" :mode="calendarMode" :defaultDate="userInfo.birthday"
+        @change="change"></u-calendar>
 
       <!-- 性别选择器 -->
       <u-popup v-model="showGender" mode="bottom" :safe-area-inset-bottom="true">
@@ -94,101 +91,116 @@
     onShow
   } from '@dcloudio/uni-app'
   import dayjs from 'dayjs'
-  import { updateAvatarAPI, fetchAvatarAPI, fetchUserDataAPI, updateUserDataAPI } from '@/api/api-user'
+  import {
+    updateAvatarAPI,
+    fetchAvatarAPI,
+    fetchUserDataAPI,
+    updateUserDataAPI
+  } from '@/api/api-user'
+  import {
+    useAvatar
+  } from '@/common/userAvatar'
+  // 使用共享的头像管理
+  const {
+    avatarUrl,
+    fetchAvatar,
+    forceUpdateAvatar
+  } = useAvatar()
   // 用户信息
   const userInfo = reactive({
-  username: '',
-  birthday: '',
-  gender: ''
-})
+    username: '',
+    birthday: '',
+    gender: ''
+  })
 
   // 弹窗控制
   const showUsername = ref(false)
   const showDate = ref(false)
   const showGender = ref(false)
-// 头像URL
-const avatarUrl = ref('')
+  // 头像URL
+  //const avatarUrl = ref('')
   // 临时存储编辑值
   const tempUsername = ref('')
-// 添加日历模式
-const calendarMode = 'date'  // 添加这行
+  // 添加日历模式
+  const calendarMode = 'date' // 添加这行
   // 性别选项
   const genderOptions = ['男', '女']
 
 
-// 选择图片
-const chooseImage = () => {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success: async (res) => {
-      try {
-        // 显示加载中
-        uni.showLoading({
-          title: '上传中...',
-          mask: true
-        })
-
-        // 读取图片为base64
-        const base64 = await getImageBase64(res.tempFilePaths[0])
-        
-        // 上传头像
-        const updateResult = await updateAvatarAPI(base64)
-        console.log("base64"+base64);
-        if (updateResult.code === 23091) {
-          // 添加短暂延时，确保服务器处理完成
-          setTimeout(async () => {
-            await fetchAvatar()
-          }, 500)
-          
-          uni.showToast({
-            title: '更新成功',
-            icon: 'success'
+  // 选择图片
+  const chooseImage = () => {
+    uni.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: async (res) => {
+        try {
+          // 显示加载中
+          uni.showLoading({
+            title: '上传中...',
+            mask: true
           })
-        }
-      } catch (err) {
-        console.error('更新头像失败:', err)
-        uni.showToast({
-          title: '更新失败',
-          icon: 'none'
-        })
-      } finally {
-        uni.hideLoading()
-      }
-    }
-  })
-}
 
-// 获取图片base64
-const getImageBase64 = (tempFilePath) => {
-  return new Promise((resolve, reject) => {
-    uni.getFileSystemManager().readFile({
-      filePath: tempFilePath,
-      encoding: 'base64',
-      success: (res) => {
-        resolve(res.data)
-      },
-      fail: (err) => {
-        reject(err)
+          // 读取图片为base64
+          const base64 = await getImageBase64(res.tempFilePaths[0])
+
+          // 上传头像
+          const updateResult = await updateAvatarAPI(base64)
+          console.log("base64" + base64);
+          if (updateResult.code === 23091) {
+            // 添加短暂延时，确保服务器处理完成
+            setTimeout(async () => {
+              //  await fetchAvatar()
+              await forceUpdateAvatar() // 使用新的强制更新方法
+            }, 500)
+
+            uni.showToast({
+              title: '更新成功',
+              icon: 'success'
+            })
+          }
+        } catch (err) {
+          console.error('更新头像失败:', err)
+          uni.showToast({
+            title: '更新失败',
+            icon: 'none'
+          })
+        } finally {
+          uni.hideLoading()
+        }
       }
     })
-  })
-}
-
-// 获取头像URL
-const fetchAvatar = async () => {
-  try {
-    const res = await fetchAvatarAPI()
-    if (res.code === 23101) {
-      // 添加时间戳防止缓存，强制刷新图片
-      avatarUrl.value = 'http://120.46.199.126:8080' + res.data + '?t=' + new Date().getTime()
-      console.log("avatarUrl: " + avatarUrl.value);
-    }
-  } catch (err) {
-    console.error('获取头像失败:', err)
   }
-}
+
+  // 获取图片base64
+  const getImageBase64 = (tempFilePath) => {
+    return new Promise((resolve, reject) => {
+      uni.getFileSystemManager().readFile({
+        filePath: tempFilePath,
+        encoding: 'base64',
+        success: (res) => {
+          resolve(res.data)
+        },
+        fail: (err) => {
+          reject(err)
+        }
+      })
+    })
+  }
+
+  // 获取头像URL
+  // const fetchAvatar = async () => {
+  //   try {
+  //     const res = await fetchAvatarAPI()
+  //     if (res.code === 23101) {
+  //       // 添加时间戳防止缓存，强制刷新图片
+  //       avatarUrl.value = 'http://120.46.199.126:8080' + res.data + '?t=' + new Date().getTime()
+  //       console.log("avatarUrl: " + avatarUrl.value);
+  //     }
+  //   } catch (err) {
+  //     console.error('获取头像失败:', err)
+  //   }
+  // }
   // 显示用户名编辑弹窗
   const showUsernamePopup = () => {
     tempUsername.value = userInfo.username
@@ -259,36 +271,68 @@ const fetchAvatar = async () => {
     })
   }
   // 获取用户信息
-const fetchUserData = async () => {
-  try {
-    const res = await fetchUserDataAPI()
-    if (res.code === 23011) {
-      // 更新用户信息
-      userInfo.username = res.data.username
-      userInfo.birthday = res.data.birthday
-      userInfo.gender = res.data.gender
-      userInfo.birthday = dayjs(res.data.birthday).format('YYYY-MM-DD')
+  const fetchUserData = async () => {
+    try {
+      const res = await fetchUserDataAPI()
+      if (res.code === 23011) {
+        // 更新用户信息
+        userInfo.username = res.data.username
+        userInfo.birthday = res.data.birthday
+        userInfo.gender = res.data.gender
+        userInfo.birthday = dayjs(res.data.birthday).format('YYYY-MM-DD')
+      }
+    } catch (err) {
+      console.error('获取用户信息失败:', err)
+      uni.showToast({
+        title: '获取信息失败',
+        icon: 'none'
+      })
     }
-  } catch (err) {
-    console.error('获取用户信息失败:', err)
-    uni.showToast({
-      title: '获取信息失败',
-      icon: 'none'
-    })
   }
-}
 
-// 确认用户名修改
-const confirmUsername = async () => {
-  if (tempUsername.value.trim()) {
+  // 确认用户名修改
+  const confirmUsername = async () => {
+    if (tempUsername.value.trim()) {
+      try {
+        const result = await updateUserDataAPI({
+          ...userInfo,
+          username: tempUsername.value
+        })
+        if (result.code === 23021) {
+
+          showUsername.value = false
+          // 重新获取用户信息
+          await fetchUserData()
+          uni.showToast({
+            title: '修改成功',
+            icon: 'success'
+          })
+        }
+      } catch (err) {
+        console.error('更新用户名失败:', err)
+        uni.showToast({
+          title: '修改失败',
+          icon: 'none'
+        })
+      }
+    } else {
+      uni.showToast({
+        title: '用户名不能为空',
+        icon: 'none'
+      })
+    }
+  }
+
+  // 日期变更处理
+  const change = async (e) => {
     try {
       const result = await updateUserDataAPI({
         ...userInfo,
-        username: tempUsername.value
+        birthday: e.result
       })
       if (result.code === 23021) {
 
-        showUsername.value = false
+        showDate.value = false
         // 重新获取用户信息
         await fetchUserData()
         uni.showToast({
@@ -297,82 +341,50 @@ const confirmUsername = async () => {
         })
       }
     } catch (err) {
-      console.error('更新用户名失败:', err)
+      console.error('更新生日失败:', err)
       uni.showToast({
         title: '修改失败',
         icon: 'none'
       })
     }
-  } else {
-    uni.showToast({
-      title: '用户名不能为空',
-      icon: 'none'
-    })
   }
-}
 
-// 日期变更处理
-const change = async (e) => {
-  try {
-    const result = await updateUserDataAPI({
-      ...userInfo,
-      birthday: e.result
-    })
-    if (result.code === 23021) {
+  // 确认性别选择
+  const selectGender = async (gender) => {
+    try {
+      const result = await updateUserDataAPI({
+        ...userInfo,
+        gender: gender
+      })
+      if (result.code === 23021) {
 
-      showDate.value = false
-      // 重新获取用户信息
-      await fetchUserData()
+        showGender.value = false
+        // 重新获取用户信息
+        await fetchUserData()
+        uni.showToast({
+          title: '修改成功',
+          icon: 'success'
+        })
+      }
+    } catch (err) {
+      console.error('更新性别失败:', err)
       uni.showToast({
-        title: '修改成功',
-        icon: 'success'
+        title: '修改失败',
+        icon: 'none'
       })
     }
-  } catch (err) {
-    console.error('更新生日失败:', err)
-    uni.showToast({
-      title: '修改失败',
-      icon: 'none'
-    })
   }
-}
 
-// 确认性别选择
-const selectGender = async (gender) => {
-  try {
-    const result = await updateUserDataAPI({
-      ...userInfo,
-      gender: gender
-    })
-    if (result.code === 23021) {
+  // 页面加载和显示时获取数据
+  onMounted(() => {
+    fetchUserData()
+    fetchAvatar()
+  })
 
-      showGender.value = false
-            // 重新获取用户信息
-            await fetchUserData()
-      uni.showToast({
-        title: '修改成功',
-        icon: 'success'
-      })
-    }
-  } catch (err) {
-    console.error('更新性别失败:', err)
-    uni.showToast({
-      title: '修改失败',
-      icon: 'none'
-    })
-  }
-}
-
-// 页面加载和显示时获取数据
-onMounted(() => {
-  fetchUserData()
-  fetchAvatar()
-})
-
-onShow(() => {
-  fetchUserData()
-  fetchAvatar()
-})
+  onShow(() => {
+    fetchUserData()
+    // fetchAvatar()
+  })
 </script>
 
 <style lang="scss">
@@ -398,8 +410,8 @@ onShow(() => {
       box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
 
       &:hover {
-      opacity: 0.8; // 添加悬停效果
-    }
+        opacity: 0.8; // 添加悬停效果
+      }
     }
 
     .avatar {

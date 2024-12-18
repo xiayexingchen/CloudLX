@@ -39,7 +39,7 @@
             <u-icon name="trash" color="#666" size="40"></u-icon>
           </view>
         </view>
-        
+
       </view>
       <!-- 无地址提示 -->
       <view class="empty-state" v-if="!addressList.length">
@@ -47,7 +47,7 @@
         <text>暂无收货地址</text>
       </view>
       <!-- 空状态 -->
-      <view v-if="addressList.length > 0 && filteredAddressList.length === 0" class="empty-state">
+      <view v-if="addressList.length > 0 && filteredAddressList.length === 0 && siteName" class="empty-state">
         <u-icon name="info-circle" size="64" color="#999"></u-icon>
         <text>暂无{{ siteName }}的可用地址</text>
       </view>
@@ -119,7 +119,12 @@
   onMounted(() => {
     fetchAddressList()
   })
-
+  onShow(() => {
+    fetchAddressList()
+  })
+  defineExpose({
+  fetchAddressList
+});
   // 获取地址列表
   const fetchAddressList = async () => {
     try {
@@ -142,7 +147,7 @@
     try {
       uni.showModal({
         title: '提示',
-        content: '确定要删除这条消息吗？',
+        content: '确定要删除这条地址吗？',
         success: async (res) => {
           if (res.confirm) {
             const result = await deleteAddressAPI(addressId)
@@ -151,14 +156,14 @@
                 title: '删除成功',
                 icon: 'success'
               })
-              // 重新获取消息列表
+              // 重新获取地址列表
               fetchAddressList()
             }
           }
         }
       })
     } catch (err) {
-      console.error('删除消息失败:', err)
+      console.error('删除地址失败:', err)
       uni.showToast({
         title: '删除失败',
         icon: 'none'

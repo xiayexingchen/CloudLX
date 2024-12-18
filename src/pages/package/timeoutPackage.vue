@@ -17,7 +17,7 @@
       <view class="info-list">
         <view class="info-item">
           <text class="label">包裹编号</text>
-          <text class="value">{{ packageInfo.trackingNumber }}</text>
+          <text class="value">{{ packageInfo.packageId }}</text>
         </view>
         <view class="info-item">
           <text class="label">物品类型</text>
@@ -71,7 +71,7 @@
   const packageInfo = ref({
     statusText: '',
     statusDesc: '',
-    trackingNumber: '',
+    packageId: '',
     itemType: '',
     entryTime: '',
     timeoutDuration: '',

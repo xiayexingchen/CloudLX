@@ -28,7 +28,7 @@
         <view class="info-list">
           <view class="info-item">
             <text class="label">包裹编号</text>
-            <text class="value">{{ packageInfo.trackingNumber }}</text>
+            <text class="value">{{ packageInfo.packageId }}</text>
           </view>
           <view class="info-item">
             <text class="label">取货地址</text>
@@ -132,7 +132,7 @@
 
   const getPackageLoc = async () => {
     try {
-      const result = await packageLocAPI(packageInfo.value.trackingNumber);
+      const result = await packageLocAPI(packageInfo.value.packageId);
       packageInfo.value['latitude'] = result.data.latitude;
       packageInfo.value['longitude'] = result.data.longitude;
       console.log('site location data:', result);

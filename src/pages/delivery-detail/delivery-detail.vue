@@ -28,8 +28,8 @@
           <image :src="getPackageTypeImage(packageInfo.itemType)" mode="aspectFit" class="package-icon" />
           <view class="info-content">
             <view class="info-row">
-              <text class="label">运单号：</text>
-              <text class="value">{{packageInfo.trackingNumber}}</text>
+              <text class="label">包裹编号：</text>
+              <text class="value">{{packageInfo.packageId}}</text>
             </view>
             <view class="info-row">
               <text class="label">包裹类型：</text>
@@ -602,7 +602,7 @@
     try {
       const balanceRes = await fetchPersonalBalanceAPI();
       if (balanceRes.code === 23051) {
-        const balance = balanceRes.data;
+        const balance = balanceRes.data.balance;
         const orderAmount = Number(totalAmount.value);
 
         if (balance < orderAmount) {
@@ -624,7 +624,8 @@
           return;
         }
       }
-
+      // 余额充足，继续提交订单
+      console.log('余额充足，准备提交订单');
       // 余额充足，继续提交订单
       uni.showLoading({
         title: '提交中...'
@@ -632,16 +633,16 @@
 
       try {
         const orderInfo = {
-          packageId: packageInfo.value.trackingNumber,
+          packageId: packageInfo.value.packageId,
           startTime: actualDeliveryTime.value,
           addressId: address.value.id,
           couponId: selectedCoupon.value?.couponId || null,
           payment_method: '钱包',
           amount: Number(totalAmount.value)
         };
-
+        console.log('提交的订单信息:', orderInfo);
         const res = await orderAPI(orderInfo);
-
+        console.log('订单提交响应:', res);
         if (res.code === 24021) {
           uni.hideLoading();
           uni.$emit('refreshPackageList');
@@ -930,6 +931,7 @@
     border-radius: 24rpx 24rpx 0 0;
     max-height: 80vh;
     display: flex;
+    width: 100%; // 确保宽度为100%
     flex-direction: column;
 
     .popup-header {
@@ -950,16 +952,18 @@
 
     .popup-content {
       flex: 1;
-      padding: 24rpx;
       max-height: 60vh;
     }
 
     .coupon-option {
       padding: 24rpx;
       text-align: center;
+      box-sizing: border-box; // 确保padding不会导致宽度溢出
       border: 1px solid $border-color;
       border-radius: 8rpx;
       margin-bottom: 20rpx;
+      margin-left: 24rpx;
+      margin-right: 24rpx;
       font-size: 28rpx;
 
       &.active {
@@ -972,13 +976,17 @@
     .coupon-item {
       margin-bottom: 20rpx;
       border-radius: 8rpx;
+      box-sizing: border-box;
       background: #fff;
 
       &.active {
         background: $primary-light;
 
         .coupon-main {
-          border-color: $primary-color;
+          width: 100%;
+        box-sizing: border-box;
+        padding: 24rpx;
+        word-break: break-all; // 文字过长时换行
         }
       }
 

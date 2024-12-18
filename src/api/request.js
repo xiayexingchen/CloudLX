@@ -9,6 +9,7 @@ export default async (params) => {
   const method = params.method || 'GET';
   const data = params.data || {};
   const contentType = params.contentType || 'application/json;charset=UTF-8'; // 更灵活的 Content-Type
+  const showLoading = params.showLoading !== false; // 新增参数，默认为true
   const header = {
     //'Blade-Auth': uni.getStorageSync('token') || '',
     //'Content-Type': contentType,
@@ -16,9 +17,11 @@ export default async (params) => {
     //'Tenant-Id': uni.getStorageSync('tenantId') || 'xxx',
     ...params.header
   };
-  uni.showLoading({
-    title: '加载中...'
-  }); // 添加加载提示
+  if (showLoading) {
+    uni.showLoading({
+      title: '加载中...'
+    });
+  }
 
   try {
     const res = await uni.request({
@@ -60,7 +63,9 @@ export default async (params) => {
     console.error('请求错误:', error); // 打印错误信息到控制台
     throw error; // 重新抛出错误，以便在调用处处理
   } finally {
-    uni.hideLoading();
-    uni.hideToast();
+    if (showLoading) {
+      uni.hideLoading();
+      uni.hideToast();
+    }
   }
 };

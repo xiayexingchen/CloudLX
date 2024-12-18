@@ -157,6 +157,10 @@
                 <u-icon name="warning" size="24" color="#64748B"></u-icon>
                 <text class="timeout-text">已超时</text>
               </view> -->
+              <view class="info-item">
+                <u-icon name="clock" size="20" color="#64748B"></u-icon>
+                <text>入库时间：{{ item.packageInTime }}</text>
+              </view>
               <view class="info-item warning">
                 <u-icon name="info-circle" size="20" color="#64748B"></u-icon>
                 <text>你的包裹已超时，请及时联系管理员</text>
@@ -227,7 +231,8 @@
 
         <!-- 无数据提示 -->
         <view v-if="currentPackageList.length === 0" class="empty-tip">
-          <u-empty mode="data" icon="http://cdn.uviewui.com/uview/empty/data.png"></u-empty>
+          <u-empty mode="data" text="暂无包裹"></u-empty>
+
         </view>
       </scroll-view>
     </view>
@@ -240,7 +245,6 @@
     onMounted,
     computed,
     onBeforeUnmount,
-
   } from 'vue';
   import {
     fetchPackageDataAPI
@@ -254,8 +258,14 @@
     fetchReviewRecordAPI
   } from '../../api/api-order';
   import {
-    onShow
+    onShow,
+    onHide
   } from '@dcloudio/uni-app'
+  // 轮询间隔（例如每30秒）
+  const POLL_INTERVAL = 10000;
+  let pollTimer = null;
+  let isPageVisible = ref(false); // 添加页面可见性标志
+
   const indicatorDots = ref(true);
   const indicatorColor = ref("#FFF");
   const autoplay = ref(true);
@@ -265,6 +275,138 @@
   const activityList = ref([]);
   const currentSwiperIndex = ref(0);
   //const searchText = ref('');
+  // 轮询函数
+  // 轮询函数
+  // 轮询函数
+  const startPolling = () => {
+    // 确保先停止已存在的轮询
+    stopPolling();
+    console.log('开始轮询服务...');
+    isPageVisible.value = true;
+    pollTimer = setInterval(async () => {
+      // 检查页面是否可见
+      if (!isPageVisible.value) {
+        console.log('页面不可见，跳过轮询');
+        return;
+      }
+      console.log(`执行轮询检查 - ${new Date().toLocaleTimeString()}`);
+
+      // 先检查是否有新内容
+      const hasNew = await checkNewContent();
+
+      // 只有在有新内容时才更新数据
+      if (hasNew) {
+        console.log('检测到新内容，更新数据...');
+        await Promise.all([
+          fetchPackageData(),
+          fetchActivityData()
+        ]);
+      } else {
+        console.log('没有检测到新内容，跳过更新');
+      }
+    }, POLL_INTERVAL);
+  };
+
+  // 检查新内容的具体实现
+  const checkNewContent = async () => {
+    try {
+      console.log('开始检查新内容...');
+      const [packageRes, activityRes] = await Promise.all([
+        fetchPackageDataAPI(false),
+        fetchActivityAPI(false)
+      ]);
+
+      const hasNewPackagesResult = hasNewPackages(packageRes.data);
+      const hasNewActivitiesResult = hasNewActivities(activityRes.data);
+
+      console.log('检查结果:', {
+        hasNewPackages: hasNewPackagesResult,
+        hasNewActivities: hasNewActivitiesResult,
+        currentPackages: {
+          pending: allPackages.value.pendingPackageList?.length || 0,
+          delivering: allPackages.value.deliveringPackageList?.length || 0,
+          completed: allPackages.value.completedPackageList?.length || 0,
+          timeout: allPackages.value.timeoutPackageList?.length || 0
+        },
+        newPackages: {
+          pending: packageRes.data.pendingPackageList?.length || 0,
+          delivering: packageRes.data.deliveringPackageList?.length || 0,
+          completed: packageRes.data.completedPackageList?.length || 0,
+          timeout: packageRes.data.timeoutPackageList?.length || 0
+        }
+      });
+
+      // 检查是否有新包裹
+      if (hasNewPackagesResult) {
+        console.log('发现新包裹！');
+        uni.showToast({
+          title: '您有新的包裹',
+          icon: 'none',
+          duration: 2000
+        });
+      }
+
+      // 检查是否有新活动
+      if (hasNewActivitiesResult) {
+        console.log('发现新活动！');
+        uni.showToast({
+          title: '有新活动发布',
+          icon: 'none',
+          duration: 2000
+        });
+      }
+
+      return hasNewPackagesResult || hasNewActivitiesResult;
+    } catch (error) {
+      console.error('检查新内容失败:', error);
+      return false;
+    }
+  };
+  // 判断是否有新包裹
+  const hasNewPackages = (newData) => {
+    const oldPackages = allPackages.value;
+    // 比较新旧包裹数量
+    const oldCount = {
+      pending: oldPackages.pendingPackageList?.length || 0,
+      delivering: oldPackages.deliveringPackageList?.length || 0,
+      completed: oldPackages.completedPackageList?.length || 0,
+      timeout: oldPackages.timeoutPackageList?.length || 0
+    };
+
+    const newCount = {
+      pending: newData.pendingPackageList?.length || 0,
+      delivering: newData.deliveringPackageList?.length || 0,
+      completed: newData.completedPackageList?.length || 0,
+      timeout: newData.timeoutPackageList?.length || 0
+    };
+
+    // 如果任何一个类别的数量增加，说明有新包裹
+    return Object.keys(oldCount).some(key => newCount[key] > oldCount[key]);
+  };
+
+  // 判断是否有新活动
+  const hasNewActivities = (newData) => {
+    const oldActivities = activityList.value;
+    // 检查是否有新增的活动
+    return newData.length > oldActivities.length;
+  };
+  // 停止轮询时也添加日志
+  // 修改停止轮询函数
+  const stopPolling = () => {
+    console.log('停止轮询服务...');
+    isPageVisible.value = false;
+
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+      console.log('轮询定时器已清除');
+    }
+  };
+
+
+
+
+
   // 获取活动图片完整路径
   const getActivityImage = (imageData) => {
     if (!imageData) return '/static/loginLogo.png'; // 默认图片
@@ -448,11 +590,41 @@
   };
 
   // 获取包裹信息
-  const fetchPackageData = async () => {
+  const fetchPackageData = async (showLoading = true) => {
     try {
-      const response = await fetchPackageDataAPI();
-      allPackages.value = response.data;
-      console.log(allPackages.value.pendingPackageList);
+      const response = await fetchPackageDataAPI(showLoading);
+      if (response.code === 22011) {
+        // 添加日期格式化函数
+        const parseDate = (dateStr) => {
+          if (!dateStr) return 0;
+          // 将 "2024-12-18 11:47:15" 转换为 "2024-12-18T11:47:15"
+          return new Date(dateStr.replace(' ', 'T')).getTime();
+        };
+
+        // 在更新 allPackages 之前添加排序逻辑
+        const sortedData = {
+          ...response.data,
+          // 待取包裹按 packageInTime 倒序
+          pendingPackageList: response.data.pendingPackageList?.sort((a, b) =>
+            parseDate(b.packageInTime) - parseDate(a.packageInTime)
+          ),
+          // 超时包裹按 packageInTime 倒序
+          timeoutPackageList: response.data.timeoutPackageList?.sort((a, b) =>
+            parseDate(b.packageInTime) - parseDate(a.packageInTime)
+          ),
+          // 配送中包裹按 packageOrderCreatedTime 倒序
+          deliveringPackageList: response.data.deliveringPackageList?.sort((a, b) =>
+            parseDate(b.packageOrderCreatedTime) - parseDate(a.packageOrderCreatedTime)
+          ),
+          // 已签收包裹按 packageCompletedTime 倒序
+          completedPackageList: response.data.completedPackageList?.sort((a, b) =>
+            parseDate(b.packageCompletedTime) - parseDate(a.packageCompletedTime)
+          )
+        };
+
+        allPackages.value = sortedData;
+        console.log(allPackages.value.pendingPackageList);
+      }
     } catch (error) {
       console.error('获取包裹信息失败:', error);
       uni.showToast({
@@ -461,6 +633,42 @@
       });
     }
   }
+  // const fetchPackageData = async (showLoading = true) => {
+  //   try {
+  //     //const response = await fetchPackageDataAPI();
+  //     const response = await fetchPackageDataAPI(showLoading);
+  //   if (response.code === 22011) {
+  //     // 在更新 allPackages 之前添加排序逻辑
+  //     const sortedData = {
+  //       ...response.data,
+  //       // 待取包裹按 packageInTime 倒序
+  //       pendingPackageList: response.data.pendingPackageList?.sort((a, b) => 
+  //         new Date(b.packageInTime) - new Date(a.packageInTime)
+  //       ),
+  //       // 超时包裹按 packageInTime 倒序
+  //       timeoutPackageList: response.data.timeoutPackageList?.sort((a, b) => 
+  //         new Date(b.packageInTime) - new Date(a.packageInTime)
+  //       ),
+  //       // 配送中包裹按 packageOrderCreatedTime 倒序
+  //       deliveringPackageList: response.data.deliveringPackageList?.sort((a, b) => 
+  //         new Date(b.packageOrderCreatedTime) - new Date(a.packageOrderCreatedTime)
+  //       ),
+  //       // 已签收包裹按 packageCompletedTime 倒序
+  //       completedPackageList: response.data.completedPackageList?.sort((a, b) => 
+  //         new Date(b.packageCompletedTime) - new Date(a.packageCompletedTime)
+  //       )
+  //     };
+  //     allPackages.value = sortedData;
+  //     console.log(allPackages.value.pendingPackageList);
+  //   }
+  //   } catch (error) {
+  //     console.error('获取包裹信息失败:', error);
+  //     uni.showToast({
+  //       title: '获取数据失败',
+  //       icon: 'none'
+  //     });
+  //   }
+  // }
   // 添加状态类名获取方法
   const getStatusClass = (status) => {
     const statusMap = {
@@ -479,7 +687,7 @@
         url: '/pages/package/pendingPackage',
         eventName: 'pendingData',
         getData: (parcel) => ({
-          trackingNumber: parcel.packageId,
+          packageId: parcel.packageId,
           address: parcel.packageSiteName,
           locker: parcel.packageCabinetId,
           itemType: parcel.packageType,
@@ -498,7 +706,8 @@
           orderId: parcel.packageOrderId,
           address: parcel.packageAddress,
           latitude: parcel.latitude,
-          longitude: parcel.longitude
+          longitude: parcel.longitude,
+          status: parcel.packageStatus,
         })
       },
       2: {
@@ -506,7 +715,7 @@
         eventName: 'completedData',
         getData: (parcel) => ({
           orderId: parcel.packageOrderId,
-          trackingNumber: parcel.packageId,
+          packageId: parcel.packageId,
           packageType: parcel.packageType,
           packageAddress: parcel.packageAddress,
           packageCompletedTime: parcel.packageCompletedTime,
@@ -522,7 +731,7 @@
         url: '/pages/package/timeoutPackage',
         eventName: 'timeoutData',
         getData: (parcel) => ({
-          trackingNumber: parcel.packageId,
+          packageId: parcel.packageId,
           itemType: parcel.packageType,
           entryTime: parcel.packageInTime,
           timeoutDuration: `超时${parcel.timeoutDuration}`,
@@ -566,7 +775,7 @@
       success: (res) => {
         // 使用 eventChannel 传递包裹信息到目标页面
         res.eventChannel.emit('parcelData', {
-          trackingNumber: parcel.packageId,
+          packageId: parcel.packageId,
           address: parcel.packageSiteaddress,
           locker: parcel.packageCabinetId,
           itemType: parcel.packageType,
@@ -642,10 +851,27 @@
       }
     });
   }
-  // 页面显示时刷新评价记录
+  // 页面显示/隐藏时的日志
   onShow(() => {
+    console.log('页面显示，初始化数据和开启轮询...');
+    isPageVisible.value = true;
+    fetchPackageData(true);
+    fetchActivityData(true);
     fetchReviewedOrders();
+    startPolling();
   });
+
+  onHide(() => {
+    console.log('页面隐藏，停止轮询...');
+    stopPolling();
+  });
+
+
+  // // 以防万一，也在页面卸载时清理
+  // onUnload(() => {
+  //   console.log('页面卸载，清理轮询...');
+  //   stopPolling();
+  // });
 
   // 页面加载时获取数据
   onMounted(() => {
@@ -659,7 +885,9 @@
   });
   // 组件卸载前移除事件监听
   onBeforeUnmount(() => {
+    console.log('组件卸载，清理轮询...');
     uni.$off('refreshPackageList');
+    stopPolling();
   });
   // Tab切换处理
   const changeTab = async (index) => {

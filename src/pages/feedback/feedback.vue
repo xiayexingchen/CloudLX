@@ -248,6 +248,7 @@
 
     .content-input {
       position: relative;
+      width: 100%; // 确保宽度为100%
 
       .input-area {
         width: 100%;
@@ -258,11 +259,11 @@
         border: 1px solid #eee;
         border-radius: 8px;
         background: #f5f7fa;
+        box-sizing: border-box; // 添加这行确保padding不会使元素超出
       }
 
       .word-count {
         position: absolute;
-        // width: 100%;
         right: 12px;
         bottom: 12px;
         font-size: 12px;

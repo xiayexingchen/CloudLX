@@ -20,7 +20,8 @@
       <view class="form-item">
         <text class="label">楼栋</text>
         <picker mode="multiSelector" :range="buildingOptions" @change="onBuildingChange" @columnchange="onColumnChange"
-          :value="buildingIndex">
+          :value="buildingIndex"  :disabled="!formData.region"
+          @click="handleBuildingClick">
           <view class="picker-value" :class="{ placeholder: !formData.build }">
             {{ formData.build || '请选择楼栋' }}
             <text class="arrow">›</text>
@@ -67,7 +68,7 @@
     isDefault: false
   })
   // 区域选项
-  const regionOptions = ['天马学生公寓', '德智学生公寓', '其他区域']
+  const regionOptions = ['天马学生公寓', '德智学生公寓']
   const regionIndex = ref(0)
   // 判断是否为编辑模式
   const isEdit = ref(false)
@@ -79,20 +80,31 @@
   ]);
   // 根据区域获取对应的楼栋列表
   const getBuildingsByArea = (areaIndex) => {
-    const buildingCounts = {
-      0: 3, // 1区有3栋
-      1: 7, // 2区有7栋
-      2: 20 // 3区有20栋
-    };
-
-    const count = buildingCounts[areaIndex];
-    return Array.from({
-      length: count
-    }, (_, i) => `${i + 1}栋`);
+  const buildingLists = {
+    0: [1, 2, 3], // 天马一区楼栋
+    1: [1, 2, 3, 4, 5, 6, 7], // 天马二区楼栋
+    2: [9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 21], // 天马三区楼栋
   };
 
+  // 如果选择的是德智学生公寓，返回1-11栋和13栋
+  if (formData.value.region === '德智学生公寓') {
+    return [...Array(11).keys()].map(i => `${i + 1}栋`).concat(['13栋']);
+  }
+
+  // 天马学生公寓的楼栋选择
+  const buildings = buildingLists[areaIndex] || [];
+  return buildings.map(num => `${num}栋`);
+};
+// 添加楼栋点击处理函数
+const handleBuildingClick = () => {
+  if (!formData.value.region) {
+    uni.showToast({
+      title: '请先选择区域',
+      icon: 'none'
+    });
+  }
+};
   // 检查是否有现有地址
-  // 修改检查现有地址的方法
   const checkExistingAddresses = async () => {
     try {
       const res = await fetchAddressDataAPI();
@@ -110,28 +122,37 @@
   };
 
   // 处理列变化
-  const onColumnChange = (e) => {
-    const {
-      column,
-      value
-    } = e.detail;
+// 处理列变化
+const onColumnChange = (e) => {
+  const { column, value } = e.detail;
 
-    if (column === 0) { // 如果改变的是区域列
-      // 更新楼栋列的数据
-      buildingOptions.value[1] = getBuildingsByArea(value);
-      // 重置楼栋列的选择
-      buildingIndex.value = [value, 0];
-    }
-  };
+  // 如果是德智学生公寓，不需要处理列变化
+  if (formData.value.region === '德智学生公寓') {
+    return;
+  }
+
+  // 天马学生公寓的列变化处理
+  if (column === 0) { // 如果改变的是区域列
+    // 更新楼栋列的数据
+    buildingOptions.value[1] = getBuildingsByArea(value);
+    // 重置楼栋列的选择
+    buildingIndex.value = [value, 0];
+  }
+};
   // 处理最终选择
   const onBuildingChange = (e) => {
+  if (formData.value.region === '德智学生公寓') {
+    // 德智学生公寓的单列选择
+    const buildingIndex = e.detail.value[0];
+    formData.value.build = buildingOptions.value[0][buildingIndex];
+  } else {
+    // 天马学生公寓的两列选择
     const [areaIndex, buildingIndex] = e.detail.value;
     const area = buildingOptions.value[0][areaIndex];
     const building = buildingOptions.value[1][buildingIndex];
-
-    // 更新表单数据
     formData.value.build = `${area}${building}`;
-  };
+  }
+};
   // 编辑模式下的数据回显处理
   const initBuildingSelection = (buildString) => {
     if (!buildString) return;
@@ -202,10 +223,27 @@
     formData.value.isDefault = e.detail.value
   }
   const onRegionChange = (e) => {
-    const index = e.detail.value
-    formData.value.region = regionOptions[index]
-    regionIndex.value = index
+  const index = e.detail.value;
+  formData.value.region = regionOptions[index];
+  regionIndex.value = index;
+  
+  // 重置楼栋选择
+  formData.value.build = '';
+  
+  // 如果选择德智学生公寓，更新楼栋选项为单列
+  if (formData.value.region === '德智学生公寓') {
+    const dezhiBuildings = getBuildingsByArea();
+    buildingOptions.value = [dezhiBuildings];
+    buildingIndex.value = [0];
+  } else {
+    // 天马学生公寓保持两列选择
+    buildingOptions.value = [
+      ['一区', '二区', '三区'],
+      getBuildingsByArea(0)
+    ];
+    buildingIndex.value = [0, 0];
   }
+};
 
   const handleSubmit = async () => {
     // 表单验证
@@ -262,21 +300,17 @@
 
       if (isSuccess) {
         uni.showToast({
-          title: res.msg || '保存成功',
+          title: isEdit.value ? '更新成功' : '保存成功',
           icon: 'success',
           duration: 1500
         })
 
         // 延迟返回，让用户看到提示
         setTimeout(() => {
-          // 返回上一页并刷新数据
-          const pages = getCurrentPages()
-          const prevPage = pages[pages.length - 2]
-          if (prevPage?.$vm) {
-            prevPage.$vm.fetchAddressList()
-          }
-          uni.navigateBack()
-        }, 1500)
+        const pages = getCurrentPages();
+        
+        uni.navigateBack();
+      }, 1500);
       } else {
         uni.showToast({
           title: res.msg || '保存失败',
@@ -350,6 +384,10 @@
           font-size: 32rpx;
           transform: rotate(90deg);
         }
+        &.disabled {
+         opacity: 0.5;
+          pointer-events: none;
+  }
       }
     }
   }

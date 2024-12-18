@@ -19,7 +19,7 @@
           </view>
           <view class="status-info">
             <text class="status-text">包裹配送中</text>
-            <text class="robot-id">配送机器人：{{ robotId }}</text>
+            <text class="robot-id-text">配送机器人：{{ fmtRobotId? fmtRobotId:'等待空闲机器人'}}</text>
           </view>
         </view>
         <view class="estimated-time">
@@ -90,13 +90,14 @@
   }
   // 获取机器人ID的函数
   const robotId = ref('')
+  const fmtRobotId = ref('')
   const getRobotId = async (orderId) => {
     try {
       const res = await getRobotIdAPI(orderId)
       if (res.code === 24071) {
         // 格式化机器人ID
         robotId.value = res.data
-        // return formatRobotId(res.data)
+        fmtRobotId.value = formatRobotId(robotId.value)
       } else {
         console.error('获取机器人ID失败:', res.msg)
         return null
@@ -108,17 +109,56 @@
   }
   // 在需要显示机器人ID的地方使用
 
+  let st = null;
+  const sites = {
+    "天马学生公寓": {
+      center: [112.945817, 28.165779],
+      sitePosition: [112.945318, 28.164796],
+    },
+    "德智学生公寓": {
+      center: [112.940252, 28.162897],
+      sitePosition: [112.941401, 28.163157],
+    },
+    "财院校区学生公寓": {
+      center: [112.929928, 28.197679],
+      sitePosition: [112.930258, 28.197304],
+    },
+    "望麓桥学生公寓": {
+      center: [112.92857, 28.202066],
+      sitePosition: [112.928706, 28.201169],
+    },
+  };
   const getPackageInfo = async () => {
     try {
       const instance = getCurrentInstance();
       if (!instance) return;
       const eventChannel = instance.proxy.getOpenerEventChannel();
       // 监听来自上一页面的数据
-      eventChannel.on('deliveryData', (data) => {
+      eventChannel.on('deliveryData', async (data) => {
         packageInfo.value = data;
         console.log('Received deliveryData from the previous page:', data);
-        getRobotId(packageInfo.value.orderId);
-        getRobotInfo();
+
+        if (packageInfo.value.status === '正在运输') {
+          st = 1;
+
+        } else if (packageInfo.value.status === '待发货') {
+          st = 2;
+          robotInfo.value.longitude = sites[packageInfo.value.address.split(' ')[0]]
+            .sitePosition[0];
+          robotInfo.value.latitude = sites[packageInfo.value.address.split(' ')[0]]
+            .sitePosition[1];
+          addMarker()
+        } else {
+          st = 3;
+        }
+
+
+        if (st != 2) {
+          await getRobotId(packageInfo.value.orderId);
+          await getRobotInfo();
+
+        }
+
       });
 
     } catch (error) {
@@ -137,22 +177,26 @@
       width: 23,
       height: 33,
     })
-    markers.value.push({
-      iconPath: "../../static/icons/mapicon_navi_e.png",
-      id: markers.value.length,
-      latitude: robotInfo.value.to.latitude,
-      longitude: robotInfo.value.to.longitude,
-      width: 23,
-      height: 33,
-    })
-    markers.value.push({
-      iconPath: "../../static/icons/mapicon_navi_s.png",
-      id: markers.value.length,
-      latitude: robotInfo.value.from.latitude,
-      longitude: robotInfo.value.from.longitude,
-      width: 23,
-      height: 33,
-    })
+    if (st === 1) {
+      markers.value.push({
+        iconPath: "../../static/icons/mapicon_navi_e.png",
+        id: markers.value.length,
+        latitude: robotInfo.value.to.latitude,
+        longitude: robotInfo.value.to.longitude,
+        width: 23,
+        height: 33,
+      })
+      markers.value.push({
+        iconPath: "../../static/icons/mapicon_navi_s.png",
+        id: markers.value.length,
+        latitude: robotInfo.value.from.latitude,
+        longitude: robotInfo.value.from.longitude,
+        width: 23,
+        height: 33,
+      })
+
+    }
+
 
   }
 
@@ -226,7 +270,9 @@
 
     console.log('robotInfo:', robotInfo);
     addMarker();
-    drawTrace();
+    if (st === 1) {
+      drawTrace();
+    }
 
   }
 
@@ -260,7 +306,10 @@
       url: '/pages/robotView/robotView',
       success: (res) => {
         res.eventChannel.emit('robotData', {
-          robotId: packageInfo.value.robotId
+          robotId: robotId.value,
+          packageInfo: packageInfo.value,
+          robotInfo: robotInfo.value,
+          status: st,
         });
       }
     });

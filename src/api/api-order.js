@@ -88,3 +88,13 @@ export const fetchReviewRecordAPI = () => {
     method: 'get',
   })
 }
+//获得机器人实时信息
+export const fetchRobotInfoAPI = (robotId) => {
+  return request({
+    url: '/robot/get-velocity',
+    method: 'post',
+    data: {
+      robotId: robotId
+    }
+  })
+}

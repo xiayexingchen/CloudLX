@@ -26,10 +26,14 @@
           <text class="subtitle">请使用微信账号登录体验完整功能</text>
         </view>
 
-        <button class="login-btn" @click="openAuthPopup" :disabled="!isChecked">
+        <!-- <button class="login-btn" @click="openAuthPopup" :disabled="!isChecked">
           <text>微信一键登录</text>
-        </button>
-
+        </button> -->
+        <button class="login-btn" 
+  @click="handleLoginClick" 
+  :class="{ 'disabled': !isChecked }">
+  <text>微信一键登录</text>
+</button>
         <!-- 隐私协议 -->
         <view class="privacy-section">
           <checkbox-group @change="handlePrivacyCheck">
@@ -81,8 +85,16 @@
   const handlePrivacyCheck = (e) => {
     isChecked.value = e.detail.value.length > 0;
   };
-
-  // 打开授权弹窗
+  const handleLoginClick = () => {
+  if (!isChecked.value) {
+    uni.showToast({
+      title: '请先同意隐私协议',
+      icon: 'none'
+    });
+    return;
+  }
+  openAuthPopup();
+};  // 打开授权弹窗
   const openAuthPopup = () => {
     console.log('1');
     if (!isChecked.value) {
@@ -324,6 +336,7 @@
       &:disabled {
         background: var(--primary-light);
         box-shadow: none;
+        //opacity: 0.6;
       }
     }
   }

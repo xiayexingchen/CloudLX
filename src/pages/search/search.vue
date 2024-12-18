@@ -4,7 +4,8 @@
     <view class="search-header">
       <view class="search-box">
         <u-icon name="search" size="20" color="#666"></u-icon>
-        <input class="search-input" v-model="searchKeyword" placeholder="输入包裹关键词搜索" @confirm="handleSearch" />
+        <input class="search-input" v-model="searchKeyword" placeholder="输入包裹关键词搜索(包裹编号/订单号等)"
+          @confirm="handleSearch" />
         <u-icon v-if="searchKeyword" name="close" size="20" color="#666" @click="clearSearch"></u-icon>
       </view>
       <text class="confirm-btn" @click="handleSearch">搜索</text>
@@ -209,88 +210,90 @@
     }
   };
 
-// 处理包裹点击
-const handlePackageClick = (pkg) => {
-  // 判断包裹属于哪个列表
-  let listType;
-  if (allPackages.value.pendingPackages?.some(p => p.packageId === pkg.packageId)) {
-    listType = 'pending';
-  } else if (allPackages.value.deliveringPackages?.some(p => p.packageId === pkg.packageId)) {
-    listType = 'delivering';
-  } else if (allPackages.value.completedPackages?.some(p => p.packageId === pkg.packageId)) {
-    listType = 'completed';
-  } else if (allPackages.value.timeoutPackages?.some(p => p.packageId === pkg.packageId)) {
-    listType = 'timeout';
-  }
+  // 处理包裹点击
+  const handlePackageClick = (pkg) => {
+    // 判断包裹属于哪个列表
+    let listType;
+    if (allPackages.value.pendingPackages?.some(p => p.packageId === pkg.packageId)) {
+      listType = 'pending';
+    } else if (allPackages.value.deliveringPackages?.some(p => p.packageId === pkg.packageId)) {
+      listType = 'delivering';
+    } else if (allPackages.value.completedPackages?.some(p => p.packageId === pkg.packageId)) {
+      listType = 'completed';
+    } else if (allPackages.value.timeoutPackages?.some(p => p.packageId === pkg.packageId)) {
+      listType = 'timeout';
+    }
 
-  const listRouteMap = {
-    pending: {
-      url: '/pages/package/pendingPackage',
-      eventName: 'pendingData',
-      getData: (pkg) => ({
-        trackingNumber: pkg.packageId,
-        address: pkg.packageSiteName,
-        locker: pkg.packageCabinetId,
-        itemType: pkg.packageType,
-        entryTime: pkg.packageInTime,
-        latitude: pkg.latitude,
-        longitude: pkg.longitude
-      })
-    },
-    delivering: {
-      url: '/pages/package/deliveringPackage',
-      eventName: 'deliveryData',
-      getData: (pkg) => ({
-        robotId: pkg.robotId,
-        deliveryTime: pkg.packageEstimatedCompletedTime,
-        packageType: pkg.packageType,
-        orderId: pkg.packageOrderId,
-        address: pkg.packageAddress,
-        latitude: pkg.latitude,
-        longitude: pkg.longitude
-      })
-    },
-    completed: {
-      url: '/pages/package/completedPackage',
-      eventName: 'completedData',
-      getData: (pkg) => ({
-        orderId: pkg.packageOrderId,
-        trackingNumber: pkg.packageId,
-        packageType: pkg.packageType,
-        packageAddress: pkg.packageAddress,
-        packageCompletedTime: pkg.packageCompletedTime,
-        packageOrderCreatedTime: pkg.packageOrderCreatedTime,
-        contactName: pkg.contactName,
-        contactPhone: pkg.contactPhone,
-        orderTime: pkg.orderTime,
-        receivedTime: pkg.receivedTime,
-        payment: pkg.payment
-      })
-    },
-    timeout: {
-      url: '/pages/package/timeoutPackage',
-      eventName: 'timeoutData',
-      getData: (pkg) => ({
-        trackingNumber: pkg.packageId,
-        itemType: pkg.packageType,
-        entryTime: pkg.packageInTime,
-        timeoutDuration: `超时${pkg.timeoutDuration}`,
-        adminName: pkg.adminName,
-        adminPhone: pkg.adminPhone
-      })
+    const listRouteMap = {
+      pending: {
+        url: '/pages/package/pendingPackage',
+        eventName: 'pendingData',
+        getData: (pkg) => ({
+          packageId: pkg.packageId,
+          address: pkg.packageSiteName,
+          locker: pkg.packageCabinetId,
+          itemType: pkg.packageType,
+          status: pkg.packageStatus,
+          entryTime: pkg.packageInTime,
+          latitude: pkg.latitude,
+          longitude: pkg.longitude
+        })
+      },
+      delivering: {
+        url: '/pages/package/deliveringPackage',
+        eventName: 'deliveryData',
+        getData: (pkg) => ({
+          robotId: pkg.robotId,
+          deliveryTime: pkg.packageEstimatedCompletedTime,
+          packageType: pkg.packageType,
+          orderId: pkg.packageOrderId,
+          status: pkg.packageStatus,
+          address: pkg.packageAddress,
+          latitude: pkg.latitude,
+          longitude: pkg.longitude
+        })
+      },
+      completed: {
+        url: '/pages/package/completedPackage',
+        eventName: 'completedData',
+        getData: (pkg) => ({
+          orderId: pkg.packageOrderId,
+          packageId: pkg.packageId,
+          packageType: pkg.packageType,
+          packageAddress: pkg.packageAddress,
+          packageCompletedTime: pkg.packageCompletedTime,
+          packageOrderCreatedTime: pkg.packageOrderCreatedTime,
+          contactName: pkg.contactName,
+          contactPhone: pkg.contactPhone,
+          orderTime: pkg.orderTime,
+          receivedTime: pkg.receivedTime,
+          payment: pkg.payment
+        })
+      },
+      timeout: {
+        url: '/pages/package/timeoutPackage',
+        eventName: 'timeoutData',
+        getData: (pkg) => ({
+          packageId: pkg.packageId,
+          itemType: pkg.packageType,
+          entryTime: pkg.packageInTime,
+          timeoutDuration: `超时${pkg.timeoutDuration}`,
+          adminName: pkg.adminName,
+          adminPhone: pkg.adminPhone
+        })
+      }
+    };
+
+    const routeInfo = listRouteMap[listType];
+    if (routeInfo) {
+      uni.navigateTo({
+        url: `${routeInfo.url}?id=${pkg.id}`,
+        success: function(res) {
+          res.eventChannel.emit(routeInfo.eventName, routeInfo.getData(pkg));
+        }
+      });
     }
   };
-
-  const routeInfo = listRouteMap[listType];
-  if (routeInfo) {
-    uni.navigateTo({
-      url: `${routeInfo.url}?id=${pkg.id}`,
-      success: function(res) {
-        res.eventChannel.emit(routeInfo.eventName, routeInfo.getData(pkg));
-      }
-    });
-  }
-};
 
 
   onMounted(() => {

@@ -1,9 +1,8 @@
 <template>
     <view class="package-detail">
-        <!-- 状态区域 -->
+        <!-- 状态区域保持不变 -->
         <view class="status-section">
             <view class="status-icon">
-                <!--        <u-icon name="checkmark-circle" color="#4caf50" size="48" /> -->
             </view>
             <text class="status-title">包裹已签收</text>
             <text class="status-desc">感谢您对云行者配送服务的信任，期待再次光临</text>
@@ -16,20 +15,45 @@
             </view>
 
             <view class="info-list">
-                <view class="info-item">
-                    <text class="label">订单编号</text>
-                    <text class="value">{{ packageInfo.orderId }}</text>
-                </view>
+                <!-- 基础信息（所有包裹都有） -->
                 <view class="info-item">
                     <text class="label">包裹编号</text>
-                    <text class="value">{{ packageInfo.trackingNumber }}</text>
+                    <text class="value">{{ packageInfo.packageId }}</text>
                 </view>
                 <view class="info-item">
                     <text class="label">包裹类型</text>
                     <text class="value">{{ packageInfo.packageType }}</text>
                 </view>
+                <view class="info-item">
+                    <text class="label">签收时间</text>
+                    <text class="value">{{ packageInfo.packageCompletedTime }}</text>
+                </view>
             </view>
         </view>
+
+        <!-- 订单信息卡片（仅机器人配送的包裹显示） -->
+        <view class="info-card" v-if="packageInfo.orderId">
+            <view class="card-header">
+                <text class="card-title">订单信息</text>
+            </view>
+
+            <view class="info-list">
+                <view class="info-item">
+                    <text class="label">订单编号</text>
+                    <text class="value">{{ packageInfo.orderId }}</text>
+                </view>
+                <view class="info-item">
+                    <text class="label">下单时间</text>
+                    <text class="value">{{ packageInfo.packageOrderCreatedTime }}</text>
+                </view>
+                <view class="info-item">
+                    <text class="label">配送地址</text>
+                    <text class="value">{{ packageInfo.packageAddress }}</text>
+                </view>
+            </view>
+        </view>
+    </view>
+</template>
 
         <!--    地址信息卡片
     <view class="info-card">
@@ -53,33 +77,13 @@
       </view>
     </view> -->
 
-        <!-- 时间信息卡片 -->
-        <view class="info-card">
-            <view class="card-header">
-                <text class="card-title">订单信息</text>
-            </view>
 
-            <view class="info-list">
-                <view class="info-item">
-                    <text class="label">下单时间</text>
-                    <text class="value">{{ packageInfo.packageOrderCreatedTime }}</text>
-                </view>
-                <view class="info-item">
-                    <text class="label">签收时间</text>
-                    <text class="value">{{ packageInfo.packageCompletedTime }}</text>
-                </view>
-                <view class="info-item">
-                    <text class="label">配送地址</text>
-                    <text class="value">{{ packageInfo.packageAddress }}</text>
-                </view>
+
                 <!--        <view class="info-item">
           <text class="label">支付费用</text>
           <text class="value price">¥{{ packageInfo.payment }}</text>
         </view> -->
-            </view>
-        </view>
-    </view>
-</template>
+        
 
 <script setup>
     import {

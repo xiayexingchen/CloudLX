@@ -86,7 +86,7 @@
     try {
       const result = await readMessagesAPI(messageId)
       if (result.code === 25021) {
-        console.log('消息已标记为已读')
+        console.log(messageId+'消息已标记为已读')
       }
     } catch (err) {
       console.error('标记已读失败:', err)
@@ -99,32 +99,7 @@
     uni.navigateBack()
   }
 
-  // 删除消息
-  const handleDelete = () => {
-    uni.showModal({
-      title: '删除消息',
-      content: '确定要删除这条消息吗？',
-      success: async (res) => {
-        if (res.confirm) {
-          try {
-            // TODO: 调用删除消息 API
-            uni.showToast({
-              title: '删除成功',
-              icon: 'success'
-            })
-            setTimeout(() => {
-              uni.navigateBack()
-            }, 1500)
-          } catch (err) {
-            uni.showToast({
-              title: '删除失败',
-              icon: 'error'
-            })
-          }
-        }
-      }
-    })
-  }
+
 </script>
 
 <style lang="scss" scoped>

@@ -2,11 +2,11 @@
 import request from './request.js'
 
 //获得正在进行或未开始活动列表接口
-export const fetchActivityAPI = () => {
+export const fetchActivityAPI = (showLoading = true) => {
   return request({
     url: '/user/activity/get-activity-list',
     method: 'get',
-
+    showLoading // 传入 showLoading 参数
   })
 }
 //优惠券活动-是否已被用户领取

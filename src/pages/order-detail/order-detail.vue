@@ -75,7 +75,7 @@
         <view class="info-item">
           <text class="label">支付金额</text>
           <text class="value price">¥{{ orderInfo.total_amount }}</text>
-           <!-- .toFixed(2) -->
+          <!-- .toFixed(2) -->
         </view>
       </view>
     </view>
@@ -98,7 +98,7 @@
     const statusMap = {
       '已完成': '订单已完成配送',
       '配送中': '订单正在配送中',
-      '待发货': '等待快递员取件'
+      '待发货': '等待机器人取件'
     };
     return statusMap[orderInfo.value.status] || '';
   };
