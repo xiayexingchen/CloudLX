@@ -98,14 +98,14 @@ const monthlyStats = computed(() => {
   const monthData = transactionData.value.find(item => item.month === currentMonth.value);
   if (!monthData) return { rechargeAmount: 0, expenditureAmount: 0 };
 
-  // 计算实际消费金额（减去退款金额）
+  // 计算实际消费金额
   const expenditure = monthData.payments
     .filter(p => p.paymentType === '支付')
     .reduce((sum, p) => sum + p.amount, 0);
     
-  const refunds = monthData.payments
-    .filter(p => p.paymentType === '退款')
-    .reduce((sum, p) => sum + p.amount, 0);
+  // const refunds = monthData.payments
+  //   .filter(p => p.paymentType === '退款')
+  //   .reduce((sum, p) => sum + p.amount, 0);
 
   const recharge = monthData.payments
     .filter(p => p.paymentType === '充值')
@@ -113,7 +113,7 @@ const monthlyStats = computed(() => {
 
   return {
     rechargeAmount: recharge.toFixed(2),
-    expenditureAmount: (expenditure - refunds).toFixed(2)
+    expenditureAmount: (expenditure).toFixed(2)
   };
 });
 

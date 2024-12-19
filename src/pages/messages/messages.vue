@@ -12,8 +12,7 @@
     </view>
 
     <!-- 消息列表 -->
-    <scroll-view class="messages-list" scroll-y @scrolltolower="loadMore" refresher-enabled
-      @refresherrefresh="onRefresh">
+    <scroll-view class="messages-list" >
       <view v-if="filteredMessages.length > 0">
         <u-swipe-action v-for="(message, index) in filteredMessages" :key="message.messageId" :show="message.show"
           :index="index" :options="options" @click="handleSwipeClick" @open="handleSwipeOpen">
@@ -205,16 +204,6 @@ const fetchMessages = async () => {
     })
   }
 
-  // 下拉刷新
-  const onRefresh = async () => {
-    await fetchMessages()
-    uni.stopPullDownRefresh()
-  }
-
-  // 加载更多
-  const loadMore = () => {
-    // TODO: 实现加载更多逻辑
-  }
   // 在页面显示时刷新数据
   onShow(() => {
  fetchMessages().then(() => {

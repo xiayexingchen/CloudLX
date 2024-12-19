@@ -20,7 +20,8 @@ export const robotLocAPI = async (robotId) => {
     url: '/user/myMapView/get-robotLocation',
     method: 'post',
     data: {
-      robotId: parseInt(robotId)
+      robotId: parseInt(robotId),
+      showLoading: false
     }
   })
 }
@@ -32,7 +33,7 @@ export const packageLocAPI = async (robotId) => {
     url: '/user/myMapView/get-packageLocation',
     method: 'post',
     data: {
-      packageId: robotId
+      packageId: robotId,
     }
   })
 }

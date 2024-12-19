@@ -4,7 +4,7 @@
     <view class="search-header">
       <view class="search-box">
         <u-icon name="search" size="20" color="#666"></u-icon>
-        <input class="search-input" v-model="searchKeyword" placeholder="输入包裹关键词搜索(包裹编号/订单号等)"
+        <input class="search-input" v-model="searchKeyword" placeholder="输入包裹关键词搜索(包裹编号/站点名等)"
           @confirm="handleSearch" />
         <u-icon v-if="searchKeyword" name="close" size="20" color="#666" @click="clearSearch"></u-icon>
       </view>
@@ -36,7 +36,9 @@
           <view class="item-header">
             <image class="type-icon" :src="getPackageTypeImage(item.packageType)" mode="aspectFit" />
             <view class="package-info">
-              <text class="package-id">{{ item.packageOrderId || item.packageCabinetId }}</text>
+              <text class="package-id">
+                {{ getPackageStatusText(item) }}: {{ item.packageId }}
+              </text>
               <text class="package-type">{{ item.packageType }}</text>
             </view>
             <view :class="['status-tag', getStatusClass(item.packageStatus)]">
@@ -47,11 +49,11 @@
           <view class="item-content">
             <view class="info-row">
               <u-icon name="map" size="14" color="#64748B"></u-icon>
-              <text>{{ item.packageSiteName || '暂无地址' }}</text>
+              <text>站点地址：{{ item.packageSiteName || '暂无地址' }}</text>
             </view>
             <view class="info-row">
               <u-icon name="clock" size="14" color="#64748B"></u-icon>
-              <text>{{ formatDate(item.packageInTime || item.packageOrderCreatedTime) }}</text>
+              <text>{{item.packageOrderCreatedTime? "下单时间："+formatDate(item.packageOrderCreatedTime):"入柜时间："+formatDate(item.packageInTime) }}</text>
             </view>
           </view>
         </view>
@@ -94,10 +96,9 @@
   // 获取状态样式类
   const getStatusClass = (status) => {
     const statusMap = {
-      '待取件': 'pending',
-      '配送中': 'delivering',
-      '已签收': 'completed',
-      '已超时': 'timeout'
+      '待发货': 'pending',
+      '正在运输': 'delivering',
+      '已完成': 'completed',
     };
     return statusMap[status] || '';
   };
@@ -169,10 +170,10 @@
 
     const searchKey = searchKeyword.value.toLowerCase();
     const allPackagesList = [
-      ...allPackages.value.pendingPackages || [],
-      ...allPackages.value.deliveringPackages || [],
-      ...allPackages.value.completedPackages || [],
-      ...allPackages.value.timeoutPackages || []
+      ...allPackages.value.pendingPackageList || [],
+      ...allPackages.value.deliveringPackageList || [],
+      ...allPackages.value.completedPackageList || [],
+      ...allPackages.value.timeoutPackageList || []
     ];
 
     // 调试日志：打印合并后的包裹列表
@@ -199,6 +200,22 @@
       // 调试日志：打印匹配结果
       console.log('是否匹配:', result);
       return result;
+    }).map(pkg => {
+      // 添加来源信息
+      let fromList = '';
+      if (allPackages.value.pendingPackageList?.includes(pkg)) {
+        fromList = 'pendingPackageList';
+      } else if (allPackages.value.deliveringPackageList?.includes(pkg)) {
+        fromList = 'deliveringPackageList';
+      } else if (allPackages.value.completedPackageList?.includes(pkg)) {
+        fromList = 'completedPackageList';
+      } else if (allPackages.value.timeoutPackageList?.includes(pkg)) {
+        fromList = 'timeoutPackageList';
+      }
+      return {
+        ...pkg,
+        fromList
+      };
     });
 
     // 调试日志：打印搜索结果
@@ -214,13 +231,13 @@
   const handlePackageClick = (pkg) => {
     // 判断包裹属于哪个列表
     let listType;
-    if (allPackages.value.pendingPackages?.some(p => p.packageId === pkg.packageId)) {
+    if (allPackages.value.pendingPackageList?.some(p => p.packageId === pkg.packageId)) {
       listType = 'pending';
-    } else if (allPackages.value.deliveringPackages?.some(p => p.packageId === pkg.packageId)) {
+    } else if (allPackages.value.deliveringPackageList?.some(p => p.packageId === pkg.packageId)) {
       listType = 'delivering';
-    } else if (allPackages.value.completedPackages?.some(p => p.packageId === pkg.packageId)) {
+    } else if (allPackages.value.completedPackageList?.some(p => p.packageId === pkg.packageId)) {
       listType = 'completed';
-    } else if (allPackages.value.timeoutPackages?.some(p => p.packageId === pkg.packageId)) {
+    } else if (allPackages.value.timeoutPackageList?.some(p => p.packageId === pkg.packageId)) {
       listType = 'timeout';
     }
 
@@ -295,6 +312,20 @@
     }
   };
 
+  // 添加获取包裹状态文本的函数
+  const getPackageStatusText = (item) => {
+    // 根据包裹所在的列表判断状态
+    if (item.fromList === 'pendingPackageList') {
+      return '待取包裹';
+    } else if (item.fromList === 'deliveringPackageList') {
+      return '正在配送';
+    } else if (item.fromList === 'completedPackageList') {
+      return '近期签收';
+    } else if (item.fromList === 'timeoutPackageList') {
+      return '超时包裹';
+    }
+    return '待取包裹'; // 默认显示
+  };
 
   onMounted(() => {
     loadSearchHistory();
@@ -389,18 +420,18 @@
 
   .search-results {
     height: calc(100vh - 140rpx);
-    padding: 0 20rpx;
+    //  padding: 0 20rpx;
   }
 
   .result-list {
-    padding: 20rpx 0;
+    //  padding: 20rpx 0;
   }
 
   .result-item {
     background: #FFFFFF;
     border-radius: 12rpx;
     padding: 20rpx;
-    margin-bottom: 20rpx;
+    margin: 20rpx;
     box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 
     .item-header {

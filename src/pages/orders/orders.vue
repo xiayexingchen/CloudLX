@@ -24,13 +24,14 @@
           <!-- 订单头部 -->
           <view class="order-header">
             <view class="left">
+              <text class="order-id">订单号：{{ order.order_id }}</text>
               <!-- 使用 text-overflow 处理站点名过长 -->
-              <text class="site-name text-ellipsis">{{ order.site_name }}</text>
+              <!-- <text class="site-name text-ellipsis">{{ order.site_name }}</text> -->
               <text class="status" :class="getStatusClass(order.status)">
                 {{ order.status }}
               </text>
             </view>
-            <text class="order-id">订单号：{{ order.order_id }}</text>
+            <!-- <text class="order-id">订单号：{{ order.order_id }}</text> -->
           </view>
 
           <!-- 订单内容 -->
@@ -48,7 +49,7 @@
             <template v-if="order.status==='已完成'">
               <view class="info-row">
                 <u-icon name="clock" size="20" color="#666"></u-icon>
-                <text>签收时间：{{ order.estimated_completion_time }}</text>
+                <text>签收时间：{{ order.completed_at }}</text>
               </view>
             </template>
             <template v-else>
@@ -64,7 +65,7 @@
           <view class="order-footer">
             <view class="left">
               <text class="type">{{ order.type }}</text>
-              <text class="amount">¥{{ order.total_amount }}</text>
+              <text class="amount">¥{{ (order.total_amount).toFixed(2) }}</text>
             </view>
             <view class="actions">
               <!-- 只在订单状态为"已完成"时显示删除按钮 -->
@@ -538,7 +539,7 @@
 
       .order-id {
         font-size: 15px;
-        color: #999;
+        color: #333;
       }
     }
 

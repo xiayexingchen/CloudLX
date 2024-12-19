@@ -66,19 +66,16 @@
 
   // 格式化时间
   const formatTime = (time) => {
-    if (!time) return ''
-    try {
-      const date = new Date(time.replace(' ', 'T'))
-      return date.toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    } catch (err) {
-      return time
-    }
+ try {
+   if (!time) return ''
+   const date = new Date(time.replace(' ', 'T'))
+   return formatDistanceToNow(date, {
+     addSuffix: true,
+     locale: zhCN
+   })
+ } catch (err) {
+   return time
+ }
   }
 
   // 标记消息已读

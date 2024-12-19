@@ -130,7 +130,7 @@
     <view class="card price-card">
       <view class="price-item">
         <text>配送费</text>
-        <text>¥{{deliveryFee}}</text>
+        <text>¥{{(deliveryFee).toFixed(2)}}</text>
       </view>
       <view class="price-item discount" v-if="selectedCoupon">
         <text>优惠金额</text>

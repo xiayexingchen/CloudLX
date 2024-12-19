@@ -362,9 +362,10 @@
       return false;
     }
   };
-  // 判断是否有新包裹
+  // 修改判断是否有新包裹的函数
   const hasNewPackages = (newData) => {
     const oldPackages = allPackages.value;
+
     // 比较新旧包裹数量
     const oldCount = {
       pending: oldPackages.pendingPackageList?.length || 0,
@@ -380,8 +381,17 @@
       timeout: newData.timeoutPackageList?.length || 0
     };
 
-    // 如果任何一个类别的数量增加，说明有新包裹
-    return Object.keys(oldCount).some(key => newCount[key] > oldCount[key]);
+    // 检查运输中包裹的状态变化
+    const oldDelivering = oldPackages.deliveringPackageList || [];
+    const newDelivering = newData.deliveringPackageList || [];
+
+    const hasStatusChange = oldDelivering.some(oldPkg => {
+      const newPkg = newDelivering.find(p => p.packageId === oldPkg.packageId);
+      return newPkg && newPkg.packageStatus !== oldPkg.packageStatus;
+    });
+
+    // 如果任何一个类别的数量增加，或者状态有变化，都视为有更新
+    return Object.keys(oldCount).some(key => newCount[key] > oldCount[key]) || hasStatusChange;
   };
 
   // 判断是否有新活动
@@ -521,10 +531,10 @@
       success: function(res) {
         // 通过eventChannel向搜索页面传递数据
         res.eventChannel.emit('acceptPackageData', {
-          pendingPackages: allPackages.value.pendingPackageList || [],
-          deliveringPackages: allPackages.value.deliveringPackageList || [],
-          completedPackages: allPackages.value.completedPackageList || [],
-          timeoutPackages: allPackages.value.timeoutPackageList || []
+          pendingPackageList: allPackages.value.pendingPackageList || [],
+          deliveringPackageList: allPackages.value.deliveringPackageList || [],
+          completedPackageList: allPackages.value.completedPackageList || [],
+          timeoutPackageList: allPackages.value.timeoutPackageList || []
         });
       }
     });
@@ -672,10 +682,9 @@
   // 添加状态类名获取方法
   const getStatusClass = (status) => {
     const statusMap = {
-      '待取件': 'pending',
-      '配送中': 'delivering',
-      '已签收': 'completed',
-      '已超时': 'timeout'
+      '待发货': 'pending',
+      '正在运输': 'delivering',
+      '已完成': 'completed',
     };
     return statusMap[status] || '';
   };

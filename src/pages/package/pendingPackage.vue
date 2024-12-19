@@ -4,9 +4,9 @@
     <map class="map" :latitude="packageInfo.latitude" :longitude="packageInfo.longitude" :markers="markers" :scale="16"
       @regionchange="onRegionChange">
       <!-- 地图控件 -->
-      <cover-view class="map-controls">
+      <!-- <cover-view class="map-controls">
         <cover-image src="/static/location.png" class="location-btn" @tap="moveToCurrentLocation" />
-      </cover-view>
+      </cover-view> -->
       <!-- marker上的气泡 -->
       <cover-view slot="callout">
         <cover-view marker-id="1"></cover-view>

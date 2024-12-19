@@ -83,7 +83,7 @@
   const buildingLists = {
     0: [1, 2, 3], // 天马一区楼栋
     1: [1, 2, 3, 4, 5, 6, 7], // 天马二区楼栋
-    2: [9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 21], // 天马三区楼栋
+    2: [9, 10, 11, 12, 13, 16, 17, 18, 19, 20], // 天马三区楼栋
   };
 
   // 如果选择的是德智学生公寓，返回1-11栋和13栋
@@ -245,6 +245,27 @@ const onColumnChange = (e) => {
   }
 };
 
+  // 检查地址是否重复
+  const checkAddressExists = async (region, build) => {
+    try {
+      const res = await fetchAddressDataAPI();
+      if (res.code === 23031) {
+        const addresses = res.data || [];
+        // 检查是否存在相同地址，但排除当前正在编辑的地址
+        return addresses.some(addr => {
+          const isSameAddress = addr.region === region && addr.building === build;
+          const isCurrentAddress = isEdit.value && addr.addressId === formData.value.addressId;
+          return isSameAddress && !isCurrentAddress;
+        });
+      }
+      return false;
+    } catch (error) {
+      console.error('检查地址是否存在失败:', error);
+      return false;
+    }
+  };
+
+  // 提交表单
   const handleSubmit = async () => {
     // 表单验证
     if (!formData.value.recipientName.trim()) {
@@ -265,7 +286,7 @@ const onColumnChange = (e) => {
         icon: 'none'
       })
     }
-    // 如果是第一个地址，强制设置为默认地址
+
     // 如果是第一个地址，强制设置为默认地址
     if (isDefaultDisabled.value && !formData.value.isDefault) {
       return uni.showToast({
@@ -273,7 +294,18 @@ const onColumnChange = (e) => {
         icon: 'none'
       });
     }
+
     try {
+      // 检查地址是否已存在
+      const addressExists = await checkAddressExists(formData.value.region, formData.value.build);
+      if (addressExists) {
+        uni.showToast({
+          title: '该地址已存在',
+          icon: 'none'
+        });
+        return;
+      }
+
       uni.showLoading({
         title: '保存中...'
       })
@@ -288,45 +320,42 @@ const onColumnChange = (e) => {
 
       // 如果是编辑模式，添加addressId
       if (isEdit.value) {
-        submitData.addressId = formData.value.addressId
+        submitData.addressId = formData.value.addressId;
       }
 
       // 选择对应的API
-      const api = isEdit.value ? updateAddressDataAPI : addAddressDataAPI
-      const res = await api(submitData)
+      const api = isEdit.value ? updateAddressDataAPI : addAddressDataAPI;
+      const res = await api(submitData);
 
       // 根据不同的操作类型判断返回码
-      const isSuccess = isEdit.value ? res.code === 23041 : res.code === 23091
+      const isSuccess = isEdit.value ? res.code === 23041 : res.code === 23091;
 
       if (isSuccess) {
         uni.showToast({
           title: isEdit.value ? '更新成功' : '保存成功',
           icon: 'success',
           duration: 1500
-        })
+        });
 
-        // 延迟返回，让用户看到提示
         setTimeout(() => {
-        const pages = getCurrentPages();
-        
-        uni.navigateBack();
-      }, 1500);
+          uni.navigateBack();
+        }, 1500);
       } else {
         uni.showToast({
           title: res.msg || '保存失败',
           icon: 'none'
-        })
+        });
       }
     } catch (error) {
-      console.error('保存地址失败:', error)
+      console.error('保存地址失败:', error);
       uni.showToast({
         title: '保存失败',
         icon: 'error'
-      })
+      });
     } finally {
-      uni.hideLoading()
+      uni.hideLoading();
     }
-  }
+  };
 </script>
 
 <style lang="scss" scoped>

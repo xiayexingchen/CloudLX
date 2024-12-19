@@ -1,9 +1,9 @@
 <template>
   <view class="address-container">
     <!-- 顶部标题栏 -->
-    <view class="header">
+    <!-- <view class="header">
       <text>我的收货地址</text>
-    </view>
+    </view> -->
     <view class="tip-box" v-if="siteName">
       <text class="tip-text">仅显示{{ siteName }}的地址</text>
     </view>
@@ -329,13 +329,13 @@
 
   .address-list {
     flex: 1;
-    padding: 20rpx;
+   // padding: 20rpx;
   }
 
   .address-item {
     background: #fff;
     border-radius: 12rpx;
-    margin-bottom: 20rpx;
+    margin: 20rpx;
     padding: 30rpx;
     display: flex;
     align-items: center;

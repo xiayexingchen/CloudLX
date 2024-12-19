@@ -153,24 +153,6 @@ onMounted(() => {
     text-align: center; // 文本居中
   }
 
-  .css-barcode {
-    width: 100%;
-    height: 140rpx;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #fff;
-    padding: 20rpx;
-    border-radius: 16rpx;
-    position: relative;
-    overflow: hidden;
-    box-shadow: inset 0 0 10rpx rgba(0, 0, 0, 0.05);
-
-    .code-line {
-      height: 100%;
-      display: inline-block;
-    }
-  }
 
   .css-barcode {
     width: 100%;
@@ -188,6 +170,7 @@ onMounted(() => {
     .barcode-inner {
       display: flex;
       justify-content: center;
+      margin-top: 20rpx;
       align-items: center;
       min-width: 80%; // 确保最小宽度
       height: 100%;

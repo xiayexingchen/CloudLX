@@ -1,7 +1,7 @@
 <template>
   <view class="disclaimer">
     <!-- 状态栏 -->
-    <view class="status-bar">
+    <!-- <view class="status-bar">
       <view class="status-left">
         <text>{{ currentTime }}</text>
       </view>
@@ -9,7 +9,7 @@
         <text>免责声明</text>
       </view>
       <view class="status-right"></view>
-    </view>
+    </view> -->
 
     <!-- 内容区域 -->
     <view class="content">

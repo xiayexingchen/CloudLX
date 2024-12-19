@@ -16,37 +16,23 @@
       <!-- 机器人视角视图 -->
       <view class="video-section">
         <image :src="videoUrl" mode="aspectFill" class="video-stream" />
-        <!-- 实时数据悬浮层 -->
-        <view class="data-overlay">
-          <view class="data-row">
-            <view class="data-item">
-              <text class="label">速度</text>
-              <text class="value">{{robotMetrics.linear_velocity.toFixed(1)}} m/s</text>
+        <!-- 实时数据悬浮层 - 移至顶部 -->
+        <view class="metrics-container">
+          <view class="metrics-column">
+            <view class="metric-item">
+              <text class="label">电量 {{robotMetrics.battery}}%</text>
             </view>
-            <view class="data-item">
-              <text class="label">角速度</text>
-              <text class="value">{{robotMetrics.angular_velocity.toFixed(1)}} rad/s</text>
+            <view class="metric-item">
+              <text class="label">速度 {{robotMetrics.linear_velocity.toFixed(1)}} m/s</text>
             </view>
           </view>
-          <view class="data-row">
-            <view class="data-item">
-              <text class="label">经度</text>
-              <text class="value">{{robotMetrics.longitude}}°E</text>
+          <view class="metrics-column">
+            <view class="metric-item">
+              <text class="label">经度 {{robotMetrics.longitude}}°E</text>
             </view>
-            <view class="data-item">
-              <text class="label">纬度</text>
-              <text class="value">{{robotMetrics.latitude}}°N</text>
+            <view class="metric-item">
+              <text class="label">纬度 {{robotMetrics.latitude}}°N</text>
             </view>
-          </view>
-          <view class="data-row">
-            <view class="data-item">
-              <text class="label">电量</text>
-              <text class="value">{{robotMetrics.battery}}%</text>
-            </view>
-            <!-- <view class="data-item">
-              <text class="label">信号强度</text>
-              <text class="value">{{robotMetrics.signal}}%</text>
-            </view> -->
           </view>
         </view>
       </view>
@@ -88,7 +74,7 @@
 
       <view class="action-buttons">
         <button class="action-btn robot-view" @click="toggleView"
-          :style="packageInfo.status !== '正在运输' && currentView === 'map' ? 'opacity: 0.5;' : ''">
+          :style="packageInfo.status == '待发货' && currentView === 'map' ? 'opacity: 0.5;' : ''">
           <u-icon :name="currentView === 'map' ? 'camera-fill' : 'map'" size="20" />
           <text>{{ currentView === 'map' ? '查看机器人视角' : '查看地图视角' }}</text>
         </button>
@@ -187,7 +173,6 @@
 
         if (packageInfo.value.status === '正在运输') {
           st = 1;
-
         } else if (packageInfo.value.status === '待发货') {
           st = 2;
           robotInfo.value.longitude = sites[packageInfo.value.address.split(' ')[0]]
@@ -199,7 +184,6 @@
           st = 3;
         }
 
-
         if (st != 2) {
           await getRobotId(packageInfo.value.orderId);
           await getRobotInfo();
@@ -207,9 +191,8 @@
         }
 
       });
-
     } catch (error) {
-      console.error('Failed to set up event listener for deliveryData:', error);
+      console.error('getPackageInfo error:', error);
     }
   };
 
@@ -297,9 +280,9 @@
     } catch (error) {
       console.error('Failed to fetch robot location:', error);
     }
-
-
-    try {
+    // 如果状态为3，就不调用getRobotDest的api了，只要显示机器人位置就行
+    if (st !== 3) {
+      try {
       const result = await robotDestAPI(robotId.value);
       robotInfo.value['to'] = {
         'latitude': result.data.to.latitude,
@@ -314,7 +297,7 @@
     } catch (error) {
       console.error('Failed to fetch robot location:', error);
     }
-
+  }
     console.log('robotInfo:', robotInfo);
     addMarker();
     if (st === 1) {
@@ -410,7 +393,7 @@
 
   // 修改视图切换函数
   const toggleView = () => {
-    if (packageInfo.value.status !== '正在运输' && currentView.value === 'map') {
+    if (packageInfo.value.status == '待发货' && currentView.value === 'map') {
       uni.showToast({
         title: '包裹未在运输中，暂无机器人视角',
         icon: 'none',
@@ -649,41 +632,31 @@
       object-fit: cover;
     }
 
-    .data-overlay {
+    .metrics-container {
       position: absolute;
-      top: 20rpx;
-      left: 20rpx;
-      padding: 20rpx;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(10px);
-      border-radius: 16rpx;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      top: 10rpx;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-around;
+      padding: 0 40rpx;
+      //background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(5px);
+      padding: 20rpx 40rpx;
 
-      .data-row {
+      .metrics-column {
         display: flex;
-        gap: 24rpx;
-        margin-bottom: 16rpx;
+        flex-direction: column;
+        gap: 20rpx;
+        align-items: flex-start;
 
-        &:last-child {
-          margin-bottom: 0;
-        }
-      }
-
-      .data-item {
-        min-width: 120rpx;
-
-        .label {
-          font-size: 24rpx;
-          color: rgba(255, 255, 255, 0.8);
-          margin-bottom: 4rpx;
-          display: block;
-        }
-
-        .value {
-          font-size: 28rpx;
-          color: #fff;
-          font-family: 'Monaco', monospace;
-          font-weight: 500;
+        .metric-item {
+          .label {
+            font-size: 28rpx;
+            color: #fff;
+            font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+          }
         }
       }
     }
