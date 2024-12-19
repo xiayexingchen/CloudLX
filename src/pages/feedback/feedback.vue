@@ -23,9 +23,15 @@
     <view class="feedback-content">
       <text class="section-title">问题描述</text>
       <view class="content-input">
-        <textarea v-model="content" placeholder="请详细描述您遇到的问题或建议..." :maxlength="200" class="input-area">
+        <textarea v-model="content" placeholder="请详细描述您遇到的问题或建议（至少5个字）..." :maxlength="200" class="input-area"
+          @blur="validateContent">
         </textarea>
-        <text class="word-count">{{ content.length }}/200</text>
+        <text :class="['word-count', content.length < 5 ? 'error' : '']">
+          {{ content.length }}/200
+        </text>
+        <text v-if="content.length > 0 && content.length < 5" class="error-tip">
+          请至少输入5个字的描述
+        </text>
       </view>
     </view>
 
@@ -97,18 +103,38 @@
     return isValidType && isValidContent
   })
 
-
+  // 添加内容验证函数
+  const validateContent = () => {
+    if (content.value.length > 0 && content.value.length < 5) {
+      uni.showToast({
+        title: '请至少输入5个字的描述',
+        icon: 'none',
+        duration: 2000
+      });
+    }
+  };
 
   // 提交反馈
   const handleSubmit = async () => {
     console.log('Submit button clicked') // 添加调试日志
 
-    if (!isValid.value) {
+    // 表单验证
+    if (!selectedType.value) {
       uni.showToast({
-        title: '请完善反馈内容',
-        icon: 'none'
-      })
-      return
+        title: '请选择反馈类型',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+
+    if (content.value.length < 5) {
+      uni.showToast({
+        title: '请至少输入5个字的描述',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
     }
 
     try {
@@ -151,7 +177,8 @@
       console.error('提交反馈失败:', err)
       uni.showToast({
         title: '提交失败',
-        icon: 'none'
+        icon: 'none',
+        duration: 2000
       })
     } finally {
       uni.hideLoading()
@@ -248,7 +275,7 @@
 
     .content-input {
       position: relative;
-      width: 100%; // 确保宽度为100%
+      width: 100%;
 
       .input-area {
         width: 100%;
@@ -259,7 +286,7 @@
         border: 1px solid #eee;
         border-radius: 8px;
         background: #f5f7fa;
-        box-sizing: border-box; // 添加这行确保padding不会使元素超出
+        box-sizing: border-box;
       }
 
       .word-count {
@@ -268,6 +295,18 @@
         bottom: 12px;
         font-size: 12px;
         color: #999;
+
+        &.error {
+          color: #ff4d4f;
+        }
+      }
+
+      .error-tip {
+        position: absolute;
+        left: 12px;
+        bottom: -20px;
+        font-size: 12px;
+        color: #ff4d4f;
       }
     }
   }

@@ -205,8 +205,8 @@ export const feedbackAPI = (feedbackInfo) => {
     method: 'post',
     data: {
       content: feedbackInfo.content,
-      title: feedbackInfo.username + "-反馈建议",
-      type: feedbackInfo.type
+      title: feedbackInfo.username + '-' + feedbackInfo.type,
+      type: "反馈建议"
     }
 
   })

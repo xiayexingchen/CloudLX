@@ -1,13 +1,56 @@
 <template>
   <view class="delivery-container">
-    <!-- 地图区域 -->
-    <map class="delivery-map" :latitude="robotInfo?.latitude || 39.989643"
-      :longitude="robotInfo?.longitude || 116.481028" :markers="markers" :polyline="polyline" :scale="18">
-      <!-- 可选：添加地图控件 -->
-      <cover-view class="map-controls">
-        <cover-image src="/static/location.png" class="location-btn" @tap="moveToCurrentLocation" />
-      </cover-view>
-    </map>
+    <!-- 使用v-if/v-else控制显示哪个视图 -->
+    <template v-if="currentView === 'map'">
+      <!-- 地图区域 -->
+      <map class="delivery-map" :latitude="robotInfo?.latitude || 39.989643"
+        :longitude="robotInfo?.longitude || 116.481028" :markers="markers" :polyline="polyline" :scale="18">
+        <!-- 可选：添加地图控件 -->
+        <!--        <cover-view class="map-controls">
+          <cover-image src="/static/location.png" class="location-btn" @tap="moveToCurrentLocation" />
+        </cover-view> -->
+      </map>
+    </template>
+
+    <template v-else>
+      <!-- 机器人视角视图 -->
+      <view class="video-section">
+        <image :src="videoUrl" mode="aspectFill" class="video-stream" />
+        <!-- 实时数据悬浮层 -->
+        <view class="data-overlay">
+          <view class="data-row">
+            <view class="data-item">
+              <text class="label">速度</text>
+              <text class="value">{{robotMetrics.linear_velocity.toFixed(1)}} m/s</text>
+            </view>
+            <view class="data-item">
+              <text class="label">角速度</text>
+              <text class="value">{{robotMetrics.angular_velocity.toFixed(1)}} rad/s</text>
+            </view>
+          </view>
+          <view class="data-row">
+            <view class="data-item">
+              <text class="label">经度</text>
+              <text class="value">{{robotMetrics.longitude}}°E</text>
+            </view>
+            <view class="data-item">
+              <text class="label">纬度</text>
+              <text class="value">{{robotMetrics.latitude}}°N</text>
+            </view>
+          </view>
+          <view class="data-row">
+            <view class="data-item">
+              <text class="label">电量</text>
+              <text class="value">{{robotMetrics.battery}}%</text>
+            </view>
+            <!-- <view class="data-item">
+              <text class="label">信号强度</text>
+              <text class="value">{{robotMetrics.signal}}%</text>
+            </view> -->
+          </view>
+        </view>
+      </view>
+    </template>
 
     <!-- 配送信息卡片 -->
     <view class="delivery-card">
@@ -44,9 +87,10 @@
       </view>
 
       <view class="action-buttons">
-        <button class="action-btn robot-view" @click="navigateToRobotPage">
-          <u-icon name="camera-fill" size="20" />
-          <text>查看机器人视角</text>
+        <button class="action-btn robot-view" @click="toggleView"
+          :style="packageInfo.status !== '正在运输' && currentView === 'map' ? 'opacity: 0.5;' : ''">
+          <u-icon :name="currentView === 'map' ? 'camera-fill' : 'map'" size="20" />
+          <text>{{ currentView === 'map' ? '查看机器人视角' : '查看地图视角' }}</text>
         </button>
         <button class="action-btn contact" @click="handleContact">
           <u-icon name="server-man" size="20" />
@@ -60,7 +104,8 @@
 <script setup>
   import {
     onLoad,
-    onReady
+    onReady,
+    onUnload
   } from '@dcloudio/uni-app';
 
   import {
@@ -68,15 +113,17 @@
     computed,
     reactive,
     onMounted,
-    getCurrentInstance
+    getCurrentInstance,
+    onUnmounted
   } from 'vue';
 
   import {
     robotDestAPI,
-    robotLocAPI
+    robotLocAPI,
   } from '@/api/api-map.js'
   import {
-    getRobotIdAPI
+    getRobotIdAPI,
+    fetchRobotInfoAPI
   } from '@/api/api-order'
   import amap from '../../../lib/amap-wx.js'
 
@@ -89,7 +136,7 @@
     return `ROID${paddedNumber}`
   }
   // 获取机器人ID的函数
-  const robotId = ref('')
+  const robotId = ref('0')
   const fmtRobotId = ref('')
   const getRobotId = async (orderId) => {
     try {
@@ -200,7 +247,7 @@
 
   }
 
-  // 添加规划路线
+  // 加规划路线
   const polyline = ref([])
   const drawTrace = () => {
     var myAmapFun = new amap.AMapWX({
@@ -243,7 +290,7 @@
   const robotInfo = ref({});
   const getRobotInfo = async () => {
     try {
-      const result = await robotLocAPI(robotId.value);
+      const result = await robotLocAPI(Number(robotId.value));
       robotInfo.value['latitude'] = result.data.latitude;
       robotInfo.value['longitude'] = result.data.longitude;
       console.log('Robot location data:', result);
@@ -283,7 +330,22 @@
     } catch (error) {
       console.error('getPackageInfo error:', error);
     }
+  });
 
+  onUnload(() => {
+    // 确保页面卸载时清理定时器
+    if (metricsTimer) {
+      clearInterval(metricsTimer);
+      metricsTimer = null;
+    }
+  });
+
+  onUnmounted(() => {
+    // 确保组件卸载时清理定时器
+    if (metricsTimer) {
+      clearInterval(metricsTimer);
+      metricsTimer = null;
+    }
   });
 
 
@@ -329,6 +391,76 @@
         }
       }
     });
+  };
+
+  // 在现有的 import 语句下添加
+  const currentView = ref('map');
+  const videoUrl = ref('http://120.46.199.126:8080/robot/video_stream');
+  const robotMetrics = ref({
+    linear_velocity: 0,
+    angular_velocity: 0,
+    longitude: 0,
+    latitude: 0,
+    battery: 100,
+    signal: 85
+  });
+
+  // 修改定时器相关的代码
+  let metricsTimer = null; // 用于存储定时器ID
+
+  // 修改视图切换函数
+  const toggleView = () => {
+    if (packageInfo.value.status !== '正在运输' && currentView.value === 'map') {
+      uni.showToast({
+        title: '包裹未在运输中，暂无机器人视角',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+
+    // 切换视图前清理现有定时器
+    if (metricsTimer) {
+      clearInterval(metricsTimer);
+      metricsTimer = null;
+    }
+
+    currentView.value = currentView.value === 'map' ? 'robot' : 'map';
+
+    // 如果切换到机器人视角，开始获取实时数据
+    if (currentView.value === 'robot') {
+      // 立即获取一次数据
+      getRobotMetrics();
+      // 启动定时器
+      metricsTimer = setInterval(() => {
+        getRobotMetrics();
+      }, 6000);
+    }
+  };
+
+  // 修改获取机器人实时数据的函数
+  const getRobotMetrics = async () => {
+    try {
+      // 获取速度和电量信息
+      const velocityRes = await fetchRobotInfoAPI(Number(robotId.value));
+      // 获取位置信息
+      const locationRes = await robotLocAPI(Number(robotId.value));
+
+      if (velocityRes.code === 50081 && locationRes.code === 27011) {
+        robotMetrics.value = {
+          ...robotMetrics.value,
+          linear_velocity: velocityRes.data.linear_velocity,
+          angular_velocity: velocityRes.data.angular_velocity,
+          battery: velocityRes.data.battery,
+          longitude: locationRes.data.longitude,
+          latitude: locationRes.data.latitude
+        };
+      } else {
+        console.error('Failed to fetch robot metrics:', velocityRes.msg, locationRes.msg);
+      }
+    } catch (error) {
+      console.error('Failed to fetch robot metrics:', error);
+    }
   };
 </script>
 
@@ -499,6 +631,59 @@
         .action-btn.contact {
           background: #333;
           color: #fff;
+        }
+      }
+    }
+  }
+
+  .video-section {
+    width: 100%;
+    height: 65%;
+    position: relative;
+    background: #000;
+    overflow: hidden;
+
+    .video-stream {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .data-overlay {
+      position: absolute;
+      top: 20rpx;
+      left: 20rpx;
+      padding: 20rpx;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 16rpx;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+      .data-row {
+        display: flex;
+        gap: 24rpx;
+        margin-bottom: 16rpx;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      .data-item {
+        min-width: 120rpx;
+
+        .label {
+          font-size: 24rpx;
+          color: rgba(255, 255, 255, 0.8);
+          margin-bottom: 4rpx;
+          display: block;
+        }
+
+        .value {
+          font-size: 28rpx;
+          color: #fff;
+          font-family: 'Monaco', monospace;
+          font-weight: 500;
         }
       }
     }

@@ -90,62 +90,62 @@
     {
       "path": "pages/address/address",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "我的地址"
       }
     },
     {
       "path": "pages/wallet/wallet",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "我的钱包"
       }
     },
     {
       "path": "pages/discount/discount",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "有优惠券"
       }
     },
     {
       "path": "pages/feedback/feedback",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "反馈建议"
       }
     },
     {
       "path": "pages/disclaimer/disclaimer",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "免责声明"
       }
     },
-    {
-      "path": "pages/map/map",
-      "style": {
-        "navigationBarTitleText": ""
-      }
-    },
-    {
-      "path": "pages/robotView/robotView",
-      "style": {
-        "navigationBarTitleText": ""
-      }
-    },
+    // {
+    //   "path": "pages/map/map",
+    //   "style": {
+    //     "navigationBarTitleText": ""
+    //   }
+    // },
+    // {
+    //   "path": "pages/robotView/robotView",
+    //   "style": {
+    //     "navigationBarTitleText": ""
+    //   }
+    // },
 
     {
       "path": "pages/message-detail/message-detail",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "信息详细"
       }
     },
     {
       "path": "pages/delivery-detail/delivery-detail",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "配送"
       }
     },
     {
       "path": "pages/review/review",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "评价"
       }
     },
     // {
@@ -157,13 +157,13 @@
     {
       "path": "pages/search/search",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "搜索"
       }
     },
     {
       "path": "pages/user/user",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "个人信息"
       }
     },
     {
@@ -175,19 +175,19 @@
     {
       "path": "pages/activity/activity",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "活动"
       }
     },
     {
       "path": "pages/order-detail/order-detail",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "订单详细"
       }
     },
     {
       "path": "pages/transaction-record/transaction-record",
       "style": {
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "交易记录"
       }
     }
   ],

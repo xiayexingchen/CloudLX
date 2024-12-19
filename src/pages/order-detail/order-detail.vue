@@ -34,11 +34,11 @@
           <text class="label">下单时间</text>
           <text class="value">{{ orderInfo.created_at }}</text>
         </view>
-        <view class="info-item" v-if="orderInfo.estimated_completion_time">
+        <view class="info-item" v-if="orderInfo.status !== '已完成' && orderInfo.estimated_completion_time">
           <text class="label">预计送达</text>
           <text class="value">{{ orderInfo.estimated_completion_time }}</text>
         </view>
-        <view class="info-item" v-if="orderInfo.completed_at">
+        <view class="info-item" v-if="orderInfo.status === '已完成' && orderInfo.completed_at">
           <text class="label">完成时间</text>
           <text class="value">{{ orderInfo.completed_at }}</text>
         </view>

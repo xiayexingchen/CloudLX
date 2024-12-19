@@ -96,13 +96,36 @@ const selectMonth = (month) => {
 // 当前月份统计
 const monthlyStats = computed(() => {
   const monthData = transactionData.value.find(item => item.month === currentMonth.value);
-  return monthData || { rechargeAmount: 0, expenditureAmount: 0 };
+  if (!monthData) return { rechargeAmount: 0, expenditureAmount: 0 };
+
+  // 计算实际消费金额（减去退款金额）
+  const expenditure = monthData.payments
+    .filter(p => p.paymentType === '支付')
+    .reduce((sum, p) => sum + p.amount, 0);
+    
+  const refunds = monthData.payments
+    .filter(p => p.paymentType === '退款')
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const recharge = monthData.payments
+    .filter(p => p.paymentType === '充值')
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  return {
+    rechargeAmount: recharge.toFixed(2),
+    expenditureAmount: (expenditure - refunds).toFixed(2)
+  };
 });
 
 // 当前月份交易记录
 const currentMonthPayments = computed(() => {
   const monthData = transactionData.value.find(item => item.month === currentMonth.value);
-  return monthData ? monthData.payments : [];
+  if (!monthData) return [];
+  
+  // 对交易记录按时间倒序排序
+  return [...monthData.payments].sort((a, b) => {
+    return new Date(b.paymentTime) - new Date(a.paymentTime);
+  });
 });
 
 // 格式化月份显示
@@ -186,8 +209,13 @@ const fetchTransactionData = async () => {
   try {
     const response = await fetchPersonalPaymentsAPI();
     if (response.code === 23141) {
-      transactionData.value = response.data;
+      // 对月份数据按时间倒序排序
+      transactionData.value = response.data.sort((a, b) => {
+        return new Date(b.month) - new Date(a.month);
+      });
+      
       if (transactionData.value.length > 0) {
+        // 默认选择最新月份
         currentMonth.value = transactionData.value[0].month;
       }
     }
@@ -199,6 +227,34 @@ const fetchTransactionData = async () => {
 onMounted(() => {
   fetchTransactionData();
 });
+
+// 格式化优惠券值
+const formatDiscountValue = (coupon) => {
+  if (coupon.couponType === '折扣券') {
+    // 将小数乘以10并四舍五入到1位小数，确保显示正确的折扣值
+    const discount = Math.round(coupon.discountValue * 100) / 10;
+    return `${discount}折`;
+  } else {
+    return `¥${coupon.discountValue}`;
+  }
+};
+
+// 计算优惠后金额也需要注意精度问题
+const calculateTotal = () => {
+  let total = deliveryFee.value;
+
+  if (selectedCoupon.value) {
+    if (selectedCoupon.value.couponType === '折扣券') {
+      // 使用 toFixed 确保精确计算
+      total = (total * selectedCoupon.value.discountValue).toFixed(2);
+      total = parseFloat(total); // 转回数字
+    } else {
+      total -= selectedCoupon.value.discountValue;
+    }
+  }
+
+  return Math.max(total, 0).toFixed(2);
+};
 </script>
 
 <style lang="scss" scoped>
