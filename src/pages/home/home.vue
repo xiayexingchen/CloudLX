@@ -22,7 +22,7 @@
       </view>
     </view>
 
-    <!-- 功能按钮区 -->
+    <!-- 功能按钮-->
     <view class="action-section">
       <view class="action-button add" @click="toPackageAdd">
         <u-icon name="plus" color="#FFFFFF" size="24"></u-icon>
@@ -63,7 +63,7 @@
                 <text class="package-type">{{ item.packageStatus }}</text>
                 <text>{{" "}}</text> <text>{{" "}}</text> <text>{{" "}}</text>
                 <text class="tracking-number">
-                  {{item.packageOrderId }}</text>
+                  订单号:{{item.packageOrderId }}</text>
               </view>
             </template>
             <template v-if="currentTab == 2">
@@ -71,7 +71,8 @@
                 <text class="package-type">已签收</text>
                 <text>{{" "}}</text> <text>{{" "}}</text> <text>{{" "}}</text>
                 <text class="tracking-number">
-                  {{item.packageOrderId }}</text>
+                  {{item.isDelete ? '' : '订单号：' + item.packageOrderId }}
+                </text>
               </view>
             </template>
             <template v-if="currentTab == 3">
@@ -103,7 +104,7 @@
               </view>
               <view class="info-item">
                 <u-icon name="clock" size="20" color="#64748B"></u-icon>
-                <text>入库时间：{{ item.packageInTime }}</text>
+                <text>入柜时间：{{ item.packageInTime }}</text>
               </view>
             </template>
 
@@ -159,7 +160,7 @@
               </view> -->
               <view class="info-item">
                 <u-icon name="clock" size="20" color="#64748B"></u-icon>
-                <text>入库时间：{{ item.packageInTime }}</text>
+                <text>入柜时间：{{ item.packageInTime }}</text>
               </view>
               <view class="info-item warning">
                 <u-icon name="info-circle" size="20" color="#64748B"></u-icon>
@@ -198,8 +199,8 @@
             <!-- 今日签收 -->
             <template v-else-if="currentTab === 2">
               <view class="button-group">
-                <!-- 只有存在 orderID 时才显示评价相关按钮 -->
-                <template v-if="item.packageOrderId">
+                <!-- 只有存在 orderID 且包裹未删除时才显示评价相关按钮 -->
+                <template v-if="item.packageOrderId && !item.isDelete">
                   <!-- 已评价状态 -->
                   <button v-if="isPackageReviewed(item.packageOrderId)" class="action-btn disabled" disabled>
                     <u-icon name="checkmark-circle" size="20" color="#FFFFFF"></u-icon>
@@ -208,14 +209,9 @@
                   <!-- 未评价状态 -->
                   <button v-else class="action-btn primary" @click="toReviewPackage(item)">
                     <u-icon name="star" size="20" color="#FFFFFF"></u-icon>
-                    <text>评价</text>
+                    <text>评价订单</text>
                   </button>
                 </template>
-
-                <!-- <button class="action-btn secondary" @click="hidePackage(index)">
-      <u-icon name="eye-off" size="20" color="#64748B"></u-icon>
-      <text>隐藏</text>
-    </button> -->
               </view>
             </template>
 
@@ -261,7 +257,11 @@
     onShow,
     onHide
   } from '@dcloudio/uni-app'
-  import { showLoading, hideLoading, showToast } from '@/api/request.js';
+  import {
+    showLoading,
+    hideLoading,
+    showToast
+  } from '@/api/request.js';
   // 轮询间隔（例如每30秒）
   const POLL_INTERVAL = 10000;
   let pollTimer = null;
@@ -273,7 +273,8 @@
   const interval = ref(2000);
   const duration = ref(500);
   // 活动数据
-  const activityList = ref([]);
+  const activityList = ref([]); // 包裹数据
+  const allActivities = ref([]); //给实时更新接口使用
   const currentSwiperIndex = ref(0);
   //const searchText = ref('');
   // 轮询函数
@@ -320,9 +321,53 @@
       const hasNewPackagesResult = hasNewPackages(packageRes.data);
       const hasNewActivitiesResult = hasNewActivities(activityRes.data);
 
-      console.log('检查结果:', {
+      // 检查包裹列表是否有变化（包括增加和减少）
+      const hasPackageChanges = (newData) => {
+        if (!allPackages.value) return false;
+
+        const lists = ['pendingPackageList', 'deliveringPackageList', 'completedPackageList',
+          'timeoutPackageList'
+        ];
+
+        return lists.some(listName => {
+          const oldLength = allPackages.value[listName]?.length || 0;
+          const newLength = newData[listName]?.length || 0;
+          return oldLength !== newLength;
+        });
+      };
+
+      // 检查活动列表是否有变化（包括增加和减少）
+      const hasActivityChanges = (newData) => {
+        if (!allActivities.value) return false;
+
+        const oldLength = allActivities.value.length || 0;
+        const newLength = newData.length || 0;
+
+        console.log('活动变化检测:', {
+          oldActivities: {
+            length: oldLength,
+            ids: allActivities.value.map(a => a.activityId),
+            names: allActivities.value.map(a => a.activityName)
+          },
+          newActivities: {
+            length: newLength,
+            ids: newData.map(a => a.activityId),
+            names: newData.map(a => a.activityName)
+          }
+        });
+
+        return oldLength !== newLength;
+      };
+
+      // 在原有代码后添加新的检查
+      const packageChangesResult = hasPackageChanges(packageRes.data);
+      const activityChangesResult = hasActivityChanges(activityRes.data);
+
+      console.log('变化检查结果:', {
         hasNewPackages: hasNewPackagesResult,
         hasNewActivities: hasNewActivitiesResult,
+        hasPackageChanges: packageChangesResult,
+        hasActivityChanges: activityChangesResult,
         currentPackages: {
           pending: allPackages.value.pendingPackageList?.length || 0,
           delivering: allPackages.value.deliveringPackageList?.length || 0,
@@ -339,7 +384,7 @@
 
       // 检查是否有新包裹
       if (hasNewPackagesResult) {
-        console.log('发现新包裹！');
+        console.log('包裹信息已更新！');
         showToast({
           title: '包裹信息已更新',
           icon: 'none',
@@ -349,9 +394,9 @@
 
       // 检查是否有新活动
       if (hasNewActivitiesResult) {
-        console.log('发现新活动！');
+        console.log('活动信息已更新！');
         showToast({
-          title: '有新活动发布',
+          title: '活动信息已更新',
           icon: 'none',
           duration: 2000
         });
@@ -399,7 +444,23 @@
   const hasNewActivities = (newData) => {
     const oldActivities = activityList.value;
     // 检查是否有新增的活动
-    return newData.length > oldActivities.length;
+    const hasNew = newData.length > oldActivities.length;
+
+    console.log('新活动检测:', {
+      oldActivities: {
+        length: oldActivities.length,
+        ids: oldActivities.map(a => a.activityId),
+        names: oldActivities.map(a => a.activityName)
+      },
+      newActivities: {
+        length: newData.length,
+        ids: newData.map(a => a.activityId),
+        names: newData.map(a => a.activityName)
+      },
+      hasNew
+    });
+
+    return hasNew;
   };
   // 停止轮询时也添加日志
   // 修改停止轮询函数
@@ -513,7 +574,9 @@
       const res = await fetchActivityAPI();
       if (res.code === 26011) {
         // 过滤掉没有图片的活动
-        activityList.value = res.data.filter(item => item.imageData);
+        const filteredActivities = res.data.filter(item => item.imageData);
+        activityList.value = filteredActivities;
+        allActivities.value = filteredActivities;
       } else {
         throw new Error(res.msg || '获取活动数据失败');
       }
@@ -734,7 +797,8 @@
           contactPhone: parcel.contactPhone,
           orderTime: parcel.orderTime,
           receivedTime: parcel.receivedTime,
-          payment: parcel.payment
+          payment: parcel.payment,
+          isDelete: parcel.isDelete,
         })
       },
       3: {

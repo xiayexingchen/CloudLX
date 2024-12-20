@@ -57,10 +57,16 @@
       </view>
     </template>
     <template v-else>
-      <!-- 普通活动 -->
+      <!-- 充值返利活动 -->
       <view class="activity-content">
         <view class="content-title">活动详情</view>
-        <rich-text :nodes="activityData.description || '暂无活动详情'"></rich-text>
+        <view class="rule-item">🎉 超值充值福利来袭！</view>
+        <view class="rule-item">💰 充值金额越多，返利越多</view>
+        <view class="rule-item">⏰ 活动时间有限，错过等一年</view>
+        <view class="rule-item">✨ 所有返利立即到账，可直接使用</view>
+        <view class="rule-item">🎁 充值金额无使用限制，校内通用</view>
+        <view class="rule-item">💝 心动不如行动，快来参与吧！</view>
+
       </view>
     </template>
 
@@ -217,8 +223,6 @@
       eventChannel.on('activityData', function(data) {
         console.log('接收到的活动数据:', data);
         activityData.value = data.data;
-        activityData.value.description =
-          "🎉 超值充值福利来袭！\n💰 充值金额越多，返利越多\n充100送20，充200送50，充500送150！\n\n⏰ 活动时间有限，错过等一年\n✨ 所有返利立即到账，可直接使用\n🎁 充值金额无使用限制，校内通用\n\n💝 心动不如行动，快来参与吧！";
         // 获取到活动数据后检查优惠券状态
         if (activityData.value.activityType === 'ticket') {
           checkCouponStatus(activityData.value.activityId);

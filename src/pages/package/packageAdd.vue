@@ -54,7 +54,7 @@
             <text class="value">{{ packageInfo.packageType }}</text>
           </view>
           <view class="info-item">
-            <text class="label">入库时间：</text>
+            <text class="label">入柜时间：</text>
             <text class="value">{{ formattedPackageInTime }}</text>
           </view>
           <!-- 可以根据需要添加更多信息 -->

@@ -267,7 +267,7 @@
           status: pkg.packageStatus,
           address: pkg.packageAddress,
           latitude: pkg.latitude,
-          longitude: pkg.longitude
+          longitude: pkg.longitude,
         })
       },
       completed: {
@@ -284,7 +284,8 @@
           contactPhone: pkg.contactPhone,
           orderTime: pkg.orderTime,
           receivedTime: pkg.receivedTime,
-          payment: pkg.payment
+          payment: pkg.payment,
+          isDelete: pkg.isDelete,
         })
       },
       timeout: {

@@ -74,7 +74,7 @@
       <view class="info-list">
         <view class="info-item">
           <text class="label">支付金额</text>
-          <text class="value price">¥{{ (orderInfo.total_amount).toFixed(2) }}</text>
+          <text class="value price">¥{{ orderInfo.total_amount?.toFixed(2) || '0.00' }}</text>
           <!--  -->
         </view>
       </view>
@@ -91,7 +91,10 @@
     onLoad
   } from '@dcloudio/uni-app';
 
-  const orderInfo = ref({});
+  const orderInfo = ref({
+    total_amount: 0,
+    // 其他默认值...
+  });
 
   // 获取状态描述
   const getStatusDescription = () => {

@@ -32,7 +32,7 @@
         </view>
 
         <!-- 订单信息卡片（仅机器人配送的包裹显示） -->
-        <view class="info-card" v-if="packageInfo.orderId">
+        <view class="info-card" v-if="packageInfo.orderId && !packageInfo.isDelete">
             <view class="card-header">
                 <text class="card-title">订单信息</text>
             </view>

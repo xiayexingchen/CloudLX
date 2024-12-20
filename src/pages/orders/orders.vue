@@ -123,6 +123,11 @@
     fetchOrderDataAPI,
     deleteOrderAPI
   } from '@/api/api-order';
+  import {
+    showLoading,
+    hideLoading,
+    showToast
+  } from '@/api/request.js';
   // 状态变量
   const searchText = ref('');
   const showCalendar = ref(false);
@@ -161,14 +166,14 @@
         orders.value = res.data;
 
       } else {
-        uni.showToast({
+        showToast({
           title: '获取订单失败',
           icon: 'none'
         });
       }
     } catch (error) {
       console.error('获取订单列表失败:', error);
-      uni.showToast({
+      showToast({
         title: '系统错误',
         icon: 'none'
       });
@@ -220,7 +225,7 @@
   //     const start = dayjs(startDate.value).startOf('day');
   //     const end = dayjs(endDate.value).endOf('day');
 
-  //     console.log("订单日期:", orderDate.format('YYYY-MM-DD HH:mm:ss'));
+  //     console.log("订���日期:", orderDate.format('YYYY-MM-DD HH:mm:ss'));
   //     console.log("开始日期:", start.format('YYYY-MM-DD HH:mm:ss'));
   //     console.log("结束日期:", end.format('YYYY-MM-DD HH:mm:ss'));
 
@@ -249,7 +254,12 @@
   const groupedOrders = computed(() => {
     const groups = {};
     const filteredOrders = orders.value.filter(order => {
-      // 1. 时间过滤
+      // 1. 首先过滤掉已删除的订单//后端好像已经删了，问题不大
+      if (order.isDelete) {
+        return false;
+      }
+
+      // 2. 时间过滤
       const orderDate = dayjs(order.created_at);
       const start = dayjs(startDate.value).startOf('day');
       const end = dayjs(endDate.value).endOf('day');
@@ -258,15 +268,15 @@
       const endTime = end.unix();
       const isInTimeRange = orderTime >= startTime && orderTime <= endTime;
 
-      // 2. 搜索过滤
+      // 3. 搜索过滤
       const searchValue = searchText.value.toLowerCase();
       const matchSearch = !searchValue ? true : (
         order.order_id.toLowerCase().includes(searchValue) ||
         order.site_name.toLowerCase().includes(searchValue)
       );
 
-      // 返回同时满足时间和搜索条件的订单
-      return isInTimeRange && matchSearch;
+      // 返回同时满足所有条件的订单
+      return !order.isDelete && isInTimeRange && matchSearch;
     }).sort((a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf());
 
     // 分组逻辑保持不变
@@ -298,7 +308,7 @@
   //     success: (res) => {
   //       if (res.confirm) {
   //         orders.value = orders.value.filter(item => item.id !== order.id);
-  //         uni.showToast({
+  //         showToast({
   //           title: '已隐藏订单',
   //           icon: 'success'
   //         });
@@ -330,7 +340,7 @@
       },
       fail: (err) => {
         console.error('页面跳转失败:', err);
-        uni.showToast({
+        showToast({
           title: '页面跳转失败',
           icon: 'none'
         });
@@ -343,7 +353,7 @@
     uni.setClipboardData({
       data: number,
       success: () => {
-        uni.showToast({
+        showToast({
           title: '已复制单号',
           icon: 'success'
         });
@@ -382,7 +392,7 @@
 
     // 再次确认订单状态
     if (order.status !== '已完成') {
-      uni.showToast({
+      showToast({
         title: '只能删除已完成的订单',
         icon: 'none'
       });
@@ -395,13 +405,15 @@
       content: '确定要删除这条订单记录吗？',
       success: async (res) => {
         if (res.confirm) {
+          //我需要后端的msg，所以这里和其他地方的请求都不一样
+          const msgToast = '';
           try {
             uni.showLoading({
               title: '删除中...'
             });
 
             const result = await deleteOrderAPI(order.order_id);
-
+            msgToast = result.msg;
             if (result.code === 24061) {
               uni.showToast({
                 title: '删除成功',
@@ -412,14 +424,14 @@
               orders.value = orders.value.filter(item => item.order_id !== order.order_id);
             } else {
               uni.showToast({
-                title: result.msg || '删除失败',
+                title: msgToast || '删除失败',
                 icon: 'none'
               });
             }
           } catch (error) {
             console.error('删除订单失败:', error);
             uni.showToast({
-              title: '删除失败，请稍后重试',
+              title: msgToast,
               icon: 'none'
             });
           } finally {

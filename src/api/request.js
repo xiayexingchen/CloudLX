@@ -86,6 +86,11 @@ export default async (params) => {
         icon: 'none',
         duration: 2000
       });
+      //   showToast({
+      //   title: ` ${resmsg}`,
+      //   icon: 'none',
+      //   duration: 2000
+      // }); 
       throw new Error(`HTTP error ${res.statusCode}`); // 抛出错误
     }
   } catch (error) {

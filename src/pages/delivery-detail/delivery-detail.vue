@@ -343,7 +343,7 @@
   };
   // 获取预计送达时间
   const getEstimatedTime = () => {
-    return dayjs().add(30, 'minutes').format('HH:mm');
+    return dayjs().add(5, 'minutes').format('HH:mm');
   };
   // 地址信息
   const address = ref({
@@ -540,33 +540,33 @@
     fetchCoupons();
   };
 
-// 格式化优惠券值
-const formatDiscountValue = (coupon) => {
-  if (coupon.couponType === '折扣券') {
-    // 将小数乘以10并四舍五入到1位小数，确保显示正确的折扣值
-    const discount = Math.round(coupon.discountValue * 100) / 10;
-    return `${discount}折`;
-  } else {
-    return `¥${coupon.discountValue}`;
-  }
-};
-
-// 计算优惠后金额也需要注意精度问题
-const calculateTotal = () => {
-  let total = deliveryFee.value;
-
-  if (selectedCoupon.value) {
-    if (selectedCoupon.value.couponType === '折扣券') {
-      // 使用 toFixed 确保精确计算
-      total = (total * selectedCoupon.value.discountValue).toFixed(2);
-      total = parseFloat(total); // 转回数字
+  // 格式化优惠券值
+  const formatDiscountValue = (coupon) => {
+    if (coupon.couponType === '折扣券') {
+      // 将小数乘以10并四舍五入到1位小数，确保显示正确的折扣值
+      const discount = Math.round(coupon.discountValue * 100) / 10;
+      return `${discount}折`;
     } else {
-      total -= selectedCoupon.value.discountValue;
+      return `¥${coupon.discountValue}`;
     }
-  }
+  };
 
-  return Math.max(total, 0).toFixed(2);
-};
+  // 计算优惠后金额也需要注意精度问题
+  const calculateTotal = () => {
+    let total = deliveryFee.value;
+
+    if (selectedCoupon.value) {
+      if (selectedCoupon.value.couponType === '折扣券') {
+        // 使用 toFixed 确保精确计算
+        total = (total * selectedCoupon.value.discountValue).toFixed(2);
+        total = parseFloat(total); // 转回数字
+      } else {
+        total -= selectedCoupon.value.discountValue;
+      }
+    }
+
+    return Math.max(total, 0).toFixed(2);
+  };
   // 格式化日期
   const formatDate = (date) => {
     return dayjs(date).format('MM-DD');
@@ -1002,9 +1002,9 @@ const calculateTotal = () => {
 
         .coupon-main {
           width: 100%;
-        box-sizing: border-box;
-        padding: 24rpx;
-        word-break: break-all; // 文字过长时换行
+          box-sizing: border-box;
+          padding: 24rpx;
+          word-break: break-all; // 文字过长时换行
         }
       }
 

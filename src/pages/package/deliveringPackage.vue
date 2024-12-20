@@ -106,6 +106,7 @@
   import {
     robotDestAPI,
     robotLocAPI,
+    orderStatusAPI,
   } from '@/api/api-map.js'
   import {
     getRobotIdAPI,
@@ -142,6 +143,51 @@
   }
   // 在需要显示机器人ID的地方使用
 
+  const updateMap = async () => {
+        
+    const res = await orderStatusAPI(packageInfo.value.orderId);
+    console.log('orderStatusAPI res:', res);
+    packageInfo.value.status = res.data;
+
+    markers.value = [];
+    polyline.value = [];
+
+    if (packageInfo.value.status === '正在运输') {
+      st = 1;
+    } else if (packageInfo.value.status === '待发货') {
+      st = 2;
+      robotInfo.value.longitude = sites[packageInfo.value.address.split(' ')[0]]
+        .sitePosition[0];
+      robotInfo.value.latitude = sites[packageInfo.value.address.split(' ')[0]]
+        .sitePosition[1];
+      
+      addMarker()
+    } else {
+      st = 3;
+      // 检查是否是第一次显示到达提醒，使用订单ID作为唯一标识
+      const storageKey = `hasShownArrivalNotice_${packageInfo.value.orderId}`;
+      const hasShownArrivalNotice = uni.getStorageSync(storageKey);
+      if (!hasShownArrivalNotice) {
+        uni.showModal({
+          title: '包裹到达提醒',
+          content: '您的包裹已到达，请及时查收！',
+          showCancel: false,
+          success: () => {
+            uni.setStorageSync(storageKey, 'true');
+          }
+        });
+      }
+    }
+
+    if (st != 2) {
+      await getRobotId(packageInfo.value.orderId);
+      await getRobotInfo();
+
+    }
+
+  };
+
+
   let st = null;
   const sites = {
     "天马学生公寓": {
@@ -170,25 +216,7 @@
       eventChannel.on('deliveryData', async (data) => {
         packageInfo.value = data;
         console.log('Received deliveryData from the previous page:', data);
-
-        if (packageInfo.value.status === '正在运输') {
-          st = 1;
-        } else if (packageInfo.value.status === '待发货') {
-          st = 2;
-          robotInfo.value.longitude = sites[packageInfo.value.address.split(' ')[0]]
-            .sitePosition[0];
-          robotInfo.value.latitude = sites[packageInfo.value.address.split(' ')[0]]
-            .sitePosition[1];
-          addMarker()
-        } else {
-          st = 3;
-        }
-
-        if (st != 2) {
-          await getRobotId(packageInfo.value.orderId);
-          await getRobotInfo();
-
-        }
+        await updateMap();
 
       });
     } catch (error) {
@@ -229,7 +257,6 @@
 
 
   }
-
   // 加规划路线
   const polyline = ref([])
   const drawTrace = () => {
@@ -306,13 +333,19 @@
 
   }
 
+  let refreshTimer = null;
   // mounted的时候加载全部  
   onMounted(async () => {
     try {
       await getPackageInfo();
+      refreshTimer = setInterval(async () => {
+        await updateMap();
+      }, 3000);
     } catch (error) {
       console.error('getPackageInfo error:', error);
     }
+
+
   });
 
   onUnload(() => {
@@ -321,6 +354,11 @@
       clearInterval(metricsTimer);
       metricsTimer = null;
     }
+
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
   });
 
   onUnmounted(() => {
@@ -328,6 +366,11 @@
     if (metricsTimer) {
       clearInterval(metricsTimer);
       metricsTimer = null;
+    }
+
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
     }
   });
 
@@ -392,7 +435,7 @@
   let metricsTimer = null; // 用于存储定时器ID
 
   // 修改视图切换函数
-  const toggleView = () => {
+  const toggleView =  () => {
     if (packageInfo.value.status == '待发货' && currentView.value === 'map') {
       uni.showToast({
         title: '包裹未在运输中，暂无机器人视角',
@@ -418,7 +461,7 @@
       metricsTimer = setInterval(() => {
         getRobotMetrics();
       }, 6000);
-    }
+    } 
   };
 
   // 修改获取机器人实时数据的函数

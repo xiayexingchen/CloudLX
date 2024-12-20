@@ -3,7 +3,7 @@
     <!-- 顶部余额卡片 -->
     <view class="balance-card">
       <view class="balance-header">
-        <text class="label">我的余额</text>
+        <text class="label">我的余额(云币)</text>
         <view class="record-btn" @click="toTransactionRecord">
           <u-icon name="list" size="16" color="#fff"></u-icon>
           <text>交易记录</text>
@@ -137,12 +137,12 @@
   const onCustomAmountInput = (e) => {
     // 取消预设金额的选中状态
     selectedAmount.value = null;
-    
+
     let value = e.detail.value;
-    
+
     // 1. 移除非数字和小数点
     value = value.replace(/[^\d.]/g, '');
-    
+
     // 2. 检查小数位数并提示
     if (value.includes('.')) {
       const [intPart, decimalPart] = value.split('.');
@@ -152,21 +152,21 @@
           icon: 'none'
         });
         // 截取两位小数
-       // value = intPart + '.' + decimalPart.slice(0, 2);
+        // value = intPart + '.' + decimalPart.slice(0, 2);
       }
     }
-    
+
     // 3. 限制整数部分最多8位
     const [intPart, decimalPart] = value.split('.');
     if (intPart.length > 8) {
       value = intPart.slice(0, 8) + (decimalPart ? '.' + decimalPart : '');
     }
-    
+
     // 4. 避免以小数点开头，自动补0
     if (value.startsWith('.')) {
       value = '0' + value;
     }
-    
+
     // 5. 更新输入框的值
     customAmount.value = value;
   };
@@ -204,7 +204,7 @@
   // 修改充值处理函数
   const handleRecharge = async () => {
     const amount = Number(customAmount.value || selectedAmount.value || 0);
-    
+
     // 验证并显示具体错误信息
     if (isNaN(amount)) {
       uni.showToast({

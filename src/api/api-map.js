@@ -36,3 +36,15 @@ export const packageLocAPI = async (robotId) => {
     }
   })
 }
+
+// 获得订单状态
+export const orderStatusAPI = async (orderId) => {
+  console.log('orderId in orderStatusAPI: ', orderId);
+  return request({
+    url: '/user/myMapView/get-order-status',
+    method: 'post',
+    data: {
+      orderId: orderId,
+    }
+  })
+}
