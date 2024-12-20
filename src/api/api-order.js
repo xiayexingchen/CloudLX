@@ -86,7 +86,6 @@ export const fetchReviewRecordAPI = () => {
   return request({
     url: '/user/myOrderView/get-reviewRecordList',
     method: 'get',
-    showLoading: false
   })
 }
 //获得机器人实时信息
@@ -96,7 +95,6 @@ export const fetchRobotInfoAPI = (robotId) => {
     method: 'post',
     data: {
       robotId: robotId,
-      showLoading: false
     }
   })
 }

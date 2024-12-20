@@ -21,7 +21,6 @@ export const robotLocAPI = async (robotId) => {
     method: 'post',
     data: {
       robotId: parseInt(robotId),
-      showLoading: false
     }
   })
 }

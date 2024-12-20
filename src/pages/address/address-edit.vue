@@ -59,6 +59,7 @@
     updateAddressDataAPI,
     fetchAddressDataAPI
   } from '@/api/api-user'
+  import { showLoading, hideLoading, showToast } from '@/api/request.js';
 
   const formData = ref({
     addressId: '',
@@ -299,16 +300,14 @@ const onColumnChange = (e) => {
       // 检查地址是否已存在
       const addressExists = await checkAddressExists(formData.value.region, formData.value.build);
       if (addressExists) {
-        uni.showToast({
+        showToast({
           title: '该地址已存在',
           icon: 'none'
         });
         return;
       }
 
-      uni.showLoading({
-        title: '保存中...'
-      })
+      showLoading('保存中...');
 
       // 准备提交的数据
       const submitData = {
@@ -331,7 +330,7 @@ const onColumnChange = (e) => {
       const isSuccess = isEdit.value ? res.code === 23041 : res.code === 23091;
 
       if (isSuccess) {
-        uni.showToast({
+        showToast({
           title: isEdit.value ? '更新成功' : '保存成功',
           icon: 'success',
           duration: 1500
@@ -341,19 +340,19 @@ const onColumnChange = (e) => {
           uni.navigateBack();
         }, 1500);
       } else {
-        uni.showToast({
+        showToast({
           title: res.msg || '保存失败',
           icon: 'none'
         });
       }
     } catch (error) {
       console.error('保存地址失败:', error);
-      uni.showToast({
+      showToast({
         title: '保存失败',
-        icon: 'error'
+        icon: 'none'
       });
     } finally {
-      uni.hideLoading();
+      hideLoading();
     }
   };
 </script>

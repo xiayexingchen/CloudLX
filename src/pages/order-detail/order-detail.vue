@@ -74,8 +74,8 @@
       <view class="info-list">
         <view class="info-item">
           <text class="label">支付金额</text>
-          <text class="value price">¥{{ orderInfo.total_amount }}</text>
-          <!-- .toFixed(2) -->
+          <text class="value price">¥{{ (orderInfo.total_amount).toFixed(2) }}</text>
+          <!--  -->
         </view>
       </view>
     </view>

@@ -41,7 +41,7 @@
       </view>
       <view class="contact-info">
         <text class="contact-name">刘*</text>
-        <text class="contact-phone">130****1111</text>
+        <text class="contact-phone">13019528909</text>
         <button class="call-button" @click="handleCall">
           <u-icon name="phone-fill" color="#fff" size="20" />
           <text>一键拨号</text>

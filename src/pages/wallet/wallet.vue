@@ -34,7 +34,7 @@
       <!-- 自定义金额 -->
       <view class="custom-amount">
         <text>其他金额</text>
-        <input type="digit" v-model="customAmount" placeholder="请输入充值金额" @input="onCustomAmountInput" />
+        <input type="digit" v-model="customAmount" placeholder="请输入充值金额" @input="onCustomAmountInput" maxlength="11" />
       </view>
     </view>
 
@@ -83,6 +83,11 @@
   const selectedAmount = ref(null);
   const customAmount = ref('');
   const selectedPayment = ref('wxpay');
+  import {
+    showLoading,
+    hideLoading,
+    showToast
+  } from '@/api/request.js';
 
   // 支付方式
   const paymentMethods = [{
@@ -108,7 +113,8 @@
   // 获取赠送金额
   const getBonus = (amount) => {
     const activity = rechargeActivities.value.find(a => a.recharge_amount === amount);
-    return activity ? activity.bonus_amount : 0;
+    // 只有当活动存在且状态为"进行中"时才返回赠送金额
+    return (activity && activity.status === '进行中') ? activity.bonus_amount : 0;
   };
   // 添加获取余额的函数
   const fetchBalance = async () => {
@@ -127,9 +133,42 @@
     customAmount.value = '';
   };
 
-  // 自定义金额输入
+  // 添加金额输入处理函数
   const onCustomAmountInput = (e) => {
+    // 取消预设金额的选中状态
     selectedAmount.value = null;
+    
+    let value = e.detail.value;
+    
+    // 1. 移除非数字和小数点
+    value = value.replace(/[^\d.]/g, '');
+    
+    // 2. 检查小数位数并提示
+    if (value.includes('.')) {
+      const [intPart, decimalPart] = value.split('.');
+      if (decimalPart && decimalPart.length > 2) {
+        uni.showToast({
+          title: '金额最多支持两位小数',
+          icon: 'none'
+        });
+        // 截取两位小数
+       // value = intPart + '.' + decimalPart.slice(0, 2);
+      }
+    }
+    
+    // 3. 限制整数部分最多8位
+    const [intPart, decimalPart] = value.split('.');
+    if (intPart.length > 8) {
+      value = intPart.slice(0, 8) + (decimalPart ? '.' + decimalPart : '');
+    }
+    
+    // 4. 避免以小数点开头，自动补0
+    if (value.startsWith('.')) {
+      value = '0' + value;
+    }
+    
+    // 5. 更新输入框的值
+    customAmount.value = value;
   };
 
   // 选择支付方式
@@ -143,11 +182,12 @@
     return formatBalance(amount);
   };
 
-  // 是否可以充值
+  // 简化 canRecharge 计算属性，只做基础验证
   const canRecharge = computed(() => {
     const amount = Number(customAmount.value || selectedAmount.value || 0);
     return amount > 0 && selectedPayment.value;
   });
+
   // 添加获取充值活动的函数
   const fetchRechargeActivities = async () => {
     try {
@@ -161,11 +201,61 @@
       console.error('获取充值活动信息失败:', error);
     }
   };
-  // 更新充值处理函数
+  // 修改充值处理函数
   const handleRecharge = async () => {
-    if (!canRecharge.value) return;
+    const amount = Number(customAmount.value || selectedAmount.value || 0);
+    
+    // 验证并显示具体错误信息
+    if (isNaN(amount)) {
+      uni.showToast({
+        title: '请输入有效金额',
+        icon: 'none'
+      });
+      return;
+    }
 
-    const amount = Number(customAmount.value || selectedAmount.value);
+    // 验证小数位数
+    const decimalPlaces = amount.toString().split('.')[1]?.length || 0;
+    if (decimalPlaces > 2) {
+      uni.showToast({
+        title: '金额最多支持两位小数',
+        icon: 'none'
+      });
+      return;
+    }
+
+    if (amount <= 0) {
+      uni.showToast({
+        title: '充值金额必须大于0',
+        icon: 'none'
+      });
+      return;
+    }
+
+    if (amount > 1000) {
+      uni.showToast({
+        title: '单次充值不能超过1000元',
+        icon: 'none'
+      });
+      return;
+    }
+
+    const totalAfterRecharge = balance.value + amount;
+    if (totalAfterRecharge > 10000000) {
+      uni.showToast({
+        title: '账户总额不能超过1000万',
+        icon: 'none'
+      });
+      return;
+    }
+
+    if (!selectedPayment.value) {
+      uni.showToast({
+        title: '请选择支付方式',
+        icon: 'none'
+      });
+      return;
+    }
 
     try {
       uni.showLoading({

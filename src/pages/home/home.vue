@@ -261,6 +261,7 @@
     onShow,
     onHide
   } from '@dcloudio/uni-app'
+  import { showLoading, hideLoading, showToast } from '@/api/request.js';
   // 轮询间隔（例如每30秒）
   const POLL_INTERVAL = 10000;
   let pollTimer = null;
@@ -312,8 +313,8 @@
     try {
       console.log('开始检查新内容...');
       const [packageRes, activityRes] = await Promise.all([
-        fetchPackageDataAPI(false),
-        fetchActivityAPI(false)
+        fetchPackageDataAPI(),
+        fetchActivityAPI()
       ]);
 
       const hasNewPackagesResult = hasNewPackages(packageRes.data);
@@ -339,8 +340,8 @@
       // 检查是否有新包裹
       if (hasNewPackagesResult) {
         console.log('发现新包裹！');
-        uni.showToast({
-          title: '您有新的包裹',
+        showToast({
+          title: '包裹信息已更新',
           icon: 'none',
           duration: 2000
         });
@@ -349,7 +350,7 @@
       // 检查是否有新活动
       if (hasNewActivitiesResult) {
         console.log('发现新活动！');
-        uni.showToast({
+        showToast({
           title: '有新活动发布',
           icon: 'none',
           duration: 2000
@@ -439,7 +440,7 @@
         }
       });
     } else {
-      uni.showToast({
+      showToast({
         title: '活动未开始',
         icon: 'none'
       });
@@ -456,7 +457,7 @@
             console.log("parcel.packageId" + parcel.packageOrderId)
             const response = await cancelOrderAPI(parcel.packageOrderId);
             if (response.code === 24031) {
-              uni.showToast({
+              showToast({
                 title: '退单成功',
                 icon: 'success'
               });
@@ -470,7 +471,7 @@
       });
     } catch (error) {
       console.error('退单失败:', error);
-      uni.showToast({
+      showToast({
         title: error.message || '退单失败',
         icon: 'none'
       });
@@ -486,7 +487,7 @@
           if (res.confirm) {
             const response = await confirmDeliveryAPI(parcel.packageOrderId);
             if (response.code === 24051) {
-              uni.showToast({
+              showToast({
                 title: '签收成功',
                 icon: 'success'
               });
@@ -500,7 +501,7 @@
       });
     } catch (error) {
       console.error('签收失败:', error);
-      uni.showToast({
+      showToast({
         title: error.message || '签收失败',
         icon: 'none'
       });
@@ -518,7 +519,7 @@
       }
     } catch (error) {
       console.error('获取活动数据失败:', error);
-      uni.showToast({
+      showToast({
         title: error.message || '获取活动数据失败',
         icon: 'none'
       });
@@ -600,9 +601,9 @@
   };
 
   // 获取包裹信息
-  const fetchPackageData = async (showLoading = true) => {
+  const fetchPackageData = async () => {
     try {
-      const response = await fetchPackageDataAPI(showLoading);
+      const response = await fetchPackageDataAPI();
       if (response.code === 22011) {
         // 添加日期格式化函数
         const parseDate = (dateStr) => {
@@ -637,7 +638,7 @@
       }
     } catch (error) {
       console.error('获取包裹信息失败:', error);
-      uni.showToast({
+      showToast({
         title: '获取数据失败',
         icon: 'none'
       });
@@ -673,7 +674,7 @@
   //   }
   //   } catch (error) {
   //     console.error('获取包裹信息失败:', error);
-  //     uni.showToast({
+  //     showToast({
   //       title: '获取数据失败',
   //       icon: 'none'
   //     });
@@ -761,7 +762,7 @@
       },
       fail: function(err) {
         console.error('页面跳转失败:', err);
-        uni.showToast({
+        showToast({
           title: '页面跳转失败',
           icon: 'none'
         });
@@ -772,7 +773,7 @@
   const toDeliver = (parcel) => {
     // 如果包裹正在配送中，则不执行操作
     if (isPackageDelivering(parcel)) {
-      uni.showToast({
+      showToast({
         title: '该包裹正在等待发货',
         icon: 'none'
       });
@@ -794,7 +795,7 @@
       },
       fail: (err) => {
         console.error('页面跳转失败:', err);
-        uni.showToast({
+        showToast({
           title: '页面跳转失败',
           icon: 'none'
         });
@@ -849,12 +850,12 @@
   const contactAdmin = (parcel) => {
     uni.showModal({
       title: '联系客服',
-      content: '客服电话：400-123-4567',
+      content: '客服电话：13019528909',
       confirmText: '拨打',
       success: (res) => {
         if (res.confirm) {
           uni.makePhoneCall({
-            phoneNumber: '4001234567'
+            phoneNumber: '13019528909'
           });
         }
       }

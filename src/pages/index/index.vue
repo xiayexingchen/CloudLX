@@ -79,7 +79,7 @@
   } from '../../api/api-user.js';
   const showAuthPopup = ref(false);
   const isChecked = ref(false);
-
+  import { showLoading, hideLoading, showToast } from '@/api/request.js';
 
   // 处理隐私协议勾选
   const handlePrivacyCheck = (e) => {
@@ -87,7 +87,7 @@
   };
   const handleLoginClick = () => {
   if (!isChecked.value) {
-    uni.showToast({
+    showToast({
       title: '请先同意隐私协议',
       icon: 'none'
     });
@@ -99,7 +99,7 @@
     console.log('1');
     if (!isChecked.value) {
       console.log('2');
-      uni.showToast({
+      showToast({
         title: '请先同意隐私协议',
         icon: 'none'
       });
@@ -124,7 +124,7 @@
       }
     } catch (error) {
       console.error('登录失败', error);
-      uni.showToast({
+      showToast({
         title: '登录失败，请重试',
         icon: 'none'
       });

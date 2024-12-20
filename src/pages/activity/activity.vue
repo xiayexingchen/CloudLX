@@ -22,43 +22,39 @@
 
     <!-- 根据活动类型显示不同内容 -->
     <template v-if="activityData.activityType === 'ticket'">
-  <!-- 优惠券活动部分 -->
-  <view class="coupon-section" v-if="activityData.activityType === 'ticket'">
-    <view class="coupon-wrapper">
-      <view class="coupon">
-        <!-- 左侧金额部分 -->
-        <view class="amount-section">
-          <text class="currency" v-if="activityData.couponType === '代金券'">¥</text>
-          <text class="amount">{{ formatDiscountValue(activityData.discountValue) }}</text>
-          <text class="unit">{{ activityData.couponType === '折扣券' ? '折' : '' }}</text>
-          <text class="type">{{ activityData.couponType }}</text>
-        </view>
+      <!-- 优惠券活动部分 -->
+      <view class="coupon-section" v-if="activityData.activityType === 'ticket'">
+        <view class="coupon-wrapper">
+          <view class="coupon">
+            <!-- 左侧金额部分 -->
+            <view class="amount-section">
+              <text class="currency" v-if="activityData.couponType === '代金券'">¥</text>
+              <text class="amount">{{ formatDiscountValue(activityData.discountValue) }}</text>
+              <text class="unit">{{ activityData.couponType === '折扣券' ? '折' : '' }}</text>
+              <text class="type">{{ activityData.couponType }}</text>
+            </view>
 
-        <!-- 右侧信息部分 -->
-        <view class="info-section">
-          <view class="title">{{ activityData.activityName }}</view>
-          <view class="date">
-            <text>有效期</text>
-            <text>{{ formatDate(activityData.startTime) }} - {{ formatDate(activityData.endTime) }}</text>
-          </view>
-          <button 
-            class="claim-btn" 
-            :class="{ 
+            <!-- 右侧信息部分 -->
+            <view class="info-section">
+              <view class="title">{{ activityData.activityName }}</view>
+              <view class="date">
+                <text>有效期</text>
+                <text>{{ formatDate(activityData.startTime) }} - {{ formatDate(activityData.endTime) }}</text>
+              </view>
+              <button class="claim-btn" :class="{ 
               'disabled': activityData.status !== '进行中' || isClaimed,
               'claimed': isClaimed 
-            }" 
-            @click="receiveCoupon"
-          >
-            {{ getButtonText() }}
-          </button>
-        </view>
+            }" @click="receiveCoupon">
+                {{ getButtonText() }}
+              </button>
+            </view>
 
-        <!-- 装饰性圆点 -->
-        <view class="dots dots-left"></view>
-        <view class="dots dots-right"></view>
+            <!-- 装饰性圆点 -->
+            <view class="dots dots-left"></view>
+            <view class="dots dots-right"></view>
+          </view>
+        </view>
       </view>
-    </view>
-  </view>
     </template>
     <template v-else>
       <!-- 普通活动 -->
@@ -105,7 +101,7 @@
     couponType: "代金券",
     discountValue: 2.00
   })
-  
+
   // 新增：优惠券是否已领取的状态
   const isClaimed = ref(false);
   // 格式化日期
@@ -221,13 +217,15 @@
       eventChannel.on('activityData', function(data) {
         console.log('接收到的活动数据:', data);
         activityData.value = data.data;
+        activityData.value.description =
+          "🎉 超值充值福利来袭！\n💰 充值金额越多，返利越多\n充100送20，充200送50，充500送150！\n\n⏰ 活动时间有限，错过等一年\n✨ 所有返利立即到账，可直接使用\n🎁 充值金额无使用限制，校内通用\n\n💝 心动不如行动，快来参与吧！";
         // 获取到活动数据后检查优惠券状态
         if (activityData.value.activityType === 'ticket') {
           checkCouponStatus(activityData.value.activityId);
         }
       });
     }
-    activityData.value.description = "🎉 超值充值福利来袭！\n\n💰 充值金额越多，返利越多\n充100送20，充200送50，充500送150！\n\n⏰ 活动时间有限，错过等一年\n✨ 所有返利立即到账，可直接使用\n🎁 充值金额无使用限制，校内通用\n\n💝 心动不如行动，快来参与吧！";
+
 
   });
 </script>
@@ -288,145 +286,146 @@
     }
 
     .coupon-section {
-  padding: 30rpx;
-  
-  .coupon-wrapper {
-    padding: 20rpx;
-    background: #fff;
-    border-radius: 16rpx;
-  }
-
-  .coupon {
-    position: relative;
-    display: flex;
-    background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
-    border-radius: 12rpx;
-    height: 220rpx;
-    overflow: hidden;
-    box-shadow: 0 4rpx 16rpx rgba(255, 107, 107, 0.2);
-
-    // 左侧金额部分
-    .amount-section {
-      width: 35%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.1);
-      position: relative;
-      padding: 20rpx;
-
-      .currency {
-        font-size: 36rpx;
-        color: #fff;
-        position: relative;
-        top: 10rpx;
-      }
-
-      .amount {
-        font-size: 80rpx;
-        font-weight: bold;
-        color: #fff;
-        line-height: 1;
-        margin: 10rpx 0;
-      }
-
-      .unit {
-        font-size: 32rpx;
-        color: #fff;
-      }
-
-      .type {
-        font-size: 24rpx;
-        color: #fff;
-        margin-top: 10rpx;
-        padding: 4rpx 16rpx;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 20rpx;
-      }
-    }
-
-    // 右侧信息部分
-    .info-section {
-      flex: 1;
       padding: 30rpx;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
 
-      .title {
-        font-size: 32rpx;
-        color: #fff;
-        font-weight: 500;
-      }
-
-      .date {
-        display: flex;
-        flex-direction: column;
-        font-size: 24rpx;
-        color: rgba(255, 255, 255, 0.8);
-        
-        text {
-          margin: 4rpx 0;
-        }
-      }
-
-      .claim-btn {
-        width: 180rpx;
-        height: 64rpx;
-        line-height: 64rpx;
-        font-size: 28rpx;
-        color: #FF6B6B;
+      .coupon-wrapper {
+        padding: 20rpx;
         background: #fff;
-        border-radius: 32rpx;
-        text-align: center;
-        margin: 0;
-        padding: 0;
-        align-self: flex-end;
-        
-        &.disabled {
-          background: rgba(255, 255, 255, 0.6);
-          color: rgba(255, 107, 107, 0.6);
+        border-radius: 16rpx;
+      }
+
+      .coupon {
+        position: relative;
+        display: flex;
+        background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+        border-radius: 12rpx;
+        height: 220rpx;
+        overflow: hidden;
+        box-shadow: 0 4rpx 16rpx rgba(255, 107, 107, 0.2);
+
+        // 左侧金额部分
+        .amount-section {
+          width: 35%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 255, 255, 0.1);
+          position: relative;
+          padding: 20rpx;
+
+          .currency {
+            font-size: 36rpx;
+            color: #fff;
+            position: relative;
+            top: 10rpx;
+          }
+
+          .amount {
+            font-size: 80rpx;
+            font-weight: bold;
+            color: #fff;
+            line-height: 1;
+            margin: 10rpx 0;
+          }
+
+          .unit {
+            font-size: 32rpx;
+            color: #fff;
+          }
+
+          .type {
+            font-size: 24rpx;
+            color: #fff;
+            margin-top: 10rpx;
+            padding: 4rpx 16rpx;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20rpx;
+          }
         }
-        
-        &.claimed {
-          background: rgba(255, 255, 255, 0.5);
-          color: rgba(255, 255, 255, 0.8);
+
+        // 右侧信息部分
+        .info-section {
+          flex: 1;
+          padding: 30rpx;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+
+          .title {
+            font-size: 32rpx;
+            color: #fff;
+            font-weight: 500;
+          }
+
+          .date {
+            display: flex;
+            flex-direction: column;
+            font-size: 24rpx;
+            color: rgba(255, 255, 255, 0.8);
+
+            text {
+              margin: 4rpx 0;
+            }
+          }
+
+          .claim-btn {
+            width: 180rpx;
+            height: 64rpx;
+            line-height: 64rpx;
+            font-size: 28rpx;
+            color: #FF6B6B;
+            background: #fff;
+            border-radius: 32rpx;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            align-self: flex-end;
+
+            &.disabled {
+              background: rgba(255, 255, 255, 0.6);
+              color: rgba(255, 107, 107, 0.6);
+            }
+
+            &.claimed {
+              background: rgba(255, 255, 255, 0.5);
+              color: rgba(255, 255, 255, 0.8);
+            }
+          }
+        }
+
+        // 装饰性圆点
+        .dots {
+          position: absolute;
+          width: 20rpx;
+          height: 20rpx;
+          background: #f8f8f8;
+          border-radius: 50%;
+
+          &.dots-left {
+            left: -10rpx;
+            top: 50%;
+            transform: translateY(-50%);
+          }
+
+          &.dots-right {
+            right: -10rpx;
+            top: 50%;
+            transform: translateY(-50%);
+          }
+        }
+
+        &::after {
+          content: '';
+          position: absolute;
+          left: 35%;
+          top: 0;
+          bottom: 0;
+          border-left: 2rpx dashed rgba(255, 255, 255, 0.3);
         }
       }
     }
 
-    // 装饰性圆点
-    .dots {
-      position: absolute;
-      width: 20rpx;
-      height: 20rpx;
-      background: #f8f8f8;
-      border-radius: 50%;
-      
-      &.dots-left {
-        left: -10rpx;
-        top: 50%;
-        transform: translateY(-50%);
-      }
-      
-      &.dots-right {
-        right: -10rpx;
-        top: 50%;
-        transform: translateY(-50%);
-      }
-    }
-
-    &::after {
-      content: '';
-      position: absolute;
-      left: 35%;
-      top: 0;
-      bottom: 0;
-      border-left: 2rpx dashed rgba(255, 255, 255, 0.3);
-    }
-  }
-}
     .activity-content {
       margin-top: 20rpx;
       padding: 30rpx;

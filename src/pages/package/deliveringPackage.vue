@@ -364,12 +364,12 @@
   const handleContact = () => {
     uni.showModal({
       title: '联系客服',
-      content: '客服电话：400-123-4567',
+      content: '客服电话：13019528909',
       confirmText: '拨打',
       success: (res) => {
         if (res.confirm) {
           uni.makePhoneCall({
-            phoneNumber: '4001234567'
+            phoneNumber: '13019528909'
           });
         }
       }
