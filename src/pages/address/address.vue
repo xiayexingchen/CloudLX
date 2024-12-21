@@ -55,17 +55,19 @@
 
     <!-- 底部按钮区 -->
     <view class="bottom-section">
-      <template v-if="isManageMode">
-        <button class="exit-btn" @click="exitManage">退出管理</button>
-        <button class="add-btn" @click="addNewAddress">
-          <text>添加收货地址</text>
-        </button>
-      </template>
-      <template v-else>
-        <button class="manage-btn" @click="toggleManageMode">管理</button>
-        <button class="add-btn" @click="addNewAddress">
-          <text>添加收货地址</text>
-        </button>
+
+        <template v-if="isManageMode">
+          <button class="exit-btn" @click="exitManage" v-if="!isSelectMode">退出管理</button>
+          <button class="add-btn" @click="addNewAddress">
+            <text>添加收货地址</text>
+          </button>
+        </template>
+        <template v-else>
+          <button class="manage-btn" @click="toggleManageMode" v-if="!isSelectMode">管理</button>
+          <button class="add-btn" @click="addNewAddress">
+            <text>添加收货地址</text>
+          </button>
+
       </template>
     </view>
   </view>
@@ -93,6 +95,7 @@
   const mode = ref('manage')
   // 添加管理模式状态
   const isManageMode = ref(false)
+  const isSelectMode = ref(false)
 
   // 切换管理模式
   const toggleManageMode = () => {
@@ -237,6 +240,9 @@
     console.log('当前模式:', mode.value) // 调试日志
     if (options.siteName) {
       siteName.value = decodeURIComponent(options.siteName);
+    }
+    if (options.mode === 'select') {
+      isSelectMode.value = true;
     }
   })
 

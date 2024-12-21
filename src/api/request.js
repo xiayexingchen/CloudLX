@@ -45,10 +45,10 @@ export default async (params) => {
     ...params.header
   };
   //真机调试showloading和toast冲突，注释掉了
-    // showLoading({
-    //   title: '加载中...'
-    // });
-  
+  // showLoading({
+  //   title: '加载中...'
+  // });
+
   try {
     const res = await uni.request({
       url: base_url + url,
@@ -59,6 +59,13 @@ export default async (params) => {
     });
     if (res.statusCode === 200) {
       return res.data;
+    } else if (res.statusCode === 400) {
+      console.log(res.data);
+      showToast({
+        title: ` ${res.data.msg}`,
+        icon: 'error',
+        duration: 2000
+      });
     } else if (res.statusCode === 401) {
       // 只在第一次 401 时显示弹窗
       if (!isShowingLoginModal) {
@@ -81,16 +88,16 @@ export default async (params) => {
       }
       throw new Error('Unauthorized');
     } else {
+      // showToast({
+      //   title: `请求失败: ${res.statusCode}`,
+      //   icon: 'error',
+      //   duration: 2000
+      // });
       showToast({
-        title: `请求失败: ${res.statusCode}`,
+        title: ` ${res.msg}`,
         icon: 'none',
         duration: 2000
       });
-      //   showToast({
-      //   title: ` ${resmsg}`,
-      //   icon: 'none',
-      //   duration: 2000
-      // }); 
       throw new Error(`HTTP error ${res.statusCode}`); // 抛出错误
     }
   } catch (error) {
@@ -99,12 +106,13 @@ export default async (params) => {
       icon: 'none',
       duration: 2000
     });
+    //普通的业务错误也会被抛出,演示的时候注释掉
     console.error('请求错误:', error); // 打印错误信息到控制台
     throw error; // 重新抛出错误，以便在调用处处理
   } finally {
     //  hideLoading();
     // uni.hideToast();
-    
+
   }
 };
 

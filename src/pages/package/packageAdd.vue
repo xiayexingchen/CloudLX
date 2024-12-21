@@ -15,13 +15,7 @@
           <text>包裹编号</text>
         </view>
         <view class="input-wrapper">
-          <input type="text" v-model="packageId" placeholder="请输入包裹编号" :maxlength="20" />
-          <!--          <u-icon 
-            name="scan" 
-            size="24" 
-            color="#3498db"
-            @click="scanCode"
-          ></u-icon> -->
+          <input type="text" v-model="packageId" placeholder="请输入包裹编号" :maxlength="20" :disabled="isSubmitted" />
         </view>
       </view>
       <!-- 手机号输入 -->
@@ -31,10 +25,16 @@
           <text>主人手机号</text>
         </view>
         <view class="input-wrapper">
-          <input type="number" v-model="ownerPhone" placeholder="请输入包裹主人手机号" :maxlength="11"
-            @input="handlePhoneInput" />
-          <u-icon name="contacts" size="24" color="#3498db" @click="chooseContact"></u-icon>
+          <input type="number" v-model="ownerPhone" placeholder="请输入包裹主人手机号" :maxlength="11" :disabled="isSubmitted" />
+          <!--          <u-icon name="info-circle" size="30" color="#3498db" @click="chooseContact"></u-icon> -->
         </view>
+      </view>
+
+      <!-- 查找包裹按钮 -->
+      <view class="submit-section" v-if="!packageInfo">
+        <button class="submit-btn" :disabled="!isSearchValid" @click="searchPackage">
+          查找包裹
+        </button>
       </view>
 
       <!-- 包裹信息展示区域 -->
@@ -57,17 +57,18 @@
             <text class="label">入柜时间：</text>
             <text class="value">{{ formattedPackageInTime }}</text>
           </view>
-          <!-- 可以根据需要添加更多信息 -->
         </view>
       </view>
 
-      <!-- 提交按钮 -->
-      <view class="submit-section">
+      <!-- 提交和重置按钮 -->
+      <view class="submit-section" v-if="packageInfo">
         <button class="submit-btn" :disabled="!packageInfo" :class="{ 'submit-btn-active': packageInfo }"
           @click="handleSubmit">
           添加包裹
         </button>
-        <!--        <text class="tips">添加包裹后将通知包裹主人</text> -->
+        <button class="reset-btn" @click="resetForm">
+          重置
+        </button>
       </view>
     </view>
   </view>
@@ -82,16 +83,18 @@
     selectToAddPackageAPI,
     AddPackageAPI
   } from '../../api/api-parcel';
+
   const packageId = ref('');
   const ownerPhone = ref('');
   const packageInfo = ref(null);
-
-  // 假设 packageInTime 是一个 ISO 格式的时间字符串，或者是一个时间戳
   const packageInTime = ref('');
+  const isSubmitted = ref(false);
 
-  // 格式化时间为 年月日 时分秒 格式
+  // 格式化时间
   const formattedPackageInTime = computed(() => {
-    const date = new Date(packageInTime.value);
+    // 将日期字符串中的横杠替换为斜杠
+    const dateStr = packageInTime.value.replace(/-/g, '/');
+    const date = new Date(dateStr);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -101,76 +104,44 @@
 
     return `${year}/${month}/${day}  ${hours}:${minutes}:${seconds}`;
   });
-  // // 包裹类型文字映射
-  //// const packageTypeText = {
-  //   express: '快递包裹',
-  //   storage: '寄存包裹'
-  // };
-  // 防抖函数
-  const debounce = (fn, delay) => {
-    let timer = null;
-    return function(...args) {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        fn.apply(this, args);
-      }, delay);
-    };
-  };
 
-  // 手机号输入处理
-  const handlePhoneInput = debounce(async () => {
-    if (ownerPhone.value.length === 11 && packageId.value) {
-      try {
-        // 查询包裹信息
-        const result = await selectToAddPackageAPI({
-          packageId: packageId.value,
-          phoneNumber: ownerPhone.value
-        });
-
-        if (result.code === 22021) {
-          packageInfo.value = result.data;
-          packageInTime.value = packageInfo.value.packageInTime;
-          uni.showToast({
-            title: '已找到包裹',
-            icon: 'success'
-          });
-        } else {
-          packageInfo.value = null;
-          uni.showToast({
-            title: '未找到包裹',
-            icon: 'error'
-          });
-        }
-      } catch (error) {
-        console.error('查询包裹失败:', error);
-        packageInfo.value = null;
-      }
-    }
-  }, 500);
-
-  //dele
-  // 表单验证
-  const isFormValid = computed(() => {
-    return packageId.value.length > 0 &&
-      ownerPhone.value.length === 11;
+  // 检查查找包裹的表单是否有效
+  const isSearchValid = computed(() => {
+    console.log('Package ID Length:', packageId.value.length);
+    console.log('Owner Phone Length:', ownerPhone.value.length);
+    return packageId.value.length > 0 && ownerPhone.value.length === 11;
   });
 
-  // 扫码功能TODO
-  const scanCode = () => {
-    uni.scanCode({
-      success: (res) => {
-        packageId.value = res.result;
-      }
-    });
-  };
+  // 查找包裹
+  const searchPackage = async () => {
+    if (!isSearchValid.value) return;
 
-  // 选择联系人NoDo
-  const chooseContact = () => {
-    uni.addPhoneContact({
-      success: (res) => {
-        ownerPhone.value = res.phoneNumber;
+    try {
+      const result = await selectToAddPackageAPI({
+        packageId: packageId.value,
+        phoneNumber: ownerPhone.value
+      });
+
+      if (result.code === 22021) {
+        packageInfo.value = result.data;
+        packageInTime.value = packageInfo.value.packageInTime;
+        console.log('Form submitted, inputs disabled-before:', isSubmitted.value);
+        isSubmitted.value = true;
+        console.log('Form submitted, inputs disabled-after:', isSubmitted.value);
+        uni.showToast({
+          title: '已找到包裹',
+          icon: 'success'
+        });
+      } else if (result.code === 22020) {
+        packageInfo.value = null;
+        uni.showToast({
+          title: result.msg,
+          icon: 'none'
+        });
       }
-    });
+    } catch (error) {
+      packageInfo.value = null;
+    }
   };
 
   // 提交表单
@@ -181,7 +152,6 @@
       uni.showLoading({
         title: '添加中...'
       });
-      console.log(packageId.value);
       const result = await AddPackageAPI(packageId.value);
 
       if (result.code === 22031) {
@@ -190,11 +160,8 @@
           icon: 'success'
         });
 
-        // 延迟返回，让用户看到成功提示
         setTimeout(() => {
-          // 发送刷新事件
           uni.$emit('refreshPackageList');
-          // 返回上一页
           uni.navigateBack();
         }, 1500);
       } else {
@@ -213,6 +180,24 @@
       uni.hideLoading();
     }
   };
+
+  // 重置表单
+  const resetForm = () => {
+    packageId.value = '';
+    ownerPhone.value = '';
+    packageInfo.value = null;
+    isSubmitted.value = false;
+    console.log('Form reset, inputs enabled:', isSubmitted.value);
+  };
+
+  // 选择联系人
+  // const chooseContact = () => {
+  //   uni.addPhoneContact({
+  //     success: (res) => {
+  //       ownerPhone.value = res.phoneNumber;
+  //     }
+  //   });
+  // };
 </script>
 
 <style lang="scss" scoped>
@@ -299,29 +284,6 @@
     }
   }
 
-  .remark-input {
-    width: 100%;
-    height: 100px;
-    background-color: #f5f7fa;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 14px;
-    line-height: 1.5;
-    border: 1px solid transparent;
-
-    &:focus {
-      border-color: #3B82F6;
-      background-color: #fff;
-    }
-  }
-
-  .word-count {
-    text-align: right;
-    font-size: 12px;
-    color: #999;
-    margin-top: 4px;
-  }
-
   .package-info {
     margin-top: 20px;
     background-color: #ffffff;
@@ -366,7 +328,6 @@
     }
   }
 
-
   .submit-section {
     margin-top: 30px;
     text-align: center;
@@ -374,7 +335,7 @@
     .submit-btn {
       width: 100%;
       height: 48px;
-      background: #bdc3c7;
+      background: #3B82F6;
       color: #fff;
       border-radius: 24px;
       font-size: 16px;
@@ -385,9 +346,9 @@
       transition: all 0.3s;
       border: none;
 
-      &:disabled {
+      &[disabled] {
         background: #bdc3c7;
-        cursor: not-allowed;
+        opacity: 0.8;
       }
 
       &-active {
@@ -400,11 +361,20 @@
       }
     }
 
-    .tips {
-      font-size: 12px;
-      color: #999;
-      margin-top: 12px;
-      display: block;
+    .reset-btn {
+      margin-top: 10px;
+      width: 100%;
+      height: 48px;
+      background: #f5f5f5;
+      color: #333;
+      border-radius: 24px;
+      font-size: 16px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      border: none;
     }
   }
 </style>
