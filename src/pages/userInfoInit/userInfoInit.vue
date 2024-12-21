@@ -8,14 +8,14 @@
     <!-- 用户名 -->
     <view class="form-item">
       <text class="form-label">用户名 <text class="required">*</text></text>
-      <u-input v-model="formData.username" placeholder="请输入用户名" :clearable="true" class="form-input" :border="true" />
+      <u-input v-model="formData.username" placeholder="请输入用户名" :clearable="true" class="form-input gray-bg" :border="true" />
     </view>
 
     <!-- 手机号 -->
     <view class="form-item">
       <text class="form-label">手机号 <text class="required">*</text></text>
       <view class="phone-input">
-        <u-input v-model="formData.phoneNumber" placeholder="请输入手机号" type="number" :clearable="true" class="form-input"
+        <u-input v-model="formData.phoneNumber" placeholder="请输入手机号" type="number" :clearable="true" class="form-input gray-bg"
           :border="true" maxlength="11" />
         <u-button @click="getVerificationCode" class="verification-btn"
           :disabled="isGettingCode || !/^1[3-9]\d{9}$/.test(formData.phoneNumber)" type="primary"
@@ -26,7 +26,7 @@
     <!-- 验证码 -->
     <view class="form-item">
       <text class="form-label">验证码 <text class="required">*</text></text>
-      <u-input v-model="formData.code" placeholder="请输入验证码" type="number" :clearable="true" class="form-input"
+      <u-input v-model="formData.code" placeholder="请输入验证码" type="number" :clearable="true" class="form-input gray-bg"
         :border="true" maxlength="6" />
     </view>
     <!-- 性别 -->
@@ -326,5 +326,9 @@
     height: 45px;
     margin-top: 40px;
     border-radius: 8px;
+  }
+
+  .gray-bg {
+    background-color: #f8f8f8 !important;
   }
 </style>

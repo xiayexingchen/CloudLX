@@ -37,7 +37,7 @@
             <image class="type-icon" :src="getPackageTypeImage(item.packageType)" mode="aspectFit" />
             <view class="package-info">
               <text class="package-id">
-                {{ getPackageStatusText(item) }}: {{ item.packageId }}
+              包裹编号: {{ item.packageId }}
               </text>
               <text class="package-type">{{ item.packageType }}</text>
             </view>
@@ -53,7 +53,8 @@
             </view>
             <view class="info-row">
               <u-icon name="clock" size="14" color="#64748B"></u-icon>
-              <text>{{item.packageOrderCreatedTime? "下单时间："+formatDate(item.packageOrderCreatedTime):"入柜时间："+formatDate(item.packageInTime) }}</text>
+              <!-- <text>{{item.packageOrderCreatedTime? "下单时间："+formatDate(item.packageOrderCreatedTime):"入柜时间："+formatDate(item.packageInTime) }}</text> -->
+             <text> 包裹类型：{{ getPackageStatusText(item) }}</text>
             </view>
           </view>
         </view>

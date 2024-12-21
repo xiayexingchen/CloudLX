@@ -94,9 +94,9 @@
 
   // 拨打电话
   const handleCall = () => {
-    if (packageInfo.value.adminPhone) {
+
       uni.makePhoneCall({
-        phoneNumber: packageInfo.value.adminPhone,
+        phoneNumber: '13019528909',
         success: () => {
           console.log('拨打电话成功');
         },
@@ -107,7 +107,7 @@
           });
         }
       });
-    }
+    
   };
 </script>
 
