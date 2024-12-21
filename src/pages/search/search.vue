@@ -162,12 +162,6 @@
       return;
     }
 
-    // 调试日志：打印搜索关键词
-    console.log('搜索关键词:', searchKeyword.value);
-
-    // 调试日志：打印所有包裹数据
-    console.log('所有包裹数据:', allPackages.value);
-
     const searchKey = searchKeyword.value.toLowerCase();
     const allPackagesList = [
       ...allPackages.value.pendingPackageList || [],
@@ -176,30 +170,21 @@
       ...allPackages.value.timeoutPackageList || []
     ];
 
-    // 调试日志：打印合并后的包裹列表
-    console.log('合并后的包裹列表:', allPackagesList);
-
     searchResults.value = allPackagesList.filter(pkg => {
-      // 调试日志：打印每个包裹的搜索字段
-      console.log('正在检查包裹:', {
-        id: pkg.packageId,
-        orderId: pkg.packageOrderId,
-        cabinetId: pkg.packageCabinetId,
-        type: pkg.packageType,
-        siteName: pkg.packageSiteName
-      });
+      // 如果包裹已删除且用户在搜索订单号，则不显示该包裹
+      if (pkg.isDelete && searchKey === pkg.packageOrderId?.toLowerCase()) {
+        return false;
+      }
 
-      const result = (
-        pkg.packageId?.toLowerCase().includes(searchKey) ||
-        pkg.packageOrderId?.toLowerCase().includes(searchKey) ||
-        pkg.packageCabinetId?.toLowerCase().includes(searchKey) ||
-        pkg.packageType?.toLowerCase().includes(searchKey) ||
-        pkg.packageSiteName?.toLowerCase().includes(searchKey)
+      return (
+        // 如果包裹已删除，则不能通过订单号搜索到
+        (pkg.packageId?.toLowerCase().includes(searchKey)) ||
+        (pkg.packageCabinetId?.toLowerCase().includes(searchKey)) ||
+        (pkg.packageType?.toLowerCase().includes(searchKey)) ||
+        (pkg.packageSiteName?.toLowerCase().includes(searchKey)) ||
+        // 只有未删除的包裹才能通过订单号搜索到
+        (!pkg.isDelete && pkg.packageOrderId?.toLowerCase().includes(searchKey))
       );
-
-      // 调试日志：打印匹配结果
-      console.log('是否匹配:', result);
-      return result;
     }).map(pkg => {
       // 添加来源信息
       let fromList = '';
@@ -217,9 +202,6 @@
         fromList
       };
     });
-
-    // 调试日志：打印搜索结果
-    console.log('搜索结果:', searchResults.value);
 
     showNoResult.value = searchResults.value.length === 0;
     if (searchResults.value.length > 0) {

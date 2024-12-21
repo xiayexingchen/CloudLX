@@ -376,7 +376,9 @@
           .claim-btn {
             width: 180rpx;
             height: 64rpx;
-            line-height: 64rpx;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 28rpx;
             color: #FF6B6B;
             background: #fff;
@@ -395,6 +397,15 @@
               background: rgba(255, 255, 255, 0.5);
               color: rgba(255, 255, 255, 0.8);
             }
+          }
+
+          .claim-btn text {
+            display: inline-block;
+            vertical-align: middle;
+          }
+
+          .claim-btn .u-icon {
+            vertical-align: middle;
           }
         }
 

@@ -601,7 +601,7 @@
 
   // 提交订单
   async function submitOrder() {
-    if (!address.value) {
+    if (!address.value.name) {
       uni.showToast({
         title: '请选择收货地址',
         icon: 'none'

@@ -71,7 +71,7 @@
                 <text class="package-type">已签收</text>
                 <text>{{" "}}</text> <text>{{" "}}</text> <text>{{" "}}</text>
                 <text class="tracking-number">
-                  {{item.isDelete ? '' : '订单号：' + item.packageOrderId }}
+                  {{ item.packageOrderId && !item.isDelete ? '订单号：' + item.packageOrderId : '' }}
                 </text>
               </view>
             </template>
@@ -443,10 +443,10 @@
   // 判断是否有新活动
   const hasNewActivities = (newData) => {
     const oldActivities = activityList.value;
-    // 检查是否有新增的活动
-    const hasNew = newData.length > oldActivities.length;
-
-    console.log('新活动检测:', {
+    // 检查活动数量是否有变化（增加或减少）
+    const hasChanges = newData.length !== oldActivities.length;
+    
+    console.log('活动变化检测:', {
       oldActivities: {
         length: oldActivities.length,
         ids: oldActivities.map(a => a.activityId),
@@ -457,10 +457,13 @@
         ids: newData.map(a => a.activityId),
         names: newData.map(a => a.activityName)
       },
-      hasNew
+      hasChanges,
+      changeType: hasChanges ? 
+        (newData.length > oldActivities.length ? '增加' : '减少') : 
+        '无变化'
     });
-
-    return hasNew;
+    
+    return hasChanges; // 返回是否有变化（增加或减少）
   };
   // 停止轮询时也添加日志
   // 修改停止轮询函数

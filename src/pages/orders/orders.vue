@@ -225,7 +225,7 @@
   //     const start = dayjs(startDate.value).startOf('day');
   //     const end = dayjs(endDate.value).endOf('day');
 
-  //     console.log("订���日期:", orderDate.format('YYYY-MM-DD HH:mm:ss'));
+  //     console.log("订单日期:", orderDate.format('YYYY-MM-DD HH:mm:ss'));
   //     console.log("开始日期:", start.format('YYYY-MM-DD HH:mm:ss'));
   //     console.log("结束日期:", end.format('YYYY-MM-DD HH:mm:ss'));
 
@@ -367,12 +367,10 @@
   // 刷新数据
   const onRefresh = () => {
     // 实际项目中这里会调用后端API
-    uni.showLoading({
-      title: '刷新中...'
-    });
+    showLoading('刷新中...');
     setTimeout(() => {
-      uni.hideLoading();
-      uni.showToast({
+      hideLoading();
+      showToast({
         title: '刷新成功',
         icon: 'success'
       });
@@ -405,42 +403,38 @@
       content: '确定要删除这条订单记录吗？',
       success: async (res) => {
         if (res.confirm) {
-          //我需要后端的msg，所以这里和其他地方的请求都不一样
-          const msgToast = '';
           try {
-            uni.showLoading({
-              title: '删除中...'
-            });
+            showLoading('删除中...');
 
             const result = await deleteOrderAPI(order.order_id);
-            msgToast = result.msg;
-            if (result.code === 24061) {
-              uni.showToast({
+            if (result.code === 24061) { // 删除成功
+              showToast({
                 title: '删除成功',
                 icon: 'success'
               });
 
               // 从列表中移除该订单
               orders.value = orders.value.filter(item => item.order_id !== order.order_id);
-            } else {
-              uni.showToast({
-                title: msgToast || '删除失败',
+            } else if (result.code === 24060) { // 删除失败，未签收
+              showToast({
+                title: '订单未签收，无法删除',
                 icon: 'none'
               });
             }
           } catch (error) {
             console.error('删除订单失败:', error);
-            uni.showToast({
-              title: msgToast,
+            showToast({
+              title: msgToast.value,
               icon: 'none'
             });
           } finally {
-            uni.hideLoading();
+            hideLoading();
           }
         }
       }
-    });
+      });
   };
+
 </script>
 
 

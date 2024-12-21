@@ -213,6 +213,24 @@ const onColumnChange = (e) => {
     }
     // 检查是否有现有地址
     checkExistingAddresses();
+
+    // 初始化楼栋选项
+    if (formData.value.region) {
+      const regionIndex = regionOptions.indexOf(formData.value.region);
+      if (regionIndex !== -1) {
+        if (formData.value.region === '德智学生公寓') {
+          const dezhiBuildings = getBuildingsByArea();
+          buildingOptions.value = [dezhiBuildings];
+          buildingIndex.value = [0];
+        } else {
+          buildingOptions.value = [
+            ['一区', '二区', '三区'],
+            getBuildingsByArea(regionIndex)
+          ];
+          buildingIndex.value = [0, 0];
+        }
+      }
+    }
   })
   // 表单验证
   const isFormValid = computed(() => {
@@ -224,27 +242,26 @@ const onColumnChange = (e) => {
     formData.value.isDefault = e.detail.value
   }
   const onRegionChange = (e) => {
-  const index = e.detail.value;
-  formData.value.region = regionOptions[index];
-  regionIndex.value = index;
-  
-  // 重置楼栋选择
-  formData.value.build = '';
-  
-  // 如果选择德智学生公寓，更新楼栋选项为单列
-  if (formData.value.region === '德智学生公寓') {
-    const dezhiBuildings = getBuildingsByArea();
-    buildingOptions.value = [dezhiBuildings];
-    buildingIndex.value = [0];
-  } else {
-    // 天马学生公寓保持两列选择
-    buildingOptions.value = [
-      ['一区', '二区', '三区'],
-      getBuildingsByArea(0)
-    ];
-    buildingIndex.value = [0, 0];
-  }
-};
+    const index = e.detail.value;
+    formData.value.region = regionOptions[index];
+    regionIndex.value = index;
+
+    // 重置楼栋选择
+    formData.value.build = '';
+
+    // 更新楼栋选项
+    if (formData.value.region === '德智学生公寓') {
+      const dezhiBuildings = getBuildingsByArea();
+      buildingOptions.value = [dezhiBuildings];
+      buildingIndex.value = [0];
+    } else {
+      buildingOptions.value = [
+        ['一区', '二区', '三区'],
+        getBuildingsByArea(0)
+      ];
+      buildingIndex.value = [0, 0];
+    }
+  };
 
   // 检查地址是否重复
   const checkAddressExists = async (region, build) => {
@@ -288,7 +305,7 @@ const onColumnChange = (e) => {
       })
     }
 
-    // 如果是第一个地址，强制设置为默认地址
+    // 如果是第一个地址，强制置为默认地址
     if (isDefaultDisabled.value && !formData.value.isDefault) {
       return uni.showToast({
         title: '首个地址必须设为默认地址',

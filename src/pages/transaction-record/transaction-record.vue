@@ -36,9 +36,14 @@
     </view>
 
     <!-- 右侧金额 -->
-    <text class="item-amount" :class="getAmountClass(payment)">
-      {{ getAmountPrefix(payment) }}{{ payment.amount.toFixed(2) }}
-    </text>
+    <view class="amount-column">
+      <text class="item-amount" :class="getAmountClass(payment)">
+        {{ getAmountPrefix(payment) }}{{ payment.amount.toFixed(2) }}
+      </text>
+      <text v-if="payment.paymentType === '退款'" class="refund-text">
+        已退款 ¥{{ payment.amount.toFixed(2) }}
+      </text>
+    </view>
   </view>
 
       <!-- 无数据提示 -->
@@ -124,7 +129,10 @@ const currentMonthPayments = computed(() => {
   
   // 对交易记录按时间倒序排序
   return [...monthData.payments].sort((a, b) => {
-    return new Date(b.paymentTime) - new Date(a.paymentTime);
+    // 将横杠替换为斜杠以兼容 iOS
+    const dateA = new Date(a.paymentTime.replace(/-/g, '/'));
+    const dateB = new Date(b.paymentTime.replace(/-/g, '/'));
+    return dateB - dateA;
   });
 });
 
@@ -138,8 +146,8 @@ const formatMonth = (monthStr) => {
 // 格式化日期时间
 const formatDateTime = (dateTimeStr) => {
   try {
-    // 将 "2024-12-07 11:04:22" 转换为 "2024-12-07T11:04:22"
-    const standardDate = dateTimeStr.replace(' ', 'T');
+    // 将 "2024-12-19 20:58:08" 转换为 "2024/12/19 20:58:08"
+    const standardDate = dateTimeStr.replace(/-/g, '/');
     const date = new Date(standardDate);
     
     // 检查日期是否有效
@@ -164,7 +172,7 @@ const formatDateTime = (dateTimeStr) => {
 const getIconClass = (type) => {
   const classMap = {
     '充值': 'recharge',
-    '退款': 'refund',
+    '退款': 'payment',
     '支付': 'payment'
   };
   return classMap[type] || 'payment';
@@ -174,7 +182,7 @@ const getIconClass = (type) => {
 const getIconName = (type) => {
   const iconMap = {
     '充值': 'plus',
-    '退款': 'reload',
+    '退款': 'minus',
     '支付': 'minus'
   };
   return iconMap[type] || 'minus';
@@ -184,18 +192,20 @@ const getIconName = (type) => {
 const getDisplayType = (payment) => {
   if (payment.paymentType === '支付') {
     return '消费 | ' + (payment.paymentMethod || '钱包');
+  } else if (payment.paymentType === '退款') {//退款和支付同样式
+    return '消费 | ' + (payment.paymentMethod || '钱包');
   }
   return payment.paymentType;
 };
 
 // 获取金额样式
 const getAmountClass = (payment) => {
-  return payment.paymentType === '支付' ? 'expense' : 'income';
+  return payment.paymentType === '充值' ? 'income' : 'expense';
 };
 
 // 获取金额前缀
 const getAmountPrefix = (payment) => {
-  return payment.paymentType === '支付' ? '-' : '+';
+  return payment.paymentType === '充值' ? '+' : '-';
 };
 
 // 月份选择处理
@@ -370,19 +380,30 @@ const calculateTotal = () => {
     }
   }
 
-  .item-amount {
-    flex-shrink: 0; // 防止金额缩小
-    font-size: 16px;
-    font-weight: 500;
-    min-width: 80px; // 设置最小宽度
-    text-align: right; // 右对齐
+  .amount-column {
+    flex-shrink: 0;
+    min-width: 80px;
+    text-align: right;
 
-    &.income {
-      color: #4CD964;
+    .item-amount {
+      font-size: 16px;
+      font-weight: 500;
+      display: block;
+
+      &.income {
+        color: #4CD964;
+      }
+
+      &.expense {
+        color: #333;
+      }
     }
 
-    &.expense {
-      color: #333;
+    .refund-text {
+      font-size: 12px;
+      color: #ff4d4f;
+      display: block;
+      margin-top: 4px;
     }
   }
 }

@@ -24,12 +24,13 @@
       <text class="section-title">问题描述</text>
       <view class="content-input">
         <textarea v-model="content" placeholder="请详细描述您遇到的问题或建议（至少5个字）..." :maxlength="200" class="input-area"
-          @blur="validateContent">
-        </textarea>
-        <text :class="['word-count', content.length < 5 ? 'error' : '']">
-          {{ content.length }}/200
+          @blur="validateContent">     </textarea>
+
+
+        <text :class="['word-count', getActualLength(content) < 5 ? 'error' : '']">
+          {{ getActualLength(content) }}/200
         </text>
-        <text v-if="content.length > 0 && content.length < 5" class="error-tip">
+        <text v-if="content.length > 0 && getActualLength(content) < 5" class="error-tip">
           请至少输入5个字的描述
         </text>
       </view>
@@ -91,21 +92,29 @@
     selectedType.value = typeId
     console.log('Selected type:', typeId)
   }
-  // 表单验证
-  // 表单验证
-  const isValid = computed(() => {
-    const isValidType = selectedType.value !== ''
-    const isValidContent = content.value.length >= 5
-    console.log('Form validation:', {
-      isValidType,
-      isValidContent
-    }) // 添加调试日志
-    return isValidType && isValidContent
-  })
+  // 添加一个计算实际字数的函数
+  const getActualLength = (str) => {
+    // 移除所有空格和换行符后计算长度
+    return str.replace(/[\s\r\n]/g, '').length;
+  };
 
-  // 添加内容验证函数
+  // 修改表单验证
+  const isValid = computed(() => {
+    // const isValidType = selectedType.value !== '';
+    // console.log('selectedType.value:', selectedType.value);
+    // const isValidContent = getActualLength(content.value) >= 5;
+    // console.log('Form validation:', {
+    //   isValidType,
+    //   isValidContent
+    // });
+    //return isValidType && isValidContent;
+    return true;
+  });
+
+  // 修改内容验证函数
   const validateContent = () => {
-    if (content.value.length > 0 && content.value.length < 5) {
+    const actualLength = getActualLength(content.value);
+    if (content.value.length > 0 && actualLength < 5) {
       uni.showToast({
         title: '请至少输入5个字的描述',
         icon: 'none',
@@ -128,7 +137,7 @@
       return;
     }
 
-    if (content.value.length < 5) {
+    if (getActualLength(content.value) < 5) {
       uni.showToast({
         title: '请至少输入5个字的描述',
         icon: 'none',
@@ -416,8 +425,9 @@
       border: none;
 
       &:disabled {
-        background: #bdc3c7;
-        opacity: 0.8;
+        background: #ccc;
+        opacity: 0.7;
+        cursor: not-allowed;
       }
 
       &:active {
