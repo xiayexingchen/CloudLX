@@ -59,6 +59,10 @@
 
       <view class="package-info">
         <view class="info-item">
+          <text class="label">包裹编号</text>
+          <text class="value">{{ packageInfo.packageId }}</text>
+        </view>
+        <view class="info-item">
           <text class="label">包裹类型</text>
           <text class="value">{{ packageInfo.packageType }}</text>
         </view>
@@ -144,7 +148,7 @@
   // 在需要显示机器人ID的地方使用
 
   const updateMap = async () => {
-        
+
     const res = await orderStatusAPI(packageInfo.value.orderId);
     console.log('orderStatusAPI res:', res);
     packageInfo.value.status = res.data;
@@ -160,7 +164,7 @@
         .sitePosition[0];
       robotInfo.value.latitude = sites[packageInfo.value.address.split(' ')[0]]
         .sitePosition[1];
-      
+
       addMarker()
     } else {
       st = 3;
@@ -310,21 +314,21 @@
     // 如果状态为3，就不调用getRobotDest的api了，只要显示机器人位置就行
     if (st !== 3) {
       try {
-      const result = await robotDestAPI(robotId.value);
-      robotInfo.value['to'] = {
-        'latitude': result.data.to.latitude,
-        'longitude': result.data.to.longitude
-      };
-      robotInfo.value['from'] = {
-        'latitude': result.data.from.latitude,
-        'longitude': result.data.from.longitude
-      };
+        const result = await robotDestAPI(robotId.value);
+        robotInfo.value['to'] = {
+          'latitude': result.data.to.latitude,
+          'longitude': result.data.to.longitude
+        };
+        robotInfo.value['from'] = {
+          'latitude': result.data.from.latitude,
+          'longitude': result.data.from.longitude
+        };
 
-      console.log('Robot to and from data:', result);
-    } catch (error) {
-      console.error('Failed to fetch robot location:', error);
+        console.log('Robot to and from data:', result);
+      } catch (error) {
+        console.error('Failed to fetch robot location:', error);
+      }
     }
-  }
     console.log('robotInfo:', robotInfo);
     addMarker();
     if (st === 1) {
@@ -435,7 +439,7 @@
   let metricsTimer = null; // 用于存储定时器ID
 
   // 修改视图切换函数
-  const toggleView =  () => {
+  const toggleView = () => {
     if (packageInfo.value.status == '待发货' && currentView.value === 'map') {
       uni.showToast({
         title: '包裹未在运输中，暂无机器人视角',
@@ -461,7 +465,7 @@
       metricsTimer = setInterval(() => {
         getRobotMetrics();
       }, 6000);
-    } 
+    }
   };
 
   // 修改获取机器人实时数据的函数

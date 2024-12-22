@@ -1157,9 +1157,10 @@
 
     .time-slots {
       max-height: 600rpx;
-      padding: 20rpx;
+      //padding: 20rpx;
 
       .time-slot {
+        margin: 16rpx;
         padding: 20rpx;
         text-align: center;
         border-radius: 8rpx;

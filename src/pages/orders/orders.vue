@@ -49,13 +49,13 @@
             <template v-if="order.status==='已完成'">
               <view class="info-row">
                 <u-icon name="clock" size="20" color="#666"></u-icon>
-                <text>完成时间：{{ order.completed_at }}</text>
+                <text>送达时间：{{ order.completed_at }}</text>
               </view>
             </template>
             <template v-else>
               <view class="info-row">
                 <u-icon name="clock" size="20" color="#666"></u-icon>
-                <text>预计完成时间：{{ order.estimated_completion_time }}</text>
+                <text>预计送达时间：{{ order.estimated_completion_time }}</text>
               </view>
             </template>
           </view>

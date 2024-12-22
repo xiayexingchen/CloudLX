@@ -39,7 +39,7 @@
           <text class="value">{{ orderInfo.estimated_completion_time }}</text>
         </view>
         <view class="info-item" v-if="orderInfo.status === '已完成' && orderInfo.completed_at">
-          <text class="label">完成时间</text>
+          <text class="label">送达时间</text>
           <text class="value">{{ orderInfo.completed_at }}</text>
         </view>
       </view>

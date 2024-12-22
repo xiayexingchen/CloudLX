@@ -783,6 +783,7 @@
         url: '/pages/package/deliveringPackage',
         eventName: 'deliveryData',
         getData: (parcel) => ({
+          packageId: parcel.packageId,
           robotId: parcel.robotId,
           deliveryTime: parcel.packageEstimatedCompletedTime,
           packageType: parcel.packageType,
@@ -1125,23 +1126,23 @@
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
     width: 100%; // 添加这行
 
-//     :deep(.u-tabs) {
-//   .u-tabs__wrapper {
-//     width: 100%;
-    
-//     .u-tabs__wrapper__nav {
-//       width: 100%;
-//       display: flex;
-//       justify-content: space-between; // 添加这行
-      
-//       .u-tabs__wrapper__nav__item {
-//         flex: 1;
-//         min-width: 0; // 添加这行，防止内容溢出
-//         text-align: center;
-//       }
-//     }
-//   }
-// }
+    //     :deep(.u-tabs) {
+    //   .u-tabs__wrapper {
+    //     width: 100%;
+
+    //     .u-tabs__wrapper__nav {
+    //       width: 100%;
+    //       display: flex;
+    //       justify-content: space-between; // 添加这行
+
+    //       .u-tabs__wrapper__nav__item {
+    //         flex: 1;
+    //         min-width: 0; // 添加这行，防止内容溢出
+    //         text-align: center;
+    //       }
+    //     }
+    //   }
+    // }
   }
 
   // 包裹卡片样式
@@ -1176,7 +1177,9 @@
       .package-info {
         flex: 1;
         margin-left: 12px;
-
+        white-space: nowrap; /* 禁止文本换行 */
+          overflow: hidden; /* 超出部分隐藏 */
+          text-overflow: ellipsis; /* 超出部分显示省略号 */
         .package-type {
           font-size: 16px;
           font-weight: 600;
@@ -1187,6 +1190,9 @@
           font-size: 13px;
           color: #64748B;
           margin-top: 4px;
+          white-space: nowrap; /* 禁止文本换行 */
+          overflow: hidden; /* 超出部分隐藏 */
+          text-overflow: ellipsis; /* 超出部分显示省略号 */
         }
       }
 

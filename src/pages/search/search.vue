@@ -37,7 +37,7 @@
             <image class="type-icon" :src="getPackageTypeImage(item.packageType)" mode="aspectFit" />
             <view class="package-info">
               <text class="package-id">
-              包裹编号: {{ item.packageId }}
+                包裹编号: {{ item.packageId }}
               </text>
               <text class="package-type">{{ item.packageType }}</text>
             </view>
@@ -54,7 +54,7 @@
             <view class="info-row">
               <u-icon name="clock" size="14" color="#64748B"></u-icon>
               <!-- <text>{{item.packageOrderCreatedTime? "下单时间："+formatDate(item.packageOrderCreatedTime):"入柜时间："+formatDate(item.packageInTime) }}</text> -->
-             <text> 包裹类型：{{ getPackageStatusText(item) }}</text>
+              <text> 包裹类型：{{ getPackageStatusText(item) }}</text>
             </view>
           </view>
         </view>
@@ -243,6 +243,7 @@
         url: '/pages/package/deliveringPackage',
         eventName: 'deliveryData',
         getData: (pkg) => ({
+          packageId: pkg.packageId,
           robotId: pkg.robotId,
           deliveryTime: pkg.packageEstimatedCompletedTime,
           packageType: pkg.packageType,

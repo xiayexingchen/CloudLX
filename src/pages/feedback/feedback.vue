@@ -414,7 +414,7 @@
     .submit-btn {
       width: 100%;
       height: 48px;
-      background: #3498db;
+      background: #3B82F6;
       color: #fff;
       border-radius: 24px;
       font-size: 16px;

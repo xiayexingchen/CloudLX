@@ -7,7 +7,7 @@
         <text class="value">{{ orderInfo.packageType }}</text>
       </view>
       <view class="info-item">
-        <text class="label">完成时间</text>
+        <text class="label">送达时间</text>
         <text class="value">{{ orderInfo.completedTime }}</text>
       </view>
     </view>
