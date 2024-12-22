@@ -59,13 +59,6 @@ export default async (params) => {
     });
     if (res.statusCode === 200) {
       return res.data;
-    } else if (res.statusCode === 400) {
-      console.log(res.data);
-      showToast({
-        title: ` ${res.data.msg}`,
-        icon: 'error',
-        duration: 2000
-      });
     } else if (res.statusCode === 401) {
       // 只在第一次 401 时显示弹窗
       if (!isShowingLoginModal) {

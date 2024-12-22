@@ -41,7 +41,15 @@
           fontWeight: 'bold'
         }" :inactiveStyle="{
           color: '#64748B'
-        }" itemStyle="padding-left: 15px; padding-right: 15px;height: 44px;" lineColor="#3B82F6" :lineWidth="20">
+        }" :itemStyle="{
+          width: '25%',
+          height: '44px',
+          padding: '0',
+          flex: '1',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }" lineColor="#3B82F6" :lineWidth="20">
       </u-tabs>
 
       <scroll-view scroll-y class="package-list" @scrolltolower="loadMoreData">
@@ -288,7 +296,7 @@
     pollTimer = setInterval(async () => {
       // 检查页面是否可见
       if (!isPageVisible.value) {
-        console.log('页面不可见，跳过轮询');
+        console.log('页面不可见，跳过���询');
         return;
       }
       console.log(`执行轮询检查 - ${new Date().toLocaleTimeString()}`);
@@ -445,7 +453,7 @@
     const oldActivities = activityList.value;
     // 检查活动数量是否有变化（增加或减少）
     const hasChanges = newData.length !== oldActivities.length;
-    
+
     console.log('活动变化检测:', {
       oldActivities: {
         length: oldActivities.length,
@@ -458,11 +466,10 @@
         names: newData.map(a => a.activityName)
       },
       hasChanges,
-      changeType: hasChanges ? 
-        (newData.length > oldActivities.length ? '增加' : '减少') : 
-        '无变化'
+      changeType: hasChanges ?
+        (newData.length > oldActivities.length ? '增加' : '减少') : '无变化'
     });
-    
+
     return hasChanges; // 返回是否有变化（增加或减少）
   };
   // 停止轮询时也添加日志
@@ -873,7 +880,7 @@
   // 已评价订单ID列表
   const reviewedOrderIds = ref([]);
 
-  // 获取已评价订单列表
+  // 获取已��价订单列表
   const fetchReviewedOrders = async () => {
     try {
       const res = await fetchReviewRecordAPI();
@@ -1116,16 +1123,25 @@
     border-radius: 20px 20px 0 0;
     min-height: calc(100vh - 420px); // 调整高度以适应上方内容
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+    width: 100%; // 添加这行
 
-    .u-tabs {
-      background: #FFFFFF;
-      border-radius: 20px 20px 0 0;
-      border-bottom: 1px solid #E2E8F0;
-      position: sticky;
-      top: 56px; // 搜索框高度
-      z-index: 99;
-    }
-
+//     :deep(.u-tabs) {
+//   .u-tabs__wrapper {
+//     width: 100%;
+    
+//     .u-tabs__wrapper__nav {
+//       width: 100%;
+//       display: flex;
+//       justify-content: space-between; // 添加这行
+      
+//       .u-tabs__wrapper__nav__item {
+//         flex: 1;
+//         min-width: 0; // 添加这行，防止内容溢出
+//         text-align: center;
+//       }
+//     }
+//   }
+// }
   }
 
   // 包裹卡片样式

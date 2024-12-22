@@ -50,7 +50,7 @@
       <view class="card-title">配送信息</view>
       <view class="info-list">
         <view class="info-item">
-          <text class="label">收件人</text>
+          <text class="label">订单发起方</text>
           <text class="value">{{ orderInfo.username }}</text>
         </view>
         <view class="info-item">

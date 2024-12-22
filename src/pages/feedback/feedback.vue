@@ -23,12 +23,12 @@
     <view class="feedback-content">
       <text class="section-title">问题描述</text>
       <view class="content-input">
-        <textarea v-model="content" placeholder="请详细描述您遇到的问题或建议（至少5个字）..." :maxlength="200" class="input-area"
+        <textarea v-model="content" placeholder="请详细描述您遇到的问题或建议（至少5个字）..." :maxlength="80" class="input-area"
           @blur="validateContent">     </textarea>
 
 
         <text :class="['word-count', getActualLength(content) < 5 ? 'error' : '']">
-          {{ getActualLength(content) }}/200
+          {{ getActualLength(content) }}/80
         </text>
         <text v-if="content.length > 0 && getActualLength(content) < 5" class="error-tip">
           请至少输入5个字的描述

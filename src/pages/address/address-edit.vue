@@ -267,12 +267,26 @@ const onColumnChange = (e) => {
   const checkAddressExists = async (region, build) => {
     try {
       const res = await fetchAddressDataAPI();
+      console.log('API Response:', res); // 调试输出 API 响应
+
       if (res.code === 23031) {
         const addresses = res.data || [];
+        console.log('Fetched Addresses:', addresses); // 调试输出获取的地址列表
+
         // 检查是否存在相同地址，但排除当前正在编辑的地址
         return addresses.some(addr => {
-          const isSameAddress = addr.region === region && addr.building === build;
-          const isCurrentAddress = isEdit.value && addr.addressId === formData.value.addressId;
+          const isSameAddress = addr.region === region && addr.building === build && addr.recipient_name === formData.value.recipientName;
+          const isCurrentAddress = (addr.address_id === formData.value.addressId) ;
+          console.log('isEdit:', isEdit.value);
+          console.log('addr.address_id:', addr.address_id);
+          console.log('formData.value.addressId:', formData.value.addressId);
+          console.log('Checking Address:', addr); // 调试输出当前检查的地址
+          console.log('isSameAddress:', isSameAddress); // 调试输出是否为相同地址
+          console.log('isCurrentAddress:', isCurrentAddress); // 调试输出是否为当前地址
+          console.log('formData.value.recipient_name:', formData.value.recipientName); 
+          console.log('formData.value.addressId:', formData.value.addressId); 
+          console.log('region:', region);
+          console.log('build:', build);
           return isSameAddress && !isCurrentAddress;
         });
       }

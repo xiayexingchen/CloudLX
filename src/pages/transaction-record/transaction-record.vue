@@ -57,21 +57,25 @@
       <view class="popup-container">
         <view class="popup-header">
           <text @click="showPicker = false">取消</text>
-          <text>选择月份</text>
-          <text class="confirm-btn" @click="showPicker = false">确定</text>
+          <text>选择年月</text>
+          <text class="confirm-btn" @click="handleConfirm">确定</text>
         </view>
-        <view class="month-list">
-          <view 
-            class="month-item" 
-            v-for="item in months" 
-            :key="item.value"
-            :class="{ active: currentMonth === item.value }"
-            @click="selectMonth(item.value)"
-          >
-            <text>{{ item.text }}</text>
-            <u-icon v-if="currentMonth === item.value" name="checkmark" color="#3B82F6" size="16"></u-icon>
-          </view>
-        </view>
+        <picker-view 
+          :value="pickerIndex" 
+          class="picker-view" 
+          @change="onPickerChange"
+        >
+          <picker-view-column>
+            <view class="column-item" v-for="year in years" :key="year">
+              {{ year }}年
+            </view>
+          </picker-view-column>
+          <picker-view-column>
+            <view class="column-item" v-for="month in months" :key="month">
+              {{ month }}月
+            </view>
+          </picker-view-column>
+        </picker-view>
       </view>
     </u-popup>
   </view>
@@ -84,20 +88,40 @@ import { fetchPersonalPaymentsAPI } from '../../api/api-user';
 const transactionData = ref([]);
 const currentMonth = ref('');
 const showPicker = ref(false);
+const pickerIndex = ref([0, 0]);
 
 // 月份选择器数据
-const months = computed(() => {
-  return transactionData.value.map(item => ({
-    text: formatMonth(item.month),
-    value: item.month
-  }));
+const years = computed(() => {
+  const yearSet = new Set(transactionData.value.map(item => item.month.split('-')[0]));
+  return Array.from(yearSet).sort();
 });
-// 修改月份选择处理方法
-const selectMonth = (month) => {
-  currentMonth.value = month;
-  showPicker.value = false;
-  // 可以在这里添加选择后的其他处理逻辑
+
+const months = computed(() => {
+  return Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+});
+
+const updatePickerIndex = () => {
+  if (!currentMonth.value) return;
+  const [year, month] = currentMonth.value.split('-');
+  pickerIndex.value = [
+    years.value.indexOf(year),
+    months.value.indexOf(month)
+  ];
 };
+
+// 处理选择器值变化
+const onPickerChange = (e) => {
+  pickerIndex.value = e.detail.value;
+};
+
+// 处理确认按钮点击
+const handleConfirm = () => {
+  const year = years.value[pickerIndex.value[0]];
+  const month = months.value[pickerIndex.value[1]];
+  currentMonth.value = `${year}-${month}`;
+  showPicker.value = false;
+};
+
 // 当前月份统计
 const monthlyStats = computed(() => {
   const monthData = transactionData.value.find(item => item.month === currentMonth.value);
@@ -140,7 +164,7 @@ const currentMonthPayments = computed(() => {
 const formatMonth = (monthStr) => {
   if (!monthStr) return '';
   const [year, month] = monthStr.split('-');
-  return `${month}月`;
+  return `${year}年${month}月`;
 };
 
 // 格式化日期时间
@@ -219,14 +243,14 @@ const fetchTransactionData = async () => {
   try {
     const response = await fetchPersonalPaymentsAPI();
     if (response.code === 23141) {
-      // 对月份数据按时间倒序排序
       transactionData.value = response.data.sort((a, b) => {
         return new Date(b.month) - new Date(a.month);
       });
-      
+
       if (transactionData.value.length > 0) {
-        // 默认选择最新月份
         currentMonth.value = transactionData.value[0].month;
+        // 更新选择器索引
+        updatePickerIndex();
       }
     }
   } catch (error) {
@@ -321,7 +345,7 @@ const calculateTotal = () => {
 .transaction-item {
   display: flex;
   align-items: center;
-  padding: 16px 0;
+  padding: 16px 10px;
   border-bottom: 1px solid #F0F0F0;
   gap: 12px; // 添加间距
 
@@ -454,5 +478,18 @@ const calculateTotal = () => {
       }
     }
   }
+}
+
+.picker-view {
+  width: 100%;
+  height: 400rpx;
+}
+
+.column-item {
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  font-size: 32rpx;
+  color: #333;
 }
 </style>
