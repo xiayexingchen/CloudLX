@@ -8,15 +8,16 @@
     <!-- 用户名 -->
     <view class="form-item">
       <text class="form-label">用户名 <text class="required">*</text></text>
-      <u-input v-model="formData.username" placeholder="请输入用户名" :clearable="true" class="form-input gray-bg" :border="true" />
+      <u-input v-model="formData.username" placeholder="请输入用户名" :clearable="true" class="form-input gray-bg"
+        :border="true" />
     </view>
 
     <!-- 手机号 -->
     <view class="form-item">
       <text class="form-label">手机号 <text class="required">*</text></text>
       <view class="phone-input">
-        <u-input v-model="formData.phoneNumber" placeholder="请输入手机号" type="number" :clearable="true" class="form-input gray-bg"
-          :border="true" maxlength="11" />
+        <u-input v-model="formData.phoneNumber" placeholder="请输入手机号" type="number" :clearable="true"
+          class="form-input gray-bg" :border="true" maxlength="11" />
         <u-button @click="getVerificationCode" class="verification-btn"
           :disabled="isGettingCode || !/^1[3-9]\d{9}$/.test(formData.phoneNumber)" type="primary"
           size="mini">{{ codeButtonText }}</u-button>
@@ -46,7 +47,7 @@
       <view class="calendar-box" @click="openCalendar">
         <text v-if="showDate" class="date-text">{{ showDate.result }}</text>
         <text v-else class="placeholder-text">点击选择日期</text>
-        <u-icon name="calendar" size="20" color="#666"></u-icon>
+        <u-icon name="calendar" size="30" color="#666"></u-icon>
         <u-calendar v-model="show" :mode="mode" @change="change"></u-calendar>
       </view>
     </view>
@@ -297,8 +298,14 @@
     border-radius: 8px;
     border: 1px solid #eee;
   }
-
-  .gender-group {
+  .calendar-box .u-icon {
+    margin-left: 8px; 
+  }
+  .date-text,
+  .placeholder-text {
+     flex: 1
+    }
+      .gender-group {
     display: flex;
     gap: 30px;
     padding: 10px 15px;

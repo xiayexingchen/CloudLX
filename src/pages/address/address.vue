@@ -28,7 +28,7 @@
         </view>
 
         <!-- 右侧按钮区域 -->
-        <view class="action-area">
+        <view class="action-area" v-if="!isSelectMode">
           <!-- 编辑按钮 -->
           <view class="edit-btn" @click.stop="editAddress(address)">
             <u-icon name="edit-pen" size="40" color="#666"></u-icon>
@@ -56,17 +56,17 @@
     <!-- 底部按钮区 -->
     <view class="bottom-section">
 
-        <template v-if="isManageMode">
-          <button class="exit-btn" @click="exitManage" v-if="!isSelectMode">退出管理</button>
-          <button class="add-btn" @click="addNewAddress">
-            <text>添加收货地址</text>
-          </button>
-        </template>
-        <template v-else>
-          <button class="manage-btn" @click="toggleManageMode" v-if="!isSelectMode">管理</button>
-          <button class="add-btn" @click="addNewAddress">
-            <text>添加收货地址</text>
-          </button>
+      <template v-if="isManageMode">
+        <button class="exit-btn" @click="exitManage" v-if="!isSelectMode">退出管理</button>
+        <button class="add-btn" @click="addNewAddress">
+          <text>添加收货地址</text>
+        </button>
+      </template>
+      <template v-else>
+        <button class="manage-btn" @click="toggleManageMode" v-if="!isSelectMode">管理</button>
+        <button class="add-btn" @click="addNewAddress">
+          <text>添加收货地址</text>
+        </button>
 
       </template>
     </view>
@@ -126,8 +126,8 @@
     fetchAddressList()
   })
   defineExpose({
-  fetchAddressList
-});
+    fetchAddressList
+  });
   // 获取地址列表
   const fetchAddressList = async () => {
     try {
@@ -335,7 +335,7 @@
 
   .address-list {
     flex: 1;
-   // padding: 20rpx;
+    // padding: 20rpx;
   }
 
   .address-item {

@@ -22,7 +22,7 @@
     <!-- 其他选项 -->
     <view class="other-options">
       <view class="option-item" @click="toDisclaimer">
-        <u-icon name="file-text" size="24" color="#1e88e5"></u-icon>
+        <u-icon name="file-text" size="30" color="#1e88e5"></u-icon>
         <text class="option-text">免责声明</text>
         <u-icon name="arrow-right" color="#969799" size="16"></u-icon>
       </view>
