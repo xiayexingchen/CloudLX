@@ -36,6 +36,10 @@
         <text>其他金额</text>
         <input type="digit" v-model="customAmount" placeholder="请输入充值金额" @input="onCustomAmountInput" maxlength="11" />
       </view>
+      <!-- 添加错误提示区域 -->
+      <view class="error-message" v-if="inputError">
+        <text>{{ inputError }}</text>
+      </view>
     </view>
 
     <!-- 支付方式选择 -->
@@ -133,41 +137,74 @@
     customAmount.value = '';
   };
 
-  // 添加金额输入处理函数
+  // 添加金额输入验证的计算属性
+  const inputError = computed(() => {
+    if (!customAmount.value && !selectedAmount.value) return '';
+    
+    const amount = Number(customAmount.value || selectedAmount.value || 0);
+    
+    // 检查是否为有效数字
+    if (isNaN(amount)) {
+      return '请输入有效金额';
+    }
+    
+    // 检查整数位数（限制5位）
+    const integerPart = amount.toString().split('.')[0];
+    if (integerPart.length > 5) {
+      return '金额不能超过5位数';
+    }
+    
+    // 检查小数位数
+    const decimalPart = amount.toString().split('.')[1] || '';
+    if (decimalPart.length > 2) {
+      return '最多支持两位小数';
+    }
+    
+    // 检查金额范围
+    if (amount <= 0) {
+      return '充值金额必须大于0';
+    }
+    
+    if (amount > 1000) {
+      return '单次充值不能超过1000元';
+    }
+    
+    return '';
+  });
+
+  // 修改 canRecharge 计算属性
+  const canRecharge = computed(() => {
+    return !inputError.value && selectedPayment.value;
+  });
+
+  // 修改金额输入处理函数
   const onCustomAmountInput = (e) => {
     // 取消预设金额的选中状态
     selectedAmount.value = null;
-
+    
     let value = e.detail.value;
-
-    // 1. 移除非数字和小数点
+    
+    // 移除非数字和小数点
     value = value.replace(/[^\d.]/g, '');
-
-    // 2. 检查小数位数并提示
-    if (value.includes('.')) {
-      const [intPart, decimalPart] = value.split('.');
-      if (decimalPart && decimalPart.length > 2) {
-        uni.showToast({
-          title: '金额最多支持两位小数',
-          icon: 'none'
-        });
-        // 截取两位小数
-        // value = intPart + '.' + decimalPart.slice(0, 2);
-      }
+    
+    // 确保只有一个小数点
+    const parts = value.split('.');
+    if (parts.length > 2) {
+      value = parts[0] + '.' + parts.slice(1).join('');
     }
-
-    // 3. 限制整数部分最多8位
-    const [intPart, decimalPart] = value.split('.');
-    if (intPart.length > 8) {
-      value = intPart.slice(0, 8) + (decimalPart ? '.' + decimalPart : '');
+    
+    // 限制整数部分最多7位
+    if (parts[0].length > 5) {
+      value = parts[0].slice(0, 5) + (parts[1] ? '.' + parts[1] : '');
     }
-
-    // 4. 避免以小数点开头，自动补0
+    
+    // 避免以小数点开头，自动补0
     if (value.startsWith('.')) {
       value = '0' + value;
     }
-
-    // 5. 更新输入框的值
+    // if(value>1000){
+    //   value=1000
+    // }
     customAmount.value = value;
   };
 
@@ -181,12 +218,6 @@
     const amount = customAmount.value || selectedAmount.value || 0;
     return formatBalance(amount);
   };
-
-  // 简化 canRecharge 计算属性，只做基础验证
-  const canRecharge = computed(() => {
-    const amount = Number(customAmount.value || selectedAmount.value || 0);
-    return amount > 0 && selectedPayment.value;
-  });
 
   // 添加获取充值活动的函数
   const fetchRechargeActivities = async () => {
@@ -516,6 +547,16 @@
         background: #bdc3c7;
         opacity: 0.8;
       }
+    }
+  }
+
+  // 添加错误提示样式
+  .error-message {
+    padding: 8rpx 32rpx;
+    
+    text {
+      font-size: 24rpx;
+      color: #ff4d4f !important;
     }
   }
 </style>

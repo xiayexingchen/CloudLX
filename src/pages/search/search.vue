@@ -15,11 +15,11 @@
     <view class="search-history" v-if="!searchKeyword && searchHistory.length > 0">
       <view class="history-header">
         <text class="title">搜索历史</text>
-        <u-icon name="trash" size="20" color="#666" @click="clearHistory"></u-icon>
+        <u-icon name="trash" size="30" color="#666" @click="clearHistory"></u-icon>
       </view>
       <view class="history-list">
         <view class="history-item" v-for="(item, index) in searchHistory" :key="index" @click="searchWithHistory(item)">
-          <u-icon name="clock" size="14" color="#666"></u-icon>
+          <u-icon name="clock" size="20" color="#666"></u-icon>
           <text>{{ item }}</text>
         </view>
       </view>
